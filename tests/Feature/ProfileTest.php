@@ -76,7 +76,16 @@ class ProfileTest extends TestCase
             ->assertRedirect('/');
 
         $this->assertGuest();
-        $this->assertNull($user->fresh());
+
+        // El "borrado" es logico (soft delete): una consulta normal ya
+        // no encuentra al usuario (no puede loguearse, no aparece en
+        // listados)...
+        $this->assertNull(User::find($user->id));
+
+        // ...pero la fila sigue en la base de datos con deleted_at
+        // seteado, para no perder el historial de turnos/facturas
+        // asociado a este usuario.
+        $this->assertSoftDeleted($user);
     }
 
     public function test_correct_password_must_be_provided_to_delete_account(): void
