@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Enums\RoleName;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
@@ -41,6 +42,10 @@ class RegisteredUserController extends Controller
             'email' => $request->email,
             'password' => Hash::make($request->password),
         ]);
+
+        // El auto-registro publico siempre otorga el rol Usuario.
+        // Medico solo lo asigna un Administrador (ver Admin\MedicoController).
+        $user->assignRole(RoleName::Usuario->value);
 
         event(new Registered($user));
 
