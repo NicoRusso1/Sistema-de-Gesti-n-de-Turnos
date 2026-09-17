@@ -18,7 +18,7 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-Route::middleware(['auth', 'role:administrador'])->prefix('admin')->name('admin.')->group(function () {
+Route::middleware(['auth', 'role:Administrator'])->prefix('admin')->name('admin.')->group(function () {
     Route::get('/medicos/crear', [MedicoController::class, 'create'])->name('medicos.create');
     Route::post('/medicos', [MedicoController::class, 'store'])->name('medicos.store');
 });
