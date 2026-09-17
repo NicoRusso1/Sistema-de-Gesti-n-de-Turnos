@@ -4,7 +4,7 @@ namespace App\Enums;
 
 enum RoleName: string
 {
-    case Usuario = 'usuario';
-    case Medico = 'medico';
-    case Administrador = 'administrador';
+    case SuperAdmin = 'SuperAdmin';
+    case Administrator = 'Administrator';
+    case OperationalUser = 'OperationalUser';
 }
