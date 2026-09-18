@@ -7,14 +7,36 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreMedicoRequest;
 use App\Models\User;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\View\View;
 
 class MedicoController extends Controller
 {
+<<<<<<< HEAD
+    /**
+     * Listado de médicos para el Dashboard.
+     */
+    public function index(): View
+    {
+        $this->authorizeAccess();
+
+        $medicos = User::role(RoleName::Medico->value)->get();
+
+        return view('admin.medicos.index', compact('medicos'));
+    }
+
+    /**
+     * Formulario de alta de Medico.
+     */
+=======
    
+>>>>>>> ab0581a9936b3ddc754549f1c7245050ea5bf45d
     public function create(): View
     {
+        $this->authorizeAccess();
+
         return view('admin.medicos.create');
     }
 
@@ -45,6 +67,15 @@ class RegisteredUserController extends Controller
      */
     public function create(): View
     {
+<<<<<<< HEAD
+        $this->authorizeAccess();
+
+        $medico = User::create([
+            'name' => $request->validated('name'),
+            'email' => $request->validated('email'),
+            'password' => Hash::make($request->validated('password')),
+            'email_verified_at' => now(),
+=======
         return view('auth.register');
     }
 
@@ -60,6 +91,7 @@ class RegisteredUserController extends Controller
             'last_name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.Patient::class],
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
+>>>>>>> ab0581a9936b3ddc754549f1c7245050ea5bf45d
         ]);
 
         $role = Role::where('name', RoleName::OperationalUser->value)->firstOrFail();
@@ -81,5 +113,38 @@ class RegisteredUserController extends Controller
 
         return redirect(route('dashboard', absolute: false));
     }
+<<<<<<< HEAD
+
+    /**
+     * Actualiza la información del médico (Admin y SuperAdmin).
+     */
+    public function update(Request $request, User $medico): RedirectResponse
+    {
+        $this->authorizeAccess();
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $medico->id],
+        ]);
+
+        $medico->update($validated);
+
+        return redirect()
+            ->back()
+            ->with('status', __('Médico actualizado correctamente.'));
+    }
+
+    /**
+     * Verifica que el usuario tenga rol Admin o SuperAdmin.
+     */
+    private function authorizeAccess(): void
+    {
+        if (!Auth::user()->hasAnyRole([RoleName::Admin->value, RoleName::SuperAdmin->value ?? 'SuperAdmin'])) {
+            abort(403, 'No tienes permisos para gestionar médicos.');
+        }
+    }
+}
+=======
 }
 }
+>>>>>>> ab0581a9936b3ddc754549f1c7245050ea5bf45d
