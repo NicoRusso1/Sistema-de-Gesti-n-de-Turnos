@@ -1,13 +1,1 @@
-<h1> Especialidades </h1>
-
-@if (error()) {
-  <p>{{error()}}</p>
-}
-
-<ul>
-  @for (specialty of specialties(); track specialty.id) {
-    <li>>{{specialty.name}} - {{specialty.description}}</li>
-  }
-</ul>
-
-<router-outlet> />
+<router-outlet />
