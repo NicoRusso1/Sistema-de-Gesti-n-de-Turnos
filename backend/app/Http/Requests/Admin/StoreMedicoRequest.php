@@ -10,7 +10,7 @@ class StoreMedicoRequest extends FormRequest
  
     public function authorize(): bool
     {
-        return $this->user()?->isAdministrator() ?? false;
+    return $this->user()?->hasAdminAccess() ?? false;
     }
 
     public function rules(): array

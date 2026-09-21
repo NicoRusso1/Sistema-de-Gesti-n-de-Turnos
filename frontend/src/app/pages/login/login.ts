@@ -1,42 +1,13 @@
 import { HttpErrorResponse } from '@angular/common/http';
-import { ActivatedRoute } from '@angular/router';
 import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 
 @Component({
   selector: 'app-login',
   imports: [ReactiveFormsModule, RouterLink],
-  template: `
-    <h1>Iniciar sesión</h1>
-
-    @if (registered) {
-      <p role="status">Registro exitoso. Ya podés iniciar sesión.</p>
-    }
-
-    @if (errorMessage()) {
-      <p role="alert">{{ errorMessage() }}</p>
-    }
-
-    <form [formGroup]="form" (ngSubmit)="onSubmit()">
-      <div>
-        <label for="email">Email</label>
-        <input id="email" type="email" formControlName="email" />
-      </div>
-
-      <div>
-        <label for="password">Contraseña</label>
-        <input id="password" type="password" formControlName="password" />
-      </div>
-
-      <button type="submit" [disabled]="loading()">
-        {{ loading() ? 'Ingresando...' : 'Ingresar' }}
-      </button>
-    </form>
-
-    <p><a routerLink="/register">Crear cuenta</a></p>
-  `,
+  templateUrl: './login.html',
 })
 export class Login {
   private fb = inject(FormBuilder);
@@ -45,7 +16,6 @@ export class Login {
 
   protected readonly registered =
     inject(ActivatedRoute).snapshot.queryParamMap.get('registered') === 'true';
-
   protected readonly errorMessage = signal('');
   protected readonly loading = signal(false);
 
@@ -64,15 +34,19 @@ export class Login {
     this.errorMessage.set('');
 
     this.authService.login(this.form.getRawValue()).subscribe({
-      next: () => {
-        this.router.navigate(['/main']);
-      },
+      next: () => this.router.navigate(['/home']),
       error: (err: HttpErrorResponse) => {
         this.loading.set(false);
-        const errors = err.error?.errors;
 
-        if (errors) {
-          this.errorMessage.set((Object.values(errors) as string[][]).flat().join(' '));
+        if (err.status === 401) {
+          this.errorMessage.set(err.error?.message ?? 'Credenciales incorrectas');
+        } else if (err.status === 422) {
+          const errors = err.error?.errors;
+          this.errorMessage.set(
+            errors ? (Object.values(errors) as string[][]).flat().join(' ') : 'Datos inválidos',
+          );
+        } else if (err.status === 429) {
+          this.errorMessage.set('Demasiados intentos. Esperá un minuto e intentá de nuevo.');
         } else {
           this.errorMessage.set('No se pudo conectar con el servidor');
         }

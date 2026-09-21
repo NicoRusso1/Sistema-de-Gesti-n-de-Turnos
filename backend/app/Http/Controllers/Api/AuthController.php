@@ -11,7 +11,6 @@ use App\Models\UserType;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
-use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
@@ -45,46 +44,46 @@ class AuthController extends Controller
         ], 201);
     }
 
-    /**
-     * GT: login vía API con Sanctum (Bearer token).
-     * Angular manda email/password, si son correctos le devolvemos un
-     * token que va a mandar en el header Authorization de ahí en más.
-     */
     public function login(Request $request)
     {
         $request->validate([
-            'email' => ['required', 'string', 'email'],
-            'password' => ['required', 'string'],
+            'email' => 'required|email',
+            'password' => 'required',
+        ], [
+            'email.required' => 'El campo correo electrónico es obligatorio.',
+            'email.email' => 'El campo correo electrónico debe ser una dirección de correo válida.',
+            'password.required' => 'El campo contraseña es obligatorio.',
         ]);
 
         $patient = Patient::where('email', strtolower($request->email))->first();
 
         if (! $patient || ! Hash::check($request->password, $patient->password_hash)) {
-            throw ValidationException::withMessages([
-                'email' => ['Las credenciales no son correctas.'],
-            ]);
+            return response()->json([
+                'message' => 'Credenciales incorrectas'
+            ], 401);
         }
 
-        // Invalida tokens anteriores del mismo dispositivo/sesión (opcional,
-        // pero evita ir acumulando tokens infinitos en cada login).
-        $patient->tokens()->delete();
-
-        $token = $patient->createToken('angular-frontend')->plainTextToken;
+        $token = $patient->createToken('auth_token')->plainTextToken;
 
         return response()->json([
             'message' => 'Login exitoso',
-            'token' => $token,
-            'patient' => $patient,
+            'access_token' => $token,
+            'token_type' => 'Bearer',
+            'user' => $patient->load('role', 'userType'),
         ]);
     }
 
-    /**
-     * Logout: invalida el token actual.
-     */
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();
 
-        return response()->json(['message' => 'Sesión cerrada']);
+        return response()->json([
+            'message' => 'Sesión cerrada correctamente'
+        ]);
+    }
+
+    public function me(Request $request)
+    {
+        return response()->json($request->user()->load('role', 'userType'));
     }
 }

@@ -1,52 +1,55 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
+import { API_URL } from '../config/api';
+import { AuthUser, LoginResponse } from '../models/login-response';
 import { RegisterData } from '../models/register-data';
 
-interface LoginData {
-  email: string;
-  password: string;
-}
-
-interface LoginResponse {
-  message: string;
-  token: string;
-  patient: {
-    id: number;
-    first_name: string;
-    last_name: string;
-    email: string;
-  };
-}
-
-const TOKEN_KEY = 'auth_token';
+const TOKEN_KEY = 'access_token';
+const USER_KEY = 'user';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
   private http = inject(HttpClient);
-  private apiUrl = 'http://localhost:8000/api';
+
+  readonly token = signal<string | null>(localStorage.getItem(TOKEN_KEY));
+  readonly user = signal<AuthUser | null>(this.readStoredUser());
 
   register(data: RegisterData): Observable<unknown> {
-    return this.http.post(`${this.apiUrl}/register`, data);
+    return this.http.post(`${API_URL}/register`, data);
   }
 
-  login(data: LoginData): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>(`${this.apiUrl}/login`, data).pipe(
-      tap((response) => {
-        localStorage.setItem(TOKEN_KEY, response.token);
+  login(credentials: { email: string; password: string }): Observable<LoginResponse> {
+    return this.http.post<LoginResponse>(`${API_URL}/login`, credentials).pipe(
+      tap((res) => {
+        localStorage.setItem(TOKEN_KEY, res.access_token);
+        localStorage.setItem(USER_KEY, JSON.stringify(res.user));
+        this.token.set(res.access_token);
+        this.user.set(res.user);
       }),
     );
   }
 
-  logout(): void {
-    localStorage.removeItem(TOKEN_KEY);
+  logout(): Observable<unknown> {
+    return this.http.post(`${API_URL}/logout`, {}).pipe(tap(() => this.clearSession()));
   }
 
-  getToken(): string | null {
-    return localStorage.getItem(TOKEN_KEY);
+  clearSession(): void {
+    localStorage.removeItem(TOKEN_KEY);
+    localStorage.removeItem(USER_KEY);
+    this.token.set(null);
+    this.user.set(null);
   }
 
   isLoggedIn(): boolean {
-    return this.getToken() !== null;
+    return this.token() !== null;
+  }
+
+  private readStoredUser(): AuthUser | null {
+    try {
+      return JSON.parse(localStorage.getItem(USER_KEY) ?? 'null');
+    } catch {
+      return null;
+    }
   }
 }
