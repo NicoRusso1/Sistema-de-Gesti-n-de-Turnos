@@ -72,9 +72,9 @@ class Patient extends Authenticatable
     }
 
     public function permissions(): HasOne
-    {
-        return $this->hasOne(UserPermission::class);
-    }
+{
+    return $this->hasOne(UserPermission::class, 'user_id');
+}
 
     public function scopeDoctors(Builder $query): Builder
     {

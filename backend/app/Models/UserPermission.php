@@ -10,7 +10,7 @@ class UserPermission extends Model
     public $timestamps = false;
 
     protected $fillable = [
-        'patient_id',
+        'user_id',
         'view_own_appointments',
         'view_all_appointments',
         'view_assigned_patients',
@@ -20,6 +20,6 @@ class UserPermission extends Model
 
     public function patient(): BelongsTo
     {
-        return $this->belongsTo(Patient::class);
+        return $this->belongsTo(Patient::class, 'user_id');
     }
 }
