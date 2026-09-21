@@ -2,17 +2,21 @@
 
 namespace App\Models;
 
+use App\Enums\UserTypeName;
 use Database\Factories\PatientFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use Laravel\Sanctum\HasApiTokens;
 
 /** @use HasFactory<PatientFactory> */
 class Patient extends Authenticatable
 {
-    use HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
 
     protected $fillable = [
         'first_name',
@@ -64,6 +68,11 @@ class Patient extends Authenticatable
     public function permissions(): HasOne
     {
         return $this->hasOne(UserPermission::class);
+    }
+
+    public function scopeDoctors(Builder $query): Builder
+    {
+        return $query->whereHas('userType', fn ($q) => $q->where('name', UserTypeName::Doctor->value));
     }
 
     public function isSuperAdmin(): bool
