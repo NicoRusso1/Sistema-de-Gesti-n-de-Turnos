@@ -17,7 +17,7 @@
                 </div>
             </div>
 
-            @if (auth()->user()->isAdministrator())
+            @if (auth()->user()->hasAdminAccess())
                 <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg mt-4">
                     <div class="p-6 text-gray-900">
                         <a href="{{ route('admin.medicos.create') }}" class="text-indigo-600 underline">

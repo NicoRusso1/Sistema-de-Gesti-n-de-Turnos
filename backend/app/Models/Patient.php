@@ -50,6 +50,12 @@ class Patient extends Authenticatable
         return $this->password_hash;
     }
 
+    public function hasAdminAccess(): bool
+{
+    return $this->isAdministrator() || $this->isSuperAdmin();
+}
+
+
     public function role(): BelongsTo
     {
         return $this->belongsTo(Role::class);
