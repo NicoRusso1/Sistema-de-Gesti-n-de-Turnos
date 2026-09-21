@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\SpecialtyController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DoctorController;
+use App\Http\Controllers\Api\AppointmentController;
 
 // Públicas
 Route::post('/register', [AuthController::class, 'register']);
@@ -12,6 +13,8 @@ Route::apiResource('specialties', SpecialtyController::class)->only(['index', 's
 
 // Requieren token
 Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/appointments', [AppointmentController::class, 'index']);
+    Route::post('/appointments', [AppointmentController::class, 'store']);
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
 
