@@ -43,4 +43,47 @@ class AuthController extends Controller
             'patient' => $patient
         ], 201);
     }
+
+    public function login(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+            'password' => 'required',
+        ], [
+            'email.required' => 'El campo correo electrónico es obligatorio.',
+            'email.email' => 'El campo correo electrónico debe ser una dirección de correo válida.',
+            'password.required' => 'El campo contraseña es obligatorio.',
+        ]);
+
+        $patient = Patient::where('email', strtolower($request->email))->first();
+
+        if (! $patient || ! Hash::check($request->password, $patient->password_hash)) {
+            return response()->json([
+                'message' => 'Credenciales incorrectas'
+            ], 401);
+        }
+
+        $token = $patient->createToken('auth_token')->plainTextToken;
+
+        return response()->json([
+            'message' => 'Login exitoso',
+            'access_token' => $token,
+            'token_type' => 'Bearer',
+            'user' => $patient->load('role', 'userType'),
+        ]);
+    }
+
+    public function logout(Request $request)
+    {
+        $request->user()->currentAccessToken()->delete();
+
+        return response()->json([
+            'message' => 'Sesión cerrada correctamente'
+        ]);
+    }
+
+    public function me(Request $request)
+    {
+        return response()->json($request->user()->load('role', 'userType'));
+    }
 }
