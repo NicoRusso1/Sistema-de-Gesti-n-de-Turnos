@@ -1,0 +1,90 @@
+.app-layout {
+  display: flex;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+.sidebar {
+  width: 250px;
+  background-color: #343a40;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  transition: all 0.3s ease; /* Transición suave de apertura/cierre */
+  white-space: nowrap; /* Evita que el texto baje de línea mientras se achica */
+  overflow: hidden;
+}
+
+/* Cuando el sidebar está cerrado, colapsamos su tamaño y visibilidad */
+.app-layout.sidebar-closed .sidebar {
+  width: 0;
+  opacity: 0;
+}
+
+.sidebar-header {
+  padding: 20px;
+  background: #212529;
+  text-align: center;
+}
+
+.sidebar nav ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.sidebar nav ul li {
+  border-bottom: 1px solid #495057;
+}
+
+.sidebar nav ul li a {
+  display: block;
+  padding: 15px 20px;
+  color: #adb5bd;
+  text-decoration: none;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.sidebar nav ul li a:hover {
+  background-color: #495057;
+  color: white;
+}
+
+.main-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background-color: #f4f6f9;
+  min-height: 100vh;
+  transition: all 0.3s ease;
+}
+
+/* Estilos de la nueva barra superior */
+.topbar {
+  display: flex;
+  align-items: center;
+  background-color: #ffffff;
+  padding: 10px 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.menu-toggle {
+  background: none;
+  border: none;
+  font-size: 24px;
+  cursor: pointer;
+  color: #343a40;
+  padding: 5px 10px;
+  border-radius: 4px;
+  transition: background 0.2s;
+}
+
+.menu-toggle:hover {
+  background: #e9ecef;
+}
+
+/* Contenedor del contenido principal para darle separación */
+.content-wrapper {
+  padding: 20px;
+  flex: 1;
+}
