@@ -1,1 +1,39 @@
-<router-outlet />
+<!-- Enlazamos la clase sidebar-closed con nuestra variable booleana -->
+<div class="app-layout" [class.sidebar-closed]="!isSidebarOpen">
+  
+  @if (user()) {
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h3>Menú</h3>
+      </div>
+      <nav>
+        <ul>
+          <li><a routerLink="/home">Inicio</a></li>
+          
+          <!-- Accesible y visible para Admin y SuperAdmin -->
+          @if (isAdmin()) {
+            <li><a routerLink="/users">Gestión de Usuarios</a></li>
+          }
+        </ul>
+      </nav>
+    </aside>
+  }
+
+  <main class="main-content">
+    
+    <!-- Barra superior con el botón hamburguesa (solo si está logueado) -->
+    @if (user()) {
+      <div class="topbar">
+        <button class="menu-toggle" (click)="toggleSidebar()" title="Alternar menú">
+          ☰
+        </button>
+      </div>
+    }
+    
+    <!-- Aquí se inyectan dinámicamente las vistas (home, login, users, etc.) -->
+    <div class="content-wrapper">
+      <router-outlet />
+    </div>
+    
+  </main>
+</div>

@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\SpecialtyController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DoctorController;
+use App\Http\Controllers\Api\UserController;
 
 // Públicas
 Route::post('/register', [AuthController::class, 'register']);
@@ -23,5 +24,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/doctors', [DoctorController::class, 'index']);
         Route::delete('/doctors/{id}', [DoctorController::class, 'destroy']);
         Route::post('/doctors/{id}/restore', [DoctorController::class, 'restore']);
+        
+        // RUTAS DE GESTIÓN DE USUARIOS
+        Route::get('/users', [UserController::class, 'index']);
     });
 });
