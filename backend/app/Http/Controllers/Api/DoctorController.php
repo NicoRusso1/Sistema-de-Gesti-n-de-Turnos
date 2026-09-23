@@ -13,7 +13,9 @@ class DoctorController extends Controller
         $query = Patient::doctors();
 
         if ($request->boolean('trashed')) {
-            $query->onlyTrashed();
+            $query->inactive();
+        } else {
+            $query->active();
         }
 
         return response()->json($query->paginate(15), 200);
@@ -21,7 +23,7 @@ class DoctorController extends Controller
 
     public function destroy(string $id)
     {
-        $doctor = Patient::doctors()->find($id);
+        $doctor = Patient::doctors()->active()->find($id);
 
         if (!$doctor) {
             return response()->json([
@@ -29,28 +31,30 @@ class DoctorController extends Controller
             ], 404);
         }
 
+        $doctor->status = 0;
+        $doctor->save();
         $doctor->tokens()->delete();
-        $doctor->delete();
 
         return response()->json([
-            'message' => 'Médico eliminado correctamente'
+            'message' => 'Médico dado de baja correctamente'
         ], 200);
     }
 
     public function restore(string $id)
     {
-        $doctor = Patient::doctors()->onlyTrashed()->find($id);
+        $doctor = Patient::doctors()->inactive()->find($id);
 
         if (!$doctor) {
             return response()->json([
-                'message' => 'Médico eliminado no encontrado'
+                'message' => 'Médico dado de baja no encontrado'
             ], 404);
         }
 
-        $doctor->restore();
+        $doctor->status = 1;
+        $doctor->save();
 
         return response()->json([
-            'message' => 'Médico restaurado correctamente'
+            'message' => 'Médico reactivado correctamente'
         ], 200);
     }
 }

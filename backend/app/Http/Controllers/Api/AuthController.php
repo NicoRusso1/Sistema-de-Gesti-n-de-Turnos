@@ -65,6 +65,12 @@ class AuthController extends Controller
             ], 401);
         }
 
+                if ($patient->status !== 1) {
+            return response()->json([
+                'message' => 'La cuenta se encuentra dada de baja'
+            ], 403);
+        }
+
         $token = $patient->createToken('auth_token')->plainTextToken;
 
         return response()->json([
@@ -97,7 +103,7 @@ class AuthController extends Controller
             'email.required' => 'El correo electrónico es obligatorio.',
             'email.email' => 'Ingresá un correo electrónico válido.',
         ]);
-        $patient = Patient::where('email', strtolower($request->email))->first();
+        $patient = Patient::active()->where('email', strtolower($request->email))->first();
         if (! $patient) {
             return response()->json([
                 'message' => 'No encontramos ningún usuario registrado con ese correo electrónico.'
