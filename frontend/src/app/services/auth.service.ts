@@ -52,4 +52,11 @@ export class AuthService {
       return null;
     }
   }
+    forgotPassword(email: string): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${API_URL}/forgot-password`, { email });
+  }
+
+  resetPassword(data: { token: string; password: string; password_confirmation: string }): Observable<{ message: string }> {
+    return this.http.post<{ message: string }>(`${API_URL}/reset-password`, data);
+  }
 }
