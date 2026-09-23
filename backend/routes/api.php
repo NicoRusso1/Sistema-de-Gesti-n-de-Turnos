@@ -10,6 +10,8 @@ use App\Http\Controllers\Api\UserController;
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,1');
 Route::apiResource('specialties', SpecialtyController::class)->only(['index', 'show']);
+Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
+Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 
 // Requieren token
 Route::middleware('auth:sanctum')->group(function () {
