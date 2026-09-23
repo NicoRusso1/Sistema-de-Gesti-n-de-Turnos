@@ -22,6 +22,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::middleware('role:Administrator')->group(function () {
         Route::apiResource('specialties', SpecialtyController::class)->except(['index', 'show']);
         Route::post('/specialties/{id}/restore', [SpecialtyController::class, 'restore']);
+        Route::post('/users', [UserController::class, 'store']);
 
         Route::get('/doctors', [DoctorController::class, 'index']);
         Route::delete('/doctors/{id}', [DoctorController::class, 'destroy']);
@@ -29,5 +30,9 @@ Route::middleware('auth:sanctum')->group(function () {
         
         // RUTAS DE GESTIÓN DE USUARIOS
         Route::get('/users', [UserController::class, 'index']);
+        Route::get('/users/{id}', [UserController::class, 'show']);
+        Route::put('/users/{id}', [UserController::class, 'update']);
+        Route::delete('/users/{id}', [UserController::class, 'destroy']);
+        Route::post('/users/{id}/restore', [UserController::class, 'restore']);
     });
 });
