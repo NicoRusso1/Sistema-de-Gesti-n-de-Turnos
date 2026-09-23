@@ -21,7 +21,6 @@ Route::middleware('auth:sanctum')->group(function () {
     // Requieren token y rol Administrator (el SuperAdmin entra por herencia)
     Route::middleware('role:Administrator')->group(function () {
         Route::apiResource('specialties', SpecialtyController::class)->except(['index', 'show']);
-        Route::post('/specialties/{id}/restore', [SpecialtyController::class, 'restore']);
         Route::post('/users', [UserController::class, 'store']);
 
         Route::get('/doctors', [DoctorController::class, 'index']);

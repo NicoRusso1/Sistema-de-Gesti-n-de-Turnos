@@ -18,7 +18,7 @@ class SpecialtyController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255', Rule::unique('specialties', 'name')->withoutTrashed()],
+            'name' => ['required', 'string', 'max:255', Rule::unique('specialties', 'name')],
             'description' => 'nullable|string|max:255',
         ]);
 
@@ -54,8 +54,8 @@ class SpecialtyController extends Controller
         }
 
         $validated = $request->validate([
-            'name' => ['sometimes', 'required', 'string', 'max:255',
-                Rule::unique('specialties', 'name')->ignore($id)->withoutTrashed()],
+                'name' => ['sometimes', 'required', 'string', 'max:255',
+                Rule::unique('specialties', 'name')->ignore($id)],
             'description' => 'nullable|string|max:255',
         ]);
 
@@ -81,24 +81,6 @@ class SpecialtyController extends Controller
 
         return response()->json([
             'message' => 'Especialidad eliminada correctamente'
-        ], 200);
-    }
-
-    public function restore(string $id)
-    {
-        $specialty = Specialty::onlyTrashed()->find($id);
-
-        if (!$specialty) {
-            return response()->json([
-                'message' => 'Especialidad eliminada no encontrada'
-            ], 404);
-        }
-
-        $specialty->restore();
-
-        return response()->json([
-            'message' => 'Especialidad restaurada correctamente',
-            'specialty' => $specialty
         ], 200);
     }
 }

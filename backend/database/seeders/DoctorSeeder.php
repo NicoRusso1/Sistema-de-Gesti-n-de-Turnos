@@ -17,7 +17,7 @@ class DoctorSeeder extends Seeder
         $role = Role::where('name', RoleName::OperationalUser->value)->firstOrFail();
         $doctorType = UserType::where('name', UserTypeName::Doctor->value)->firstOrFail();
 
-        $doctor = Patient::withTrashed()->firstOrCreate(
+        $doctor = Patient::firstOrCreate(
             ['email' => 'medico@hospital.test'],
             [
                 'first_name' => 'Juan',
@@ -30,8 +30,8 @@ class DoctorSeeder extends Seeder
             ]
         );
 
-        if ($doctor->trashed()) {
-            $doctor->restore();
+        if ($doctor->status !== 1) {
+            $doctor->update(['status' => 1]);
         }
     }
 }

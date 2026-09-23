@@ -21,7 +21,7 @@ class SuperAdminSeeder extends Seeder
                 'last_name' => 'Administrador',
                 'password_hash' => Hash::make('password'),
                 'role_id' => $role->id,
-                'status' => null,
+                'status' => 1,
                 'is_owner' => false,
                 'email_verified_at' => now(),
             ]

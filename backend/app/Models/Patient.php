@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasOne;
-use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -16,7 +15,7 @@ use Laravel\Sanctum\HasApiTokens;
 /** @use HasFactory<PatientFactory> */
 class Patient extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
+        use HasApiTokens, HasFactory, Notifiable;
 
     protected $fillable = [
         'first_name',
@@ -42,6 +41,7 @@ class Patient extends Authenticatable
             'password_hash' => 'hashed',
             'is_owner' => 'boolean',
             'registration_date' => 'datetime',
+            'status' => 'integer',
         ];
     }
 
@@ -80,6 +80,17 @@ class Patient extends Authenticatable
     {
         return $query->whereHas('userType', fn ($q) => $q->where('name', UserTypeName::Doctor->value));
     }
+
+        public function scopeActive(Builder $query): Builder
+    {
+        return $query->where('status', 1);
+    }
+
+    public function scopeInactive(Builder $query): Builder
+    {
+        return $query->where('status', 0);
+    }
+
 
     public function isSuperAdmin(): bool
     {
