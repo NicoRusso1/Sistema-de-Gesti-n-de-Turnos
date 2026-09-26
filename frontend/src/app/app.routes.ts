@@ -14,6 +14,18 @@ export const routes: Routes = [
   { path: 'forgot-password', component: ForgotPassword },
   { path: 'reset-password', component: ResetPassword },
   { path: 'home', component: Home, canActivate: [authGuard] },
+
+    {
+    path: 'users/new',
+    loadComponent: () => import('./pages/user-form/user-form').then(m => m.UserForm),
+    canActivate: [adminGuard]
+  },
+  {
+    path: 'users/:id/edit',
+    loadComponent: () => import('./pages/user-form/user-form').then(m => m.UserForm),
+    canActivate: [adminGuard]
+  },
+  
   { 
     path: 'users', 
     loadComponent: () => import('./pages/users/users.component').then(m => m.UsersComponent),

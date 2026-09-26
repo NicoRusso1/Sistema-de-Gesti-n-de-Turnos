@@ -2,14 +2,16 @@ import { Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { UserService } from '../../services/user.service';
 import { PaginatedUsers, User } from '../../models/user';
+import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-users',
   standalone: true,
-  imports: [ReactiveFormsModule],
+  imports: [ReactiveFormsModule, RouterLink],
   template: `
     <div class="users-container">
       <h2>Listado y Filtros de Usuarios</h2>
+      <a routerLink="/users/new" class="btn-primary">Nuevo usuario</a>
       
       <!-- Al presionar Enter en el input se ejecuta ngSubmit -->
       <form [formGroup]="filterForm" (ngSubmit)="applyFilters()" class="filters-card">
@@ -65,6 +67,7 @@ import { PaginatedUsers, User } from '../../models/user';
               <th>Email</th>
               <th>Rol / Tipo</th>
               <th>Estado</th>
+              <th>Acciones</th>
             </tr>
           </thead>
           <tbody>
@@ -85,10 +88,20 @@ import { PaginatedUsers, User } from '../../models/user';
                   @else if (user.status === 0) { Inactivo }
                   @else { N/A }
                 </td>
+                <td>
+                  @if (user.role.name === 'OperationalUser') {
+                    <a [routerLink]="['/users', user.id, 'edit']">Editar</a>
+                    @if (user.status === 1) {
+                      <button type="button" (click)="deactivate(user)">Dar de baja</button>
+                    } @else {
+                      <button type="button" (click)="activate(user)">Reactivar</button>
+                    }
+                  }
+                </td>
               </tr>
             } @empty {
               <tr>
-                <td colspan="6" class="text-center">No se encontraron usuarios que coincidan con los filtros.</td>
+                <td colspan="7" class="text-center">No se encontraron usuarios que coincidan con los filtros.</td>
               </tr>
             }
           </tbody>
@@ -177,5 +190,23 @@ export class UsersComponent implements OnInit {
     if (this.pagination && page >= 1 && page <= this.pagination.last_page) {
       this.loadUsers(page);
     }
+  }
+
+  deactivate(user: User): void {
+    if (!confirm(`¿Dar de baja a ${user.first_name} ${user.last_name}?`)) {
+      return;
+    }
+
+    this.userService.deactivateUser(user.id).subscribe({
+      next: () => this.loadUsers(this.pagination?.current_page ?? 1),
+      error: () => alert('No se pudo dar de baja al usuario'),
+    });
+  }
+
+  activate(user: User): void {
+    this.userService.activateUser(user.id).subscribe({
+      next: () => this.loadUsers(this.pagination?.current_page ?? 1),
+      error: () => alert('No se pudo reactivar al usuario'),
+    });
   }
 }
