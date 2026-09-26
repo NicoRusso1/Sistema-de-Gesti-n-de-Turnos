@@ -26,3 +26,16 @@ export interface PaginatedUsers {
   to: number;
   total: number;
 }
+
+export interface UserFormData {
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone: string
+  user_type_id: number;
+}
+
+export interface CreateUserData extends UserFormData {
+  password: string;
+  password_confirmation: string;
+}

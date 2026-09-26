@@ -2,7 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { API_URL } from '../config/api';
-import { PaginatedUsers } from '../models/user';
+import { CreateUserData, PaginatedUsers, User, UserFormData } from '../models/user';
 
 @Injectable({
   providedIn: 'root'
@@ -26,5 +26,25 @@ export class UserService {
     if (filters.page) params = params.set('page', filters.page.toString());
 
     return this.http.get<PaginatedUsers>(`${API_URL}/users`, { params });
+  }
+
+    getUser(id: number): Observable<User> {
+    return this.http.get<User>(`${API_URL}/users/${id}`);
+  }
+
+  createUser(data: CreateUserData): Observable<unknown> {
+    return this.http.post(`${API_URL}/users`, data);
+  }
+
+  updateUser(id: number, data: UserFormData): Observable<unknown> {
+    return this.http.put(`${API_URL}/users/${id}`, data);
+  }
+
+  deactivateUser(id: number): Observable<unknown> {
+    return this.http.delete(`${API_URL}/users/${id}`);
+  }
+
+  activateUser(id: number): Observable<unknown> {
+    return this.http.post(`${API_URL}/users/${id}/restore`, {});
   }
 }
