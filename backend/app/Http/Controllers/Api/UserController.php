@@ -17,6 +17,26 @@ use App\Models\UserPermission;
 
 class UserController extends Controller
 {
+    #[OA\Get(
+        path: '/api/users',
+        summary: 'Listar usuarios con filtros',
+        tags: ['Usuarios'],
+        security: [
+            ['sanctum' => []]
+        ],
+        parameters: [
+            new OA\Parameter(name: 'role', in: 'query', required: false, schema: new OA\Schema(type: 'string', enum: ['SuperAdmin', 'Administrator', 'OperationalUser'])),
+            new OA\Parameter(name: 'user_type', in: 'query', required: false, schema: new OA\Schema(type: 'string', enum: ['patient', 'doctor', 'secretary'])),
+            new OA\Parameter(name: 'status', in: 'query', required: false, schema: new OA\Schema(type: 'integer', enum: [0, 1])),
+            new OA\Parameter(name: 'search', in: 'query', required: false, schema: new OA\Schema(type: 'string')),
+            new OA\Parameter(name: 'page', in: 'query', required: false, schema: new OA\Schema(type: 'integer', minimum: 1))
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Listado paginado de usuarios.'),
+            new OA\Response(response: 401, description: 'No autenticado.'),
+            new OA\Response(response: 403, description: 'Sin permisos de administrador.')
+        ]
+    )]
     public function index(Request $request)
     {
         $query = Patient::with(['role', 'userType', 'personalData']);
@@ -62,6 +82,35 @@ class UserController extends Controller
         return response()->json($users);
     }
 
+    #[OA\Post(
+        path: '/api/users',
+        summary: 'Crear un usuario operativo',
+        tags: ['Usuarios'],
+        security: [
+            ['sanctum' => []]
+        ],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['first_name', 'last_name', 'email', 'user_type_id', 'password', 'password_confirmation'],
+                properties: [
+                    new OA\Property(property: 'first_name', type: 'string', example: 'Ana'),
+                    new OA\Property(property: 'last_name', type: 'string', example: 'Gomez'),
+                    new OA\Property(property: 'email', type: 'string', example: 'ana@hospital.test'),
+                    new OA\Property(property: 'phone', type: 'string', example: '3511234567'),
+                    new OA\Property(property: 'user_type_id', type: 'integer', example: 1),
+                    new OA\Property(property: 'password', type: 'string', example: 'Password123!'),
+                    new OA\Property(property: 'password_confirmation', type: 'string', example: 'Password123!')
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 201, description: 'Usuario creado correctamente.'),
+            new OA\Response(response: 401, description: 'No autenticado.'),
+            new OA\Response(response: 403, description: 'Sin permisos de administrador.'),
+            new OA\Response(response: 422, description: 'Datos inválidos.')
+        ]
+    )]
     public function store(Request $request)
     {
         $request->validate([
@@ -96,6 +145,30 @@ class UserController extends Controller
         ], 201);
     }
 
+    #[OA\Get(
+        path: '/api/users/{id}',
+        summary: 'Obtener un usuario operativo',
+        tags: ['Usuarios'],
+        security: [
+            ['sanctum' => []]
+        ],
+        parameters: [
+            new OA\Parameter(
+                name: 'id',
+                description: 'ID del usuario',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'integer', minimum: 1),
+                example: 2
+            )
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Usuario encontrado.'),
+            new OA\Response(response: 401, description: 'No autenticado.'),
+            new OA\Response(response: 403, description: 'Sin permisos de administrador.'),
+            new OA\Response(response: 404, description: 'Usuario no encontrado.')
+        ]
+    )]
     public function show(string $id)
     {
         $user = $this->findOperationalUser($id);
@@ -109,6 +182,43 @@ class UserController extends Controller
         return response()->json($user->load('personalData'), 200);
     }
 
+    #[OA\Put(
+        path: '/api/users/{id}',
+        summary: 'Actualizar un usuario operativo',
+        tags: ['Usuarios'],
+        security: [
+            ['sanctum' => []]
+        ],
+        parameters: [
+            new OA\Parameter(
+                name: 'id',
+                description: 'ID del usuario',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'integer', minimum: 1),
+                example: 2
+            )
+        ],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: 'first_name', type: 'string', example: 'Ana'),
+                    new OA\Property(property: 'last_name', type: 'string', example: 'Gomez'),
+                    new OA\Property(property: 'email', type: 'string', example: 'ana@hospital.test'),
+                    new OA\Property(property: 'phone', type: 'string', example: '3511234567'),
+                    new OA\Property(property: 'user_type_id', type: 'integer', example: 2)
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Usuario actualizado correctamente.'),
+            new OA\Response(response: 401, description: 'No autenticado.'),
+            new OA\Response(response: 403, description: 'Sin permisos de administrador.'),
+            new OA\Response(response: 404, description: 'Usuario no encontrado.'),
+            new OA\Response(response: 422, description: 'Datos inválidos.')
+        ]
+    )]
     public function update(Request $request, string $id)
     {
         $user = $this->findOperationalUser($id);
@@ -146,6 +256,30 @@ class UserController extends Controller
         ], 200);
     }
 
+    #[OA\Delete(
+        path: '/api/users/{id}',
+        summary: 'Dar de baja un usuario operativo',
+        tags: ['Usuarios'],
+        security: [
+            ['sanctum' => []]
+        ],
+        parameters: [
+            new OA\Parameter(
+                name: 'id',
+                description: 'ID del usuario',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'integer', minimum: 1),
+                example: 2
+            )
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Usuario dado de baja correctamente.'),
+            new OA\Response(response: 401, description: 'No autenticado.'),
+            new OA\Response(response: 403, description: 'Sin permisos de administrador.'),
+            new OA\Response(response: 404, description: 'Usuario no encontrado.')
+        ]
+    )]
     public function destroy(string $id)
     {
         $user = $this->findOperationalUser($id);
@@ -165,6 +299,30 @@ class UserController extends Controller
         ], 200);
     }
 
+    #[OA\Post(
+        path: '/api/users/{id}/restore',
+        summary: 'Reactivar un usuario operativo',
+        tags: ['Usuarios'],
+        security: [
+            ['sanctum' => []]
+        ],
+        parameters: [
+            new OA\Parameter(
+                name: 'id',
+                description: 'ID del usuario',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'integer', minimum: 1),
+                example: 2
+            )
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Usuario reactivado correctamente.'),
+            new OA\Response(response: 401, description: 'No autenticado.'),
+            new OA\Response(response: 403, description: 'Sin permisos de administrador.'),
+            new OA\Response(response: 404, description: 'Usuario no encontrado.')
+        ]
+    )]
     public function restore(string $id)
     {
         $user = $this->findOperationalUser($id);

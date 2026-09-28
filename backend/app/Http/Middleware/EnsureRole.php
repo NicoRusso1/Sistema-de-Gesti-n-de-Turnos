@@ -24,7 +24,9 @@ class EnsureRole
                 && in_array(RoleName::Administrator->value, $roles, true));
 
         if (! $allowed) {
-            abort(403);
+            return response()->json([
+            'message' => 'No tenés permiso para acceder a este recurso'
+            ], 403);
         }
 
         return $next($request);
