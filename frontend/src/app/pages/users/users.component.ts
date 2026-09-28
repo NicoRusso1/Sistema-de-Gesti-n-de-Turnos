@@ -3,6 +3,9 @@ import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { UserService } from '../../services/user.service';
 import { PaginatedUsers, User } from '../../models/user';
 import { RouterLink } from '@angular/router';
+import { AuthService } from '../../services/auth.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { debounceTime } from 'rxjs';
 
 @Component({
   selector: 'app-users',
@@ -24,7 +27,7 @@ import { RouterLink } from '@angular/router';
         <!-- El (change) aplica el filtro inmediatamente al seleccionar una opción -->
         <div class="form-group">
           <label>Rol:</label>
-          <select formControlName="role" (change)="applyFilters()">
+            <select formControlName="role">
             <option value="">Todos los Roles</option>
             <option value="SuperAdmin">Super Administrador</option>
             <option value="Administrator">Administrador</option>
@@ -34,7 +37,7 @@ import { RouterLink } from '@angular/router';
 
         <div class="form-group">
           <label>Tipo de Usuario:</label>
-          <select formControlName="user_type" (change)="applyFilters()">
+            <select formControlName="user_type">
             <option value="">Todos los Tipos</option>
             <option value="patient">Paciente</option>
             <option value="doctor">Doctor</option>
@@ -44,7 +47,7 @@ import { RouterLink } from '@angular/router';
 
         <div class="form-group">
           <label>Estado:</label>
-          <select formControlName="status" (change)="applyFilters()">
+          <select formControlName="status">
             <option value="">Todos</option>
             <option value="1">Activo</option>
             <option value="0">Inactivo</option>
@@ -94,11 +97,22 @@ import { RouterLink } from '@angular/router';
                     <a [routerLink]="['/users', user.id, 'permissions']">Permisos</a>
                     @if (user.status === 1) {
                       <button type="button" (click)="deactivate(user)">Dar de baja</button>
+                      @if (canManageAdmins) {
+                        <button type="button" (click)="grantAdmin(user)">Hacer administrador</button>
+                      }
                     } @else {
                       <button type="button" (click)="activate(user)">Reactivar</button>
                     }
                   }
+                  @if (user.is_owner) {
+                    <span class="badge owner-badge">Propietario</span>
+                  }
+
+                  @if (canRevokeAdmin(user)) {
+                    <button type="button" (click)="revokeAdmin(user)">Quitar administrador</button>
+                  }
                 </td>
+
               </tr>
             } @empty {
               <tr>
@@ -147,6 +161,25 @@ import { RouterLink } from '@angular/router';
 export class UsersComponent implements OnInit {
   private userService = inject(UserService);
   private fb = inject(FormBuilder);
+
+    private auth = inject(AuthService);
+
+  get isSuperAdmin(): boolean {
+    return this.auth.user()?.role.name === 'SuperAdmin';
+  }
+
+  get canManageAdmins(): boolean {
+    const me = this.auth.user();
+    return this.isSuperAdmin || (me?.role.name === 'Administrator' && !!me?.is_owner);
+  }
+
+  canRevokeAdmin(user: User): boolean {
+    return this.canManageAdmins
+      && user.role.name === 'Administrator'
+      && user.id !== this.auth.user()?.id
+      && (!user.is_owner || this.isSuperAdmin);
+  }
+
 
   users: User[] = [];
   pagination: PaginatedUsers | null = null;
@@ -210,4 +243,26 @@ export class UsersComponent implements OnInit {
       error: () => alert('No se pudo reactivar al usuario'),
     });
   }
+    grantAdmin(user: User): void {
+    if (!confirm(`¿Conceder rol de Administrador a ${user.first_name} ${user.last_name}?`)) {
+      return;
+    }
+
+    this.userService.grantAdmin(user.id).subscribe({
+      next: () => this.loadUsers(this.pagination?.current_page ?? 1),
+      error: (err) => alert(err.error?.message ?? 'No se pudo conceder el rol'),
+    });
+  }
+
+  revokeAdmin(user: User): void {
+    if (!confirm(`¿Revocar rol de Administrador a ${user.first_name} ${user.last_name}?`)) {
+      return;
+    }
+
+    this.userService.revokeAdmin(user.id).subscribe({
+      next: () => this.loadUsers(this.pagination?.current_page ?? 1),
+      error: (err) => alert(err.error?.message ?? 'No se pudo revocar el rol'),
+    });
+  }
+
 }
