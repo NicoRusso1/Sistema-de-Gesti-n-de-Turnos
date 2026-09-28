@@ -22,4 +22,15 @@ class UserPermission extends Model
     {
         return $this->belongsTo(Patient::class);
     }
+
+    protected function casts(): array
+    {
+        return [
+            'view_own_appointments' => 'boolean',
+            'view_all_appointments' => 'boolean',
+            'view_assigned_patients' => 'boolean',
+            'cancel_appointments' => 'boolean',
+            'edit_schedules' => 'boolean',
+        ];
+    }
 }

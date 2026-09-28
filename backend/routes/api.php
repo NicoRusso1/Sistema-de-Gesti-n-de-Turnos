@@ -33,5 +33,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/users/{id}', [UserController::class, 'update']);
         Route::delete('/users/{id}', [UserController::class, 'destroy']);
         Route::post('/users/{id}/restore', [UserController::class, 'restore']);
+        Route::get('/users/{id}/permissions', [UserController::class, 'permissions']);
+        Route::put('/users/{id}/permissions', [UserController::class, 'updatePermissions']);
     });
 });
