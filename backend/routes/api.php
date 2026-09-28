@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DoctorController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\AdminRoleController;
+use App\Http\Controllers\Api\HealthInsuranceController;
 
 // Públicas
 Route::post('/register', [AuthController::class, 'register']);
@@ -32,6 +33,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/doctors', [DoctorController::class, 'index']);
         Route::delete('/doctors/{id}', [DoctorController::class, 'destroy']);
         Route::post('/doctors/{id}/restore', [DoctorController::class, 'restore']);
+        Route::apiResource('health-insurances', HealthInsuranceController::class);
+        Route::post('/health-insurances/{id}/restore', [HealthInsuranceController::class, 'restore']);
         
         // RUTAS DE GESTIÓN DE USUARIOS
         Route::get('/users', [UserController::class, 'index']);
