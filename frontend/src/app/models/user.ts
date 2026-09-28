@@ -39,3 +39,11 @@ export interface CreateUserData extends UserFormData {
   password: string;
   password_confirmation: string;
 }
+
+export interface UserPermissions {
+  view_own_appointments: boolean;
+  view_all_appointments: boolean;
+  view_assigned_patients: boolean;
+  cancel_appointments: boolean;
+  edit_schedules: boolean;
+}

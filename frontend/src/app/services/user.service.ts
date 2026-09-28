@@ -2,7 +2,8 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { API_URL } from '../config/api';
-import { CreateUserData, PaginatedUsers, User, UserFormData } from '../models/user';
+import { CreateUserData, PaginatedUsers, User, UserFormData, UserPermissions } from '../models/user';
+
 
 @Injectable({
   providedIn: 'root'
@@ -46,5 +47,13 @@ export class UserService {
 
   activateUser(id: number): Observable<unknown> {
     return this.http.post(`${API_URL}/users/${id}/restore`, {});
+  }
+
+    getPermissions(id: number): Observable<UserPermissions> {
+    return this.http.get<UserPermissions>(`${API_URL}/users/${id}/permissions`);
+  }
+
+  updatePermissions(id: number, data: UserPermissions): Observable<unknown> {
+    return this.http.put(`${API_URL}/users/${id}/permissions`, data);
   }
 }
