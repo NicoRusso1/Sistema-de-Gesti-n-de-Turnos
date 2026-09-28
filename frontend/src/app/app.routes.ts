@@ -37,4 +37,21 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/users/users.component').then(m => m.UsersComponent),
     canActivate: [adminGuard]
   },
+
+    {
+    path: 'health-insurances/new',
+    loadComponent: () => import('./pages/health-insurance-form/health-insurance-form').then(m => m.HealthInsuranceForm),
+    canActivate: [adminGuard]
+  },
+  
+  {
+    path: 'health-insurances/:id/edit',
+    loadComponent: () => import('./pages/health-insurance-form/health-insurance-form').then(m => m.HealthInsuranceForm),
+    canActivate: [adminGuard]
+  },
+  {
+    path: 'health-insurances',
+    loadComponent: () => import('./pages/health-insurances/health-insurances').then(m => m.HealthInsurances),
+    canActivate: [adminGuard]
+  },
 ];
