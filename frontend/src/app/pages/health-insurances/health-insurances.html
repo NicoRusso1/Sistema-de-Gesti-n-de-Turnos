@@ -1,0 +1,60 @@
+<h1>Obras sociales</h1>
+
+<a routerLink="/health-insurances/new">Nueva obra social</a>
+
+<form [formGroup]="filterForm" (ngSubmit)="load()">
+  <div>
+    <label for="search">Buscar</label>
+    <input id="search" type="text" formControlName="search" placeholder="Nombre">
+  </div>
+
+  <div>
+    <label for="status">Estado</label>
+    <select id="status" formControlName="status" (change)="load()">
+      <option value="">Todas</option>
+      <option value="1">Activas</option>
+      <option value="0">Inactivas</option>
+    </select>
+  </div>
+
+  <button type="submit">Filtrar</button>
+  <button type="button" (click)="clearFilters()">Limpiar</button>
+</form>
+
+@if (errorMessage()) {
+  <p role="alert">{{ errorMessage() }}</p>
+}
+
+<table>
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Nombre</th>
+      <th>Descuento</th>
+      <th>Estado</th>
+      <th>Acciones</th>
+    </tr>
+  </thead>
+  <tbody>
+    @for (item of healthInsurances(); track item.id) {
+      <tr>
+        <td>{{ item.id }}</td>
+        <td>{{ item.name }}</td>
+        <td>{{ item.discount_percentage }}%</td>
+        <td>{{ item.status === 1 ? 'Activa' : 'Inactiva' }}</td>
+        <td>
+          <a [routerLink]="['/health-insurances', item.id, 'edit']">Editar</a>
+          @if (item.status === 1) {
+            <button type="button" (click)="deactivate(item)">Dar de baja</button>
+          } @else {
+            <button type="button" (click)="activate(item)">Reactivar</button>
+          }
+        </td>
+      </tr>
+    } @empty {
+      <tr>
+        <td colspan="5">No se encontraron obras sociales.</td>
+      </tr>
+    }
+  </tbody>
+</table>

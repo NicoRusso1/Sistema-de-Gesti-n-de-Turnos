@@ -1,0 +1,34 @@
+<h1>{{ isEdit ? 'Editar obra social' : 'Nueva obra social' }}</h1>
+
+@if (errorMessage()) {
+  <p role="alert">{{ errorMessage() }}</p>
+}
+
+<form [formGroup]="form" (ngSubmit)="onSubmit()">
+  <div>
+    <label for="name">Nombre</label>
+    <input id="name" type="text" formControlName="name">
+    @if (form.controls.name.touched && form.controls.name.invalid) {
+      <small>El nombre es obligatorio</small>
+    }
+  </div>
+
+  <div>
+    <label for="discount_percentage">Descuento (%)</label>
+    <input id="discount_percentage" type="number" step="0.01" min="0" max="100" formControlName="discount_percentage">
+    @if (form.controls.discount_percentage.touched && form.controls.discount_percentage.invalid) {
+      <small>El descuento debe estar entre 0 y 100</small>
+    }
+  </div>
+
+  <div>
+    <label for="status">Estado</label>
+    <select id="status" formControlName="status">
+      <option value="1">Activa</option>
+      <option value="0">Inactiva</option>
+    </select>
+  </div>
+
+  <button type="submit" [disabled]="loading()">{{ isEdit ? 'Guardar cambios' : 'Crear obra social' }}</button>
+  <a routerLink="/health-insurances">Cancelar</a>
+</form>
