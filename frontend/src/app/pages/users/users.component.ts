@@ -91,6 +91,7 @@ import { RouterLink } from '@angular/router';
                 <td>
                   @if (user.role.name === 'OperationalUser') {
                     <a [routerLink]="['/users', user.id, 'edit']">Editar</a>
+                    <a [routerLink]="['/users', user.id, 'permissions']">Permisos</a>
                     @if (user.status === 1) {
                       <button type="button" (click)="deactivate(user)">Dar de baja</button>
                     } @else {

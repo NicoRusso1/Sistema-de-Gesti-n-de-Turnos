@@ -1,0 +1,56 @@
+<h1>Permisos de usuario</h1>
+
+@if (user(); as u) {
+  <p>
+    <strong>{{ u.first_name }} {{ u.last_name }}</strong>
+    ({{ u.user_type?.name ?? 'sin tipo' }})
+  </p>
+}
+
+@if (errorMessage()) {
+  <p role="alert">{{ errorMessage() }}</p>
+}
+
+@if (successMessage()) {
+  <p role="status">{{ successMessage() }}</p>
+}
+
+<form [formGroup]="form" (ngSubmit)="onSubmit()">
+  <div>
+    <label>
+      <input type="checkbox" formControlName="view_own_appointments">
+      Ver sus propios turnos
+    </label>
+  </div>
+
+  <div>
+    <label>
+      <input type="checkbox" formControlName="view_all_appointments">
+      Ver todos los turnos
+    </label>
+  </div>
+
+  <div>
+    <label>
+      <input type="checkbox" formControlName="view_assigned_patients">
+      Ver pacientes asignados (solo médicos)
+    </label>
+  </div>
+
+  <div>
+    <label>
+      <input type="checkbox" formControlName="cancel_appointments">
+      Cancelar turnos
+    </label>
+  </div>
+
+  <div>
+    <label>
+      <input type="checkbox" formControlName="edit_schedules">
+      Editar horarios y agendas
+    </label>
+  </div>
+
+  <button type="submit" [disabled]="loading()">Guardar permisos</button>
+  <a routerLink="/users">Volver</a>
+</form>

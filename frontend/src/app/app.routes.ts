@@ -26,6 +26,12 @@ export const routes: Routes = [
     canActivate: [adminGuard]
   },
   
+    {
+    path: 'users/:id/permissions',
+    loadComponent: () => import('./pages/user-permissions/user-permissions').then(m => m.UserPermissions),
+    canActivate: [adminGuard]
+  },
+
   { 
     path: 'users', 
     loadComponent: () => import('./pages/users/users.component').then(m => m.UsersComponent),
