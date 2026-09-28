@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 80" width="800" height="80">
+  <style>
+    .pulse {
+      stroke-dasharray: 140 860;
+      stroke-dashoffset: 1000;
+      animation: run 2.8s linear infinite;
+    }
+    @keyframes run {
+      to { stroke-dashoffset: 0; }
+    }
+  </style>
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#1B4B5A"/>
+      <stop offset="1" stop-color="#ED7D5C"/>
+    </linearGradient>
+  </defs>
+  <path d="M0 40 H290 L310 40 L328 8 L352 72 L372 22 L388 40 H800" pathLength="1000" fill="none" stroke="url(#g)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" opacity="0.35"/>
+  <path class="pulse" d="M0 40 H290 L310 40 L328 8 L352 72 L372 22 L388 40 H800" pathLength="1000" fill="none" stroke="#ED7D5C" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
