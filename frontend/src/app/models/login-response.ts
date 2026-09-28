@@ -2,6 +2,7 @@ export interface AuthUser {
   id: number;
   first_name: string;
   last_name: string;
+  is_owner: boolean;
   email: string;
   role: { id: number; name: string };
   user_type: { id: number; name: string } | null;

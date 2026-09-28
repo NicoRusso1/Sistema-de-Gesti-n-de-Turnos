@@ -5,6 +5,7 @@ export interface User {
   email: string;
   phone?: string;
   status: number | null;
+  is_owner: boolean;
   role_id: number;
   user_type_id: number | null;
   role: { id: number; name: string };

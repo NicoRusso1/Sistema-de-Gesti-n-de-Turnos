@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Enums\AdminActionName;
 use App\Models\AdminAction;
 use Illuminate\Database\Seeder;
 
@@ -9,8 +10,8 @@ class AdminActionSeeder extends Seeder
 {
     public function run(): void
     {
-        foreach (['grant_owner', 'revoke_owner', 'activate', 'deactivate'] as $action) {
-            AdminAction::firstOrCreate(['name' => $action]);
+        foreach (AdminActionName::cases() as $action) {
+            AdminAction::firstOrCreate(['name' => $action->value]);
         }
     }
 }

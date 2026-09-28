@@ -15,6 +15,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role' => \App\Http\Middleware\EnsureRole::class,
             'permission' => \App\Http\Middleware\EnsurePermission::class,
+            'superadmin_or_owner' => \App\Http\Middleware\EnsureSuperAdminOrOwner::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

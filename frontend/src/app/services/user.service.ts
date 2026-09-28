@@ -56,4 +56,13 @@ export class UserService {
   updatePermissions(id: number, data: UserPermissions): Observable<unknown> {
     return this.http.put(`${API_URL}/users/${id}/permissions`, data);
   }
+
+    grantAdmin(id: number): Observable<unknown> {
+    return this.http.post(`${API_URL}/users/${id}/admin-role`, {});
+  }
+
+  revokeAdmin(id: number): Observable<unknown> {
+    return this.http.delete(`${API_URL}/users/${id}/admin-role`);
+  }
+
 }

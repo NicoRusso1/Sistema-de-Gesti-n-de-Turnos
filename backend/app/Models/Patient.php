@@ -55,6 +55,11 @@ class Patient extends Authenticatable
     return $this->isAdministrator() || $this->isSuperAdmin();
 }
 
+    public function isOwner(): bool
+    {
+        return $this->isAdministrator() && $this->is_owner;
+    }
+
 
     public function role(): BelongsTo
     {

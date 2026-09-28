@@ -5,6 +5,7 @@ use App\Http\Controllers\SpecialtyController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DoctorController;
 use App\Http\Controllers\Api\UserController;
+use App\Http\Controllers\Api\AdminRoleController;
 
 // Públicas
 Route::post('/register', [AuthController::class, 'register']);
@@ -17,6 +18,11 @@ Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/me', [AuthController::class, 'me']);
+    // Requieren token y ser SuperAdmin o Administrador Propietario
+    Route::middleware('superadmin_or_owner')->group(function () {
+        Route::post('/users/{id}/admin-role', [AdminRoleController::class, 'grant']);
+        Route::delete('/users/{id}/admin-role', [AdminRoleController::class, 'revoke']);
+    });
 
     // Requieren token y rol Administrator (el SuperAdmin entra por herencia)
     Route::middleware('role:Administrator')->group(function () {
