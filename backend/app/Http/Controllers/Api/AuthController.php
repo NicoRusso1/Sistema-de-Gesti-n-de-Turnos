@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api;
 
+use OpenApi\Attributes as OA;
 use App\Enums\RoleName;
 use App\Enums\UserTypeName;
 use App\Http\Controllers\Controller;
@@ -46,6 +47,27 @@ class AuthController extends Controller
         ], 201);
     }
 
+    #[OA\Post(
+        path: '/api/login',
+        summary: 'Iniciar sesión',
+        tags: ['Autenticación'],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['email', 'password'],
+                properties: [
+                    new OA\Property(property: 'email', type: 'string', example: 'superadmin@hospital.test'),
+                    new OA\Property(property: 'password', type: 'string', example: 'password')
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Login exitoso.'),
+            new OA\Response(response: 401, description: 'Credenciales incorrectas.'),
+            new OA\Response(response: 403, description: 'La cuenta se encuentra dada de baja.'),
+            new OA\Response(response: 422, description: 'Datos inválidos.')
+        ]
+    )]
     public function login(Request $request)
     {
         $request->validate([
@@ -65,7 +87,7 @@ class AuthController extends Controller
             ], 401);
         }
 
-                if ($patient->status !== 1) {
+        if ($patient->status !== 1) {
             return response()->json([
                 'message' => 'La cuenta se encuentra dada de baja'
             ], 403);
