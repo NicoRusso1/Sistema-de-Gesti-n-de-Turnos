@@ -1,0 +1,65 @@
+<h1>Consulta de Disponibilidad de Salas</h1>
+
+<p><a routerLink="/salas">← Volver a Gestión de Salas</a></p>
+
+<form [formGroup]="filterForm" (ngSubmit)="consultar()" style="display: flex; gap: 12px; align-items: flex-end; margin-bottom: 20px;">
+  <div>
+    <label for="fecha">Fecha:</label><br>
+    <input id="fecha" type="date" formControlName="fecha">
+  </div>
+
+  <div>
+    <label for="franja_horaria">Franja Horaria:</label><br>
+    <select id="franja_horaria" formControlName="franja_horaria">
+      <option value="">Todas</option>
+      <option value="08:00-12:00">Mañana (08:00 - 12:00)</option>
+      <option value="12:00-16:00">Tarde 1 (12:00 - 16:00)</option>
+      <option value="16:00-20:00">Tarde 2 (16:00 - 20:00)</option>
+    </select>
+  </div>
+
+  <div>
+    <label for="especialidad">Especialidad:</label><br>
+    <select id="especialidad" formControlName="especialidad_id">
+      <option value="">Todas</option>
+      @for (spec of specialties(); track spec.id) {
+        <option [value]="spec.id">{{ spec.name }}</option>
+      }
+    </select>
+  </div>
+
+  <button type="submit" [disabled]="loading()">Consultar</button>
+</form>
+
+<table border="1" cellpadding="8" style="width: 100%; border-collapse: collapse;">
+  <thead>
+    <tr>
+      <th>Sala</th>
+      <th>Piso</th>
+      <th>Especialidad</th>
+      <th>Estado de Ocupación</th>
+      <th>Turno Asociado</th>
+    </tr>
+  </thead>
+  <tbody>
+    @for (s of disponibilidad(); track s.id) {
+      <tr>
+        <td><strong>Sala {{ s.numero }}</strong></td>
+        <td>Piso {{ s.piso }}</td>
+        <td>{{ s.especialidad }}</td>
+        <td>
+          <span [style.color]="s.ocupacion === 'disponible' ? 'green' : 'crimson'">
+            <strong>{{ s.ocupacion === 'disponible' ? 'Libre / Disponible' : 'Ocupada' }}</strong>
+          </span>
+        </td>
+        <td>
+          {{ s.turno_asociado ? s.turno_asociado.detalle : 'Sin turno asignado' }}
+        </td>
+      </tr>
+    } @empty {
+      <tr>
+        <td colspan="5">No se encontraron salas disponibles para el criterio seleccionado (las salas fuera de servicio son excluidas automáticamente).</td>
+      </tr>
+    }
+  </tbody>
+</table>

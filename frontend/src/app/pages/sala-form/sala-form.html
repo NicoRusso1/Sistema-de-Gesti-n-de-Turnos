@@ -1,0 +1,48 @@
+<h1>{{ isEdit ? 'Editar Sala' : 'Nueva Sala' }}</h1>
+
+@if (errorMessage()) {
+  <p role="alert" style="color: red;">{{ errorMessage() }}</p>
+}
+
+<form [formGroup]="form" (ngSubmit)="onSubmit()" style="max-width: 400px; display: flex; flex-direction: column; gap: 12px;">
+  <div>
+    <label for="numero">Número de Sala *</label><br>
+    <input id="numero" type="text" formControlName="numero" placeholder="Ej: 101, A-12">
+    @if (form.controls.numero.touched && form.controls.numero.invalid) {
+      <small style="color: red; display: block;">El número de sala es requerido.</small>
+    }
+  </div>
+
+  <div>
+    <label for="piso">Piso *</label><br>
+    <input id="piso" type="number" min="0" formControlName="piso">
+    @if (form.controls.piso.touched && form.controls.piso.invalid) {
+      <small style="color: red; display: block;">El piso debe ser mayor o igual a 0.</small>
+    }
+  </div>
+
+  <div>
+    <label for="especialidad_id">Especialidad (Opcional)</label><br>
+    <select id="especialidad_id" formControlName="especialidad_id">
+      <option value="">-- General / Ninguna --</option>
+      @for (spec of specialties(); track spec.id) {
+        <option [value]="spec.id">{{ spec.name }}</option>
+      }
+    </select>
+  </div>
+
+  <div>
+    <label for="estado">Estado *</label><br>
+    <select id="estado" formControlName="estado">
+      <option value="disponible">Disponible</option>
+      <option value="fuera_de_servicio">Fuera de servicio</option>
+    </select>
+  </div>
+
+  <div style="margin-top: 10px; display: flex; gap: 10px;">
+    <button type="submit" [disabled]="loading()">
+      {{ loading() ? 'Guardando...' : (isEdit ? 'Guardar Cambios' : 'Crear Sala') }}
+    </button>
+    <a routerLink="/salas">Cancelar</a>
+  </div>
+</form>
