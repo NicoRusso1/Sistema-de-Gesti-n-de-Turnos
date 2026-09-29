@@ -54,4 +54,25 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/health-insurances/health-insurances').then(m => m.HealthInsurances),
     canActivate: [adminGuard]
   },
+    // RUTAS DEL MÓDULO DE SALAS
+  {
+    path: 'salas/disponibilidad',
+    loadComponent: () => import('./pages/salas-disponibilidad/salas-disponibilidad').then(m => m.SalasDisponibilidadComponent),
+    canActivate: [adminGuard]
+  },
+  {
+    path: 'salas/new',
+    loadComponent: () => import('./pages/sala-form/sala-form').then(m => m.SalaFormComponent),
+    canActivate: [adminGuard]
+  },
+  {
+    path: 'salas/:id/edit',
+    loadComponent: () => import('./pages/sala-form/sala-form').then(m => m.SalaFormComponent),
+    canActivate: [adminGuard]
+  },
+  {
+    path: 'salas',
+    loadComponent: () => import('./pages/salas/salas').then(m => m.SalasComponent),
+    canActivate: [adminGuard]
+  },
 ];

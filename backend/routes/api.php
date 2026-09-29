@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\DoctorController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\AdminRoleController;
 use App\Http\Controllers\Api\HealthInsuranceController;
+use App\Http\Controllers\Api\SalaController;
 
 // Públicas
 Route::post('/register', [AuthController::class, 'register']);
@@ -36,6 +37,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::apiResource('health-insurances', HealthInsuranceController::class);
         Route::post('/health-insurances/{id}/restore', [HealthInsuranceController::class, 'restore']);
         
+        // GESTIÓN DE SALAS Y DISPONIBILIDAD
+        Route::get('/salas/disponibilidad', [SalaController::class, 'disponibilidad']);
+        Route::patch('/salas/{id}/estado', [SalaController::class, 'cambiarEstado']);
+        Route::apiResource('salas', SalaController::class);
+
         // RUTAS DE GESTIÓN DE USUARIOS
         Route::get('/users', [UserController::class, 'index']);
         Route::get('/users/{id}', [UserController::class, 'show']);

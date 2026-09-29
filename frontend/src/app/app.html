@@ -11,8 +11,10 @@
           <li><a routerLink="/home">Inicio</a></li>
           
           <!-- Accesible y visible para Admin y SuperAdmin -->
-          @if (isAdmin()) {
+           @if (isAdmin()) {
             <li><a routerLink="/users">Gestión de Usuarios</a></li>
+            <!-- Si ya tienes 'Gestión de Turnos', colócalo aquí arriba -->
+            <li><a routerLink="/salas">Salas</a></li>
             <li><a routerLink="/health-insurances">Obras Sociales</a></li>
           }
         </ul>
