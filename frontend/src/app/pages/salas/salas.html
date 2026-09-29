@@ -1,0 +1,74 @@
+<h1>Gestión de Salas</h1>
+
+<div style="margin-bottom: 1rem; display: flex; gap: 10px;">
+  <a routerLink="/salas/new" class="btn-primary">Nueva Sala</a>
+  <a routerLink="/salas/disponibilidad" class="btn-secondary">Consultar Disponibilidad</a>
+</div>
+
+<form [formGroup]="filterForm" (ngSubmit)="load()" style="margin-bottom: 1.5rem; display: flex; gap: 10px; align-items: flex-end;">
+  <div>
+    <label for="search">Número de Sala:</label><br>
+    <input id="search" type="text" formControlName="search" placeholder="Ej: 101, 2A">
+  </div>
+
+  <div>
+    <label for="piso">Piso:</label><br>
+    <input id="piso" type="number" formControlName="piso" placeholder="Piso">
+  </div>
+
+  <div>
+    <label for="estado">Estado:</label><br>
+    <select id="estado" formControlName="estado" (change)="load()">
+      <option value="">Todos</option>
+      <option value="disponible">Disponible</option>
+      <option value="fuera_de_servicio">Fuera de servicio</option>
+    </select>
+  </div>
+
+  <button type="submit">Filtrar</button>
+  <button type="button" (click)="clearFilters()">Limpiar</button>
+</form>
+
+@if (errorMessage()) {
+  <p role="alert" style="color: red;">{{ errorMessage() }}</p>
+}
+@if (successMessage()) {
+  <p role="alert" style="color: green;">{{ successMessage() }}</p>
+}
+
+<table border="1" cellpadding="8" style="width: 100%; border-collapse: collapse;">
+  <thead>
+    <tr>
+      <th>Número</th>
+      <th>Piso</th>
+      <th>Especialidad</th>
+      <th>Estado</th>
+      <th>Acciones</th>
+    </tr>
+  </thead>
+  <tbody>
+    @for (item of salas(); track item.id) {
+      <tr>
+        <td><strong>{{ item.numero }}</strong></td>
+        <td>{{ item.piso }}</td>
+        <td>{{ item.specialty ? item.specialty.name : 'General (Sin asignar)' }}</td>
+        <td>
+          <span [style.color]="item.estado === 'disponible' ? 'green' : 'crimson'">
+            {{ item.estado === 'disponible' ? 'Disponible' : 'Fuera de Servicio' }}
+          </span>
+        </td>
+        <td>
+          <a [routerLink]="['/salas', item.id, 'edit']">Editar</a> |
+          <button type="button" (click)="toggleEstado(item)">
+            {{ item.estado === 'disponible' ? 'Inhabilitar' : 'Habilitar' }}
+          </button> |
+          <button type="button" (click)="eliminar(item)" style="color: red;">Eliminar</button>
+        </td>
+      </tr>
+    } @empty {
+      <tr>
+        <td colspan="5">No se encontraron salas registradas.</td>
+      </tr>
+    }
+  </tbody>
+</table>

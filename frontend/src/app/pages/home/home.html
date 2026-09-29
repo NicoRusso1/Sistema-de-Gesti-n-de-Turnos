@@ -1,0 +1,6 @@
+@if (user(); as u) {
+  <h1>Hola, {{ u.first_name }} {{ u.last_name }}</h1>
+  <p>Rol: <strong>{{ u.role.name }}</strong></p>
+}
+
+<button type="button" (click)="logout()">Cerrar sesión</button>
