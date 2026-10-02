@@ -174,22 +174,23 @@ class SalaController extends Controller
         ], 200);
     }
 
-    /**
-     * Consulta de disponibilidad de salas con filtros
-     * GET /api/salas/disponibilidad?fecha=YYYY-MM-DD&franja_horaria=08:00-12:00&especialidad_id=1
+        /**
+     * Consulta optimizada de disponibilidad de salas (GT-162 y GT-164)
+     * Resuelve el problema N+1 y valida solapamiento horario real.
      */
     public function disponibilidad(Request $request)
     {
         $request->validate([
             'fecha' => ['nullable', 'date'],
             'franja_horaria' => ['nullable', 'string'],
+            'hora_inicio' => ['nullable', 'date_format:H:i'],
+            'hora_fin' => ['nullable', 'date_format:H:i', 'after:hora_inicio'],
             'especialidad_id' => ['nullable', 'integer', 'exists:specialties,id'],
         ]);
 
-        $query = Sala::with('specialty');
-
-        // Regla 2: Excluir salas fuera de servicio
-        $query->where('estado', '!=', 'fuera_de_servicio');
+        $query = Sala::with('specialty')
+            // Regla: Excluir salas fuera de servicio
+            ->where('estado', '!=', 'fuera_de_servicio');
 
         if ($request->filled('especialidad_id')) {
             $query->where('especialidad_id', $request->especialidad_id);
@@ -199,25 +200,52 @@ class SalaController extends Controller
 
         $fecha = $request->input('fecha');
         $franja = $request->input('franja_horaria');
+        $horaInicio = $request->input('hora_inicio');
+        $horaFin = $request->input('hora_fin');
 
-        // Mapear cada sala con su estado de ocupación
-        $resultado = $salas->map(function ($sala) use ($fecha, $franja) {
-            $turnoOcupante = null;
-            $ocupada = false;
+        // Si la franja viene como "08:00-12:00", desglosamos hora inicio y fin automáticamente
+        if ($franja && str_contains($franja, '-') && !$horaInicio && !$horaFin) {
+            $partes = explode('-', $franja);
+            $horaInicio = trim($partes[0]);
+            $horaFin = trim($partes[1]);
+        }
 
-            // Si existe la tabla de turnos, verificar ocupación
-            if ($fecha && Schema::hasTable('turnos')) {
-                $turnoQuery = DB::table('turnos')
-                    ->where('sala_id', $sala->id)
-                    ->whereDate('fecha', $fecha);
+        // OPTIMIZACIÓN GT-162: Pre-cargar en UNA SOLA QUERY todos los turnos ocupados
+        $turnosPorSala = collect();
 
-                if ($franja) {
-                    $turnoQuery->where('franja_horaria', $franja);
-                }
+        if ($fecha && $salas->isNotEmpty() && (Schema::hasTable('turnos') || Schema::hasTable('appointments'))) {
+            $tablaTurnos = Schema::hasTable('turnos') ? 'turnos' : 'appointments';
+            $salaIds = $salas->pluck('id')->toArray();
 
-                $turnoOcupante = $turnoQuery->first();
-                $ocupada = $turnoOcupante !== null;
+            $turnosQuery = DB::table($tablaTurnos)
+                ->whereIn('sala_id', $salaIds)
+                ->whereDate('fecha', $fecha);
+
+            // VALIDACIÓN GT-164: Solapamiento horario
+            // Condición: (inicio_turno < fin_consultado) Y (fin_turno > inicio_consultado)
+            if ($horaInicio && $horaFin && Schema::hasColumn($tablaTurnos, 'hora_inicio')) {
+                $turnosQuery->where(function ($q) use ($horaInicio, $horaFin) {
+                    $q->where('hora_inicio', '<', $horaFin)
+                      ->where('hora_fin', '>', $horaInicio);
+                });
+            } elseif ($franja && Schema::hasColumn($tablaTurnos, 'franja_horaria')) {
+                // Coincidencia por etiqueta fija
+                $turnosQuery->where('franja_horaria', $franja);
             }
+
+            // Excluir turnos cancelados si la columna estado existe en turnos
+            if (Schema::hasColumn($tablaTurnos, 'estado')) {
+                $turnosQuery->where('estado', '!=', 'cancelado');
+            }
+
+            // Agrupamos por sala_id (O(1) en memoria, sin queries adicionales)
+            $turnosPorSala = $turnosQuery->get()->keyBy('sala_id');
+        }
+
+        // Mapear resultado con estado de solapamiento/ocupación
+        $resultado = $salas->map(function ($sala) use ($turnosPorSala) {
+            $turno = $turnosPorSala->get($sala->id);
+            $estaSolapada = $turno !== null;
 
             return [
                 'id' => $sala->id,
@@ -225,10 +253,12 @@ class SalaController extends Controller
                 'piso' => $sala->piso,
                 'especialidad' => $sala->specialty ? $sala->specialty->name : 'General',
                 'estado_base' => $sala->estado,
-                'ocupacion' => $ocupada ? 'ocupada' : 'disponible',
-                'turno_asociado' => $turnoOcupante ? [
-                    'id' => $turnoOcupante->id,
-                    'detalle' => $turnoOcupante->paciente ?? 'Turno reservado',
+                'ocupacion' => $estaSolapada ? 'ocupada' : 'disponible',
+                'solapada' => $estaSolapada, // Flag explícito para GT-164
+                'turno_asociado' => $turno ? [
+                    'id' => $turno->id,
+                    'detalle' => $turno->paciente ?? ($turno->motivo ?? 'Turno reservado'),
+                    'horario' => isset($turno->hora_inicio) ? "{$turno->hora_inicio} - {$turno->hora_fin}" : ($turno->franja_horaria ?? 'N/A'),
                 ] : null,
             ];
         });
