@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\AdminRoleController;
 use App\Http\Controllers\Api\HealthInsuranceController;
 use App\Http\Controllers\Api\SalaController;
+use App\Http\Controllers\Api\DoctorScheduleController;
 
 // Públicas
 Route::post('/register', [AuthController::class, 'register']);
@@ -50,5 +51,17 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/users/{id}/restore', [UserController::class, 'restore']);
         Route::get('/users/{id}/permissions', [UserController::class, 'permissions']);
         Route::put('/users/{id}/permissions', [UserController::class, 'updatePermissions']);
+    });
+
+        Route::get('/doctors/{id}/slots', [DoctorScheduleController::class, 'slots']);
+
+    Route::middleware('permission:edit_schedules,view_all_appointments')->group(function () {
+        Route::get('/doctors/{id}/schedules', [DoctorScheduleController::class, 'index']);
+    });
+
+    Route::middleware('permission:edit_schedules')->group(function () {
+        Route::post('/doctors/{id}/schedules', [DoctorScheduleController::class, 'store']);
+        Route::put('/doctors/{id}/schedules/{scheduleId}', [DoctorScheduleController::class, 'update']);
+        Route::delete('/doctors/{id}/schedules/{scheduleId}', [DoctorScheduleController::class, 'destroy']);
     });
 });
