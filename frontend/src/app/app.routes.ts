@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './guards/auth.guard';
 import { adminGuard } from './guards/admin.guard';
+import { doctorGuard } from './guards/doctor.guard';
 import { Home } from './pages/home/home';
 import { Login } from './pages/login/login';
 import { Register } from './pages/register/register';
@@ -81,4 +82,12 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/salas/salas').then(m => m.SalasComponent),
     canActivate: [adminGuard]
   },
+
+    // PACIENTES ASIGNADOS AL MÉDICO
+  {
+    path: 'my-patients',
+    loadComponent: () => import('./pages/my-patients/my-patients').then(m => m.MyPatients),
+    canActivate: [doctorGuard]
+  },
+
 ];

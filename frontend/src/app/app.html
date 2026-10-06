@@ -16,6 +16,12 @@
             <!-- Si ya tienes 'Gestión de Turnos', colócalo aquí arriba -->
             <li><a routerLink="/salas">Salas</a></li>
             <li><a routerLink="/health-insurances">Obras Sociales</a></li>
+            <li><a routerLink="/health-insurances">Obras Sociales</a></li>
+          }
+
+          <!-- Visible solo para médicos -->
+          @if (isDoctor()) {
+            <li><a routerLink="/my-patients">Mis pacientes</a></li>
           }
         </ul>
       </nav>
