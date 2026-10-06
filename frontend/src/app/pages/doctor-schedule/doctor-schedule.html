@@ -1,0 +1,102 @@
+<h1>Agenda del médico</h1>
+
+@if (doctor(); as d) {
+  <p><strong>{{ d.first_name }} {{ d.last_name }}</strong></p>
+}
+
+@if (errorMessage()) {
+  <p role="alert">{{ errorMessage() }}</p>
+}
+
+@if (successMessage()) {
+  <p role="status">{{ successMessage() }}</p>
+}
+
+<h2>{{ editingId() !== null ? 'Editar franja' : 'Agregar franja' }}</h2>
+
+<form [formGroup]="form" (ngSubmit)="onSubmit()">
+  <div>
+    <label for="day_of_week">Día</label>
+    <select id="day_of_week" formControlName="day_of_week">
+      @for (day of days; track day.value) {
+        <option [value]="day.value">{{ day.label }}</option>
+      }
+    </select>
+  </div>
+
+  <div>
+    <label for="start_time">Desde</label>
+    <input id="start_time" type="time" step="900" min="08:00" max="20:00" formControlName="start_time">
+  </div>
+
+  <div>
+    <label for="end_time">Hasta</label>
+    <input id="end_time" type="time" step="900" min="08:00" max="20:00" formControlName="end_time">
+  </div>
+
+  <button type="submit">{{ editingId() !== null ? 'Guardar cambios' : 'Agregar franja' }}</button>
+  @if (editingId() !== null) {
+    <button type="button" (click)="cancelEdit()">Cancelar edición</button>
+  }
+</form>
+
+<p><small>Horario permitido de 08:00 a 20:00, en múltiplos de 15 minutos.</small></p>
+
+<h2>Agenda semanal</h2>
+
+<table>
+  <thead>
+    <tr>
+      <th>Día</th>
+      <th>Franjas</th>
+    </tr>
+  </thead>
+  <tbody>
+    @for (day of schedulesByDay(); track day.value) {
+      <tr>
+        <td>{{ day.label }}</td>
+        <td>
+          @for (item of day.items; track item.id) {
+            <div>
+              {{ time(item.start_time) }} - {{ time(item.end_time) }}
+              <button type="button" (click)="edit(item)">Editar</button>
+              <button type="button" (click)="remove(item)">Eliminar</button>
+            </div>
+          } @empty {
+            Sin atención
+          }
+        </td>
+      </tr>
+    }
+  </tbody>
+</table>
+
+<h2>Vista previa de turnos</h2>
+
+<form [formGroup]="slotsForm" (ngSubmit)="searchSlots()">
+  <div>
+    <label for="date">Fecha</label>
+    <input id="date" type="date" [min]="today" formControlName="date">
+  </div>
+
+  <button type="submit">Ver turnos</button>
+</form>
+
+@if (slotsError()) {
+  <p role="alert">{{ slotsError() }}</p>
+}
+
+@if (slots() !== null) {
+  @if (slots()!.length > 0) {
+    <p>{{ slots()!.length }} turnos de 15 minutos:</p>
+    <ul>
+      @for (slot of slots(); track slot.start_time) {
+        <li>{{ slot.start_time }} - {{ slot.end_time }}</li>
+      }
+    </ul>
+  } @else {
+    <p>El médico no atiende ese día.</p>
+  }
+}
+
+<a routerLink="/users">Volver</a>

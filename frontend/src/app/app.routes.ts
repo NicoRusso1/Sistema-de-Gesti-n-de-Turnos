@@ -32,6 +32,12 @@ export const routes: Routes = [
     canActivate: [adminGuard]
   },
 
+    {
+    path: 'users/:id/schedule',
+    loadComponent: () => import('./pages/doctor-schedule/doctor-schedule').then(m => m.DoctorScheduleEditor),
+    canActivate: [adminGuard]
+  },
+
   { 
     path: 'users', 
     loadComponent: () => import('./pages/users/users.component').then(m => m.UsersComponent),
