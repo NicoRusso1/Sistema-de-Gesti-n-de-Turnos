@@ -3,3 +3,8 @@ export interface Specialty {
   name: string;
   description: string | null;
 }
+
+export interface SpecialtyFormData {
+  name: string;
+  description: string;
+}

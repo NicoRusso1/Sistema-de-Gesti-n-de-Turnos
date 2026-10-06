@@ -1,48 +1,48 @@
 <!-- Enlazamos la clase sidebar-closed con nuestra variable booleana -->
 <div class="app-layout" [class.sidebar-closed]="!isSidebarOpen">
-  
-  @if (user()) {
-    <aside class="sidebar">
-      <div class="sidebar-header">
-        <h3>Menú</h3>
-      </div>
-      <nav>
-        <ul>
-          <li><a routerLink="/home">Inicio</a></li>
-          
-          <!-- Accesible y visible para Admin y SuperAdmin -->
-           @if (isAdmin()) {
-            <li><a routerLink="/users">Gestión de Usuarios</a></li>
-            <!-- Si ya tienes 'Gestión de Turnos', colócalo aquí arriba -->
-            <li><a routerLink="/salas">Salas</a></li>
-            <li><a routerLink="/health-insurances">Obras Sociales</a></li>
-            <li><a routerLink="/health-insurances">Obras Sociales</a></li>
-          }
 
-          <!-- Visible solo para médicos -->
-          @if (isDoctor()) {
-            <li><a routerLink="/my-patients">Mis pacientes</a></li>
-          }
-        </ul>
-      </nav>
-    </aside>
+  @if (user()) {
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h3>Menú</h3>
+    </div>
+    <nav>
+      <ul>
+        <li><a routerLink="/home">Inicio</a></li>
+
+        <!-- Accesible y visible para Admin y SuperAdmin -->
+        @if (isAdmin()) {
+        <li><a routerLink="/users">Gestión de Usuarios</a></li>
+        <!-- Si ya tienes 'Gestión de Turnos', colócalo aquí arriba -->
+        <li><a routerLink="/salas">Salas</a></li>
+        <li><a routerLink="/health-insurances">Obras Sociales</a></li>
+        <li><a routerLink="/specialties">Especialidades</a></li>
+        }
+
+        <!-- Visible solo para médicos -->
+        @if (isDoctor()) {
+        <li><a routerLink="/my-patients">Mis pacientes</a></li>
+        }
+      </ul>
+    </nav>
+  </aside>
   }
 
   <main class="main-content">
-    
+
     <!-- Barra superior con el botón hamburguesa (solo si está logueado) -->
     @if (user()) {
-      <div class="topbar">
-        <button class="menu-toggle" (click)="toggleSidebar()" title="Alternar menú">
-          ☰
-        </button>
-      </div>
+    <div class="topbar">
+      <button class="menu-toggle" (click)="toggleSidebar()" title="Alternar menú">
+        ☰
+      </button>
+    </div>
     }
-    
+
     <!-- Aquí se inyectan dinámicamente las vistas (home, login, users, etc.) -->
     <div class="content-wrapper">
       <router-outlet />
     </div>
-    
+
   </main>
 </div>

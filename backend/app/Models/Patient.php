@@ -27,6 +27,7 @@ class Patient extends Authenticatable
         'health_insurance_id',
         'health_insurance_number',
         'user_type_id',
+        'specialty_id',
         'role_id',
         'status',
         'is_owner',
@@ -86,6 +87,12 @@ class Patient extends Authenticatable
     public function healthInsurance(): BelongsTo
     {
         return $this->belongsTo(HealthInsurance::class);
+    }
+
+    // Especialidad del médico
+    public function specialty(): BelongsTo
+    {
+        return $this->belongsTo(Specialty::class);
     }
     public function appointmentsAsPatient(): HasMany
     {
