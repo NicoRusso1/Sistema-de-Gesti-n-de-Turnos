@@ -1,0 +1,22 @@
+<h1>{{ isEdit ? 'Editar especialidad' : 'Nueva especialidad' }}</h1>
+@if (errorMessage()) {
+<p role="alert">{{ errorMessage() }}</p>
+}
+<form [formGroup]="form" (ngSubmit)="onSubmit()">
+    <div>
+        <label for="name">Nombre</label>
+        <input id="name" type="text" maxlength="255" formControlName="name">
+        @if (form.controls.name.touched && form.controls.name.invalid) {
+        <small>El nombre es obligatorio</small>
+        }
+    </div>
+    <div>
+        <label for="description">Descripción</label>
+        <textarea id="description" rows="3" maxlength="255" formControlName="description"></textarea>
+        @if (form.controls.description.touched && form.controls.description.invalid) {
+        <small>La descripción es obligatoria</small>
+        }
+    </div>
+    <button type="submit" [disabled]="loading()">{{ isEdit ? 'Guardar cambios' : 'Crear especialidad' }}</button>
+    <a routerLink="/specialties">Cancelar</a>
+</form>

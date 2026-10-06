@@ -16,7 +16,7 @@ export const routes: Routes = [
   { path: 'reset-password', component: ResetPassword },
   { path: 'home', component: Home, canActivate: [authGuard] },
 
-    {
+  {
     path: 'users/new',
     loadComponent: () => import('./pages/user-form/user-form').then(m => m.UserForm),
     canActivate: [adminGuard]
@@ -26,31 +26,31 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/user-form/user-form').then(m => m.UserForm),
     canActivate: [adminGuard]
   },
-  
-    {
+
+  {
     path: 'users/:id/permissions',
     loadComponent: () => import('./pages/user-permissions/user-permissions').then(m => m.UserPermissions),
     canActivate: [adminGuard]
   },
 
-    {
+  {
     path: 'users/:id/schedule',
     loadComponent: () => import('./pages/doctor-schedule/doctor-schedule').then(m => m.DoctorScheduleEditor),
     canActivate: [adminGuard]
   },
 
-  { 
-    path: 'users', 
+  {
+    path: 'users',
     loadComponent: () => import('./pages/users/users.component').then(m => m.UsersComponent),
     canActivate: [adminGuard]
   },
 
-    {
+  {
     path: 'health-insurances/new',
     loadComponent: () => import('./pages/health-insurance-form/health-insurance-form').then(m => m.HealthInsuranceForm),
     canActivate: [adminGuard]
   },
-  
+
   {
     path: 'health-insurances/:id/edit',
     loadComponent: () => import('./pages/health-insurance-form/health-insurance-form').then(m => m.HealthInsuranceForm),
@@ -61,7 +61,7 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/health-insurances/health-insurances').then(m => m.HealthInsurances),
     canActivate: [adminGuard]
   },
-    // RUTAS DEL MÓDULO DE SALAS
+  // RUTAS DEL MÓDULO DE SALAS
   {
     path: 'salas/disponibilidad',
     loadComponent: () => import('./pages/salas-disponibilidad/salas-disponibilidad').then(m => m.SalasDisponibilidadComponent),
@@ -83,11 +83,26 @@ export const routes: Routes = [
     canActivate: [adminGuard]
   },
 
-    // PACIENTES ASIGNADOS AL MÉDICO
+  // PACIENTES ASIGNADOS AL MÉDICO
   {
     path: 'my-patients',
     loadComponent: () => import('./pages/my-patients/my-patients').then(m => m.MyPatients),
     canActivate: [doctorGuard]
   },
-
+  // ABM DE ESPECIALIDADES
+  {
+    path: 'specialties/new',
+    loadComponent: () => import('./pages/specialty-form/specialty-form').then(m => m.SpecialtyForm),
+    canActivate: [adminGuard]
+  },
+  {
+    path: 'specialties/:id/edit',
+    loadComponent: () => import('./pages/specialty-form/specialty-form').then(m => m.SpecialtyForm),
+    canActivate: [adminGuard]
+  },
+  {
+    path: 'specialties',
+    loadComponent: () => import('./pages/specialties/specialties').then(m => m.Specialties),
+    canActivate: [adminGuard]
+  },
 ];

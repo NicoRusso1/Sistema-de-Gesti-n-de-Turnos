@@ -1,0 +1,43 @@
+<h1>Especialidades</h1>
+<a routerLink="/specialties/new">Nueva especialidad</a>
+<form [formGroup]="filterForm" (ngSubmit)="load()">
+    <div>
+        <label for="search">Buscar</label>
+        <input id="search" type="text" formControlName="search" placeholder="Nombre">
+    </div>
+    <button type="submit">Filtrar</button>
+    <button type="button" (click)="clearFilters()">Limpiar</button>
+</form>
+@if (errorMessage()) {
+<p role="alert">{{ errorMessage() }}</p>
+}
+@if (successMessage()) {
+<p role="status">{{ successMessage() }}</p>
+}
+<table>
+    <thead>
+        <tr>
+            <th>ID</th>
+            <th>Nombre</th>
+            <th>Descripción</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        @for (item of specialties(); track item.id) {
+        <tr>
+            <td>{{ item.id }}</td>
+            <td>{{ item.name }}</td>
+            <td>{{ item.description ?? '-' }}</td>
+            <td>
+                <a [routerLink]="['/specialties', item.id, 'edit']">Editar</a>
+                <button type="button" (click)="remove(item)">Eliminar</button>
+            </td>
+        </tr>
+        } @empty {
+        <tr>
+            <td colspan="4">No se encontraron especialidades.</td>
+        </tr>
+        }
+    </tbody>
+</table>
