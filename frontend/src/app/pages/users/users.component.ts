@@ -93,6 +93,9 @@ import { debounceTime } from 'rxjs';
                   @if (user.role.name === 'OperationalUser') {
                     <a [routerLink]="['/users', user.id, 'edit']">Editar</a>
                     <a [routerLink]="['/users', user.id, 'permissions']">Permisos</a>
+                     @if (user.user_type?.name === 'doctor') {
+                      <a [routerLink]="['/users', user.id, 'schedule']">Agenda</a>
+                    }
                     @if (user.status === 1) {
                       <button type="button" (click)="deactivate(user)">Dar de baja</button>
                       @if (canManageAdmins) {
