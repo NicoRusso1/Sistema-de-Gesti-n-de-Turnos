@@ -7,6 +7,7 @@ use Database\Factories\PatientFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -15,7 +16,7 @@ use Laravel\Sanctum\HasApiTokens;
 /** @use HasFactory<PatientFactory> */
 class Patient extends Authenticatable
 {
-        use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable;
 
     protected $fillable = [
         'first_name',
@@ -23,6 +24,8 @@ class Patient extends Authenticatable
         'email',
         'password_hash',
         'phone',
+        'health_insurance_id',
+        'health_insurance_number',
         'user_type_id',
         'role_id',
         'status',
@@ -51,9 +54,9 @@ class Patient extends Authenticatable
     }
 
     public function hasAdminAccess(): bool
-{
-    return $this->isAdministrator() || $this->isSuperAdmin();
-}
+    {
+        return $this->isAdministrator() || $this->isSuperAdmin();
+    }
 
     public function isOwner(): bool
     {
@@ -80,13 +83,33 @@ class Patient extends Authenticatable
     {
         return $this->hasOne(UserPermission::class);
     }
+    public function healthInsurance(): BelongsTo
+    {
+        return $this->belongsTo(HealthInsurance::class);
+    }
+    public function appointmentsAsPatient(): HasMany
+    {
+        return $this->hasMany(Appointment::class, 'patient_id');
+    }
+    public function appointmentsAsDoctor(): HasMany
+    {
+        return $this->hasMany(Appointment::class, 'doctor_id');
+    }
+
+    public function scopeAssignedTo(Builder $query, Patient $doctor): Builder
+    {
+        return $query->whereHas(
+            'appointmentsAsPatient',
+            fn($q) => $q->where('doctor_id', $doctor->id)
+        );
+    }
 
     public function scopeDoctors(Builder $query): Builder
     {
-        return $query->whereHas('userType', fn ($q) => $q->where('name', UserTypeName::Doctor->value));
+        return $query->whereHas('userType', fn($q) => $q->where('name', UserTypeName::Doctor->value));
     }
 
-        public function scopeActive(Builder $query): Builder
+    public function scopeActive(Builder $query): Builder
     {
         return $query->where('status', 1);
     }

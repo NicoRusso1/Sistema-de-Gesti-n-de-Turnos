@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\AdminRoleController;
 use App\Http\Controllers\Api\HealthInsuranceController;
 use App\Http\Controllers\Api\SalaController;
 use App\Http\Controllers\Api\DoctorScheduleController;
+use App\Http\Controllers\Api\DoctorPatientController;
 
 // Públicas
 Route::post('/register', [AuthController::class, 'register']);
@@ -26,7 +27,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/users/{id}/admin-role', [AdminRoleController::class, 'grant']);
         Route::delete('/users/{id}/admin-role', [AdminRoleController::class, 'revoke']);
     });
-
+    Route::middleware('permission:view_assigned_patients')->group(function () {
+        Route::get('/medicos/me/pacientes', [DoctorPatientController::class, 'index']);
+    });
     // Requieren token y rol Administrator (el SuperAdmin entra por herencia)
     Route::middleware('role:Administrator')->group(function () {
         Route::apiResource('specialties', SpecialtyController::class)->except(['index', 'show']);
@@ -37,7 +40,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/doctors/{id}/restore', [DoctorController::class, 'restore']);
         Route::apiResource('health-insurances', HealthInsuranceController::class);
         Route::post('/health-insurances/{id}/restore', [HealthInsuranceController::class, 'restore']);
-        
+
         // GESTIÓN DE SALAS Y DISPONIBILIDAD
         Route::get('/salas/disponibilidad', [SalaController::class, 'disponibilidad']);
         Route::patch('/salas/{id}/estado', [SalaController::class, 'cambiarEstado']);
@@ -53,7 +56,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/users/{id}/permissions', [UserController::class, 'updatePermissions']);
     });
 
-        Route::get('/doctors/{id}/slots', [DoctorScheduleController::class, 'slots']);
+    Route::get('/doctors/{id}/slots', [DoctorScheduleController::class, 'slots']);
 
     Route::middleware('permission:edit_schedules,view_all_appointments')->group(function () {
         Route::get('/doctors/{id}/schedules', [DoctorScheduleController::class, 'index']);

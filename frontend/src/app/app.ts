@@ -11,7 +11,7 @@ import { AuthService } from './services/auth.service';
 export class App {
   authService = inject(AuthService);
   user = this.authService.user;
-  
+
   // Variable para controlar el estado del menú
   isSidebarOpen = true;
 
@@ -19,6 +19,9 @@ export class App {
   isAdmin(): boolean {
     const role = this.user()?.role?.name;
     return role === 'Administrator' || role === 'SuperAdmin';
+  }
+  isDoctor(): boolean {
+    return this.user()?.user_type?.name === 'doctor';
   }
 
   // Función para abrir/cerrar menú

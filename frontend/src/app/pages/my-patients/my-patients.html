@@ -1,0 +1,59 @@
+<h1>Mis pacientes</h1>
+<form [formGroup]="filterForm" (ngSubmit)="load()">
+    <div>
+        <label for="search">Buscar</label>
+        <input id="search" type="text" formControlName="search" placeholder="Nombre, apellido o email">
+    </div>
+    <button type="submit">Filtrar</button>
+    <button type="button" (click)="clearFilters()">Limpiar</button>
+</form>
+@if (errorMessage()) {
+<p role="alert">{{ errorMessage() }}</p>
+}
+@if (loading()) {
+<p>Cargando...</p>
+}
+<table>
+    <thead>
+        <tr>
+            <th>Paciente</th>
+            <th>DNI</th>
+            <th>Email</th>
+            <th>Teléfono</th>
+            <th>Obra social</th>
+            <th>N° afiliado</th>
+            <th>Turnos conmigo</th>
+        </tr>
+    </thead>
+    <tbody>
+        @for (p of patients(); track p.id) {
+        <tr>
+            <td>{{ p.last_name }}, {{ p.first_name }}</td>
+            <td>{{ p.personal_data?.national_id ?? '-' }}</td>
+            <td><a [href]="'mailto:' + p.email">{{ p.email }}</a></td>
+            <td>
+                @if (p.phone) {
+                <a [href]="'tel:' + p.phone">{{ p.phone }}</a>
+                } @else {
+                -
+                }
+            </td>
+            <td>
+                @if (p.health_insurance; as hi) {
+                {{ hi.name }} ({{ hi.discount_percentage }}% desc.)
+                } @else {
+                Particular
+                }
+            </td>
+            <td>{{ p.health_insurance_number ?? '-' }}</td>
+            <td>{{ p.appointments_count }}</td>
+        </tr>
+        } @empty {
+        @if (!loading() && !errorMessage()) {
+        <tr>
+            <td colspan="7">No tenés pacientes con turnos asignados.</td>
+        </tr>
+        }
+        }
+    </tbody>
+</table>

@@ -6,6 +6,7 @@ use App\Enums\RoleName;
 use App\Enums\UserTypeName;
 use App\Models\Patient;
 use App\Models\Role;
+use App\Models\UserPermission;
 use App\Models\UserType;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -33,5 +34,9 @@ class DoctorSeeder extends Seeder
         if ($doctor->status !== 1) {
             $doctor->update(['status' => 1]);
         }
+        UserPermission::firstOrCreate(
+            ['patient_id' => $doctor->id],
+            ['view_assigned_patients' => true]
+        );
     }
 }
