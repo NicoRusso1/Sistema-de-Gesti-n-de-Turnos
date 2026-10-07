@@ -67,11 +67,11 @@ class UserController extends Controller
                 foreach ($terms as $term) {
                     $q->where(function ($subQuery) use ($term) {
                         $subQuery->where('first_name', 'like', "%{$term}%")
-                                 ->orWhere('last_name', 'like', "%{$term}%")
-                                 ->orWhere('email', 'like', "%{$term}%")
-                                 ->orWhereHas('personalData', function ($qData) use ($term) {
-                                     $qData->where('national_id', 'like', "%{$term}%");
-                                 });
+                            ->orWhere('last_name', 'like', "%{$term}%")
+                            ->orWhere('email', 'like', "%{$term}%")
+                            ->orWhereHas('personalData', function ($qData) use ($term) {
+                                $qData->where('national_id', 'like', "%{$term}%");
+                            });
                     });
                 }
             });
@@ -248,6 +248,10 @@ class UserController extends Controller
         if ($user->wasChanged('user_type_id')) {
             $user->load('userType');
             $this->permissionsFor($user)->update($this->defaultPermissions($user->userType?->name));
+            // Si deja de ser médico, pierde las especialidades asignadas
+            if (!$user->isDoctor()) {
+                $user->specialties()->detach();
+            }
         }
 
         return response()->json([
