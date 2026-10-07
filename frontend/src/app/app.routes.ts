@@ -39,6 +39,13 @@ export const routes: Routes = [
     canActivate: [adminGuard]
   },
 
+  // ESPECIALIDADES DE UN MÉDICO
+  {
+    path: 'users/:id/specialties',
+    loadComponent: () => import('./pages/doctor-specialties/doctor-specialties').then(m => m.DoctorSpecialties),
+    canActivate: [adminGuard]
+  },
+
   {
     path: 'users',
     loadComponent: () => import('./pages/users/users.component').then(m => m.UsersComponent),
