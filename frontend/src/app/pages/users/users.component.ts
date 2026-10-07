@@ -95,6 +95,7 @@ import { debounceTime } from 'rxjs';
                     <a [routerLink]="['/users', user.id, 'permissions']">Permisos</a>
                      @if (user.user_type?.name === 'doctor') {
                       <a [routerLink]="['/users', user.id, 'schedule']">Agenda</a>
+                      <a [routerLink]="['/users', user.id, 'specialties']">Especialidades</a>
                     }
                     @if (user.status === 1) {
                       <button type="button" (click)="deactivate(user)">Dar de baja</button>
@@ -163,7 +164,7 @@ export class UsersComponent implements OnInit {
   private userService = inject(UserService);
   private fb = inject(FormBuilder);
 
-    private auth = inject(AuthService);
+  private auth = inject(AuthService);
 
   get isSuperAdmin(): boolean {
     return this.auth.user()?.role.name === 'SuperAdmin';
@@ -244,7 +245,7 @@ export class UsersComponent implements OnInit {
       error: () => alert('No se pudo reactivar al usuario'),
     });
   }
-    grantAdmin(user: User): void {
+  grantAdmin(user: User): void {
     if (!confirm(`¿Conceder rol de Administrador a ${user.first_name} ${user.last_name}?`)) {
       return;
     }

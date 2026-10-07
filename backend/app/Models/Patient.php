@@ -7,6 +7,7 @@ use Database\Factories\PatientFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
@@ -27,7 +28,6 @@ class Patient extends Authenticatable
         'health_insurance_id',
         'health_insurance_number',
         'user_type_id',
-        'specialty_id',
         'role_id',
         'status',
         'is_owner',
@@ -90,9 +90,14 @@ class Patient extends Authenticatable
     }
 
     // Especialidad del médico
-    public function specialty(): BelongsTo
+    public function specialties(): BelongsToMany
     {
-        return $this->belongsTo(Specialty::class);
+        return $this->belongsToMany(
+            Specialty::class,
+            'medico_especialidad',
+            'medico_id',
+            'especialidad_id'
+        );
     }
     public function appointmentsAsPatient(): HasMany
     {

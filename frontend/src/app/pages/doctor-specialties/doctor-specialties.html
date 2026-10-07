@@ -1,0 +1,35 @@
+<h1>Especialidades del médico</h1>
+@if (user(); as u) {
+<p>
+    <strong>{{ u.first_name }} {{ u.last_name }}</strong>
+    ({{ u.user_type?.name ?? 'sin tipo' }})
+</p>
+}
+@if (errorMessage()) {
+<p role="alert">{{ errorMessage() }}</p>
+}
+@if (successMessage()) {
+<p role="status">{{ successMessage() }}</p>
+}
+@if (canEdit()) {
+<form (submit)="$event.preventDefault(); save()">
+    <fieldset>
+        <legend>Seleccioná una o más especialidades</legend>
+        @for (item of specialties(); track item.id) {
+        <div>
+            <label>
+                <input type="checkbox" [checked]="isSelected(item.id)" (change)="toggle(item.id)">
+                {{ item.name }}
+            </label>
+        </div>
+        } @empty {
+        <p>No hay especialidades cargadas. Creá una desde el menú Especialidades.</p>
+        }
+    </fieldset>
+    <p>Seleccionadas: {{ selectedIds().length }}</p>
+    <button type="submit" [disabled]="loading()">Guardar especialidades</button>
+    <a routerLink="/users">Volver</a>
+</form>
+} @else {
+<a routerLink="/users">Volver</a>
+}

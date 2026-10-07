@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\SpecialtyController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DoctorController;
+use App\Http\Controllers\Api\DoctorSpecialtyController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\AdminRoleController;
 use App\Http\Controllers\Api\HealthInsuranceController;
@@ -38,6 +39,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/doctors', [DoctorController::class, 'index']);
         Route::delete('/doctors/{id}', [DoctorController::class, 'destroy']);
         Route::post('/doctors/{id}/restore', [DoctorController::class, 'restore']);
+        // ESPECIALIDADES DE UN MÉDICO
+        Route::get('/doctors/{id}/specialties', [DoctorSpecialtyController::class, 'index']);
+        Route::post('/doctors/{id}/specialties', [DoctorSpecialtyController::class, 'store']);
+        Route::put('/doctors/{id}/specialties', [DoctorSpecialtyController::class, 'sync']);
+        Route::delete('/doctors/{id}/specialties/{specialtyId}', [DoctorSpecialtyController::class, 'destroy']);
         Route::apiResource('health-insurances', HealthInsuranceController::class);
         Route::post('/health-insurances/{id}/restore', [HealthInsuranceController::class, 'restore']);
 
@@ -57,6 +63,8 @@ Route::middleware('auth:sanctum')->group(function () {
     });
 
     Route::get('/doctors/{id}/slots', [DoctorScheduleController::class, 'slots']);
+    // Filtro del flujo de reserva: médicos asignados a una especialidad
+    Route::get('/specialties/{id}/doctors', [DoctorSpecialtyController::class, 'doctorsBySpecialty']);
 
     Route::middleware('permission:edit_schedules,view_all_appointments')->group(function () {
         Route::get('/doctors/{id}/schedules', [DoctorScheduleController::class, 'index']);
