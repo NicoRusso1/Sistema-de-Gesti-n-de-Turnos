@@ -1,0 +1,184 @@
+<div class="booking-container">
+  <div class="booking-header">
+    <h2>📅 Reserva de Turnos Médicos</h2>
+    <p>Selecciona especialidad, médico, fecha y confirma tu turno con tu obra social.</p>
+  </div>
+
+  <!-- Mensaje de éxito al completar la reserva -->
+  @if (successAppointment(); as app) {
+    <div class="success-card">
+      <div class="success-icon">✓</div>
+      <h3>¡Turno Reservado con Éxito!</h3>
+      <p>Tu turno ha sido agendado en estado <strong>{{ app.status | uppercase }}</strong>.</p>
+      
+      <div class="summary-details">
+        <div><strong>Fecha y Hora:</strong> {{ app.scheduled_at | date:'dd/MM/yyyy HH:mm' }} hs</div>
+        <div><strong>Médico:</strong> Dr/a. {{ app.doctor?.first_name }} {{ app.doctor?.last_name }}</div>
+        <div><strong>Especialidad:</strong> {{ app.specialty?.name || 'General' }}</div>
+        <div><strong>Obra Social:</strong> {{ app.healthInsurance?.name || 'Particular' }}</div>
+        @if (app.affiliate_number) {
+          <div><strong>Afiliado N°:</strong> {{ app.affiliate_number }}</div>
+        }
+        <hr />
+        <div class="price-row"><span>Monto Base:</span> <span>${{ app.monto_base | number:'1.2-2' }}</span></div>
+        <div class="price-row discount"><span>Descuento:</span> <span>-${{ app.monto_descuento | number:'1.2-2' }}</span></div>
+        <div class="price-row total"><span>Total Abonado/A pagar:</span> <span>${{ app.monto_final | number:'1.2-2' }}</span></div>
+      </div>
+
+      <div class="actions">
+        <button type="button" class="btn btn-primary" (click)="resetBooking()">Reservar otro turno</button>
+        <a routerLink="/home" class="btn btn-secondary">Volver al inicio</a>
+      </div>
+    </div>
+  } @else {
+    <!-- Formulario de selección y reserva -->
+    <form [formGroup]="form" (ngSubmit)="confirmBooking()" class="booking-grid">
+      
+      <!-- COLUMNA 1: Selección de Especialidad, Médico y Fecha -->
+      <div class="card form-step">
+        <h3>1. Datos de la Consulta</h3>
+
+        <!-- Especialidad -->
+        <div class="form-group">
+          <label for="specialty">Especialidad médica *</label>
+          <select id="specialty" formControlName="specialty_id" class="form-control">
+            <option [ngValue]="null">-- Seleccionar especialidad --</option>
+            @for (s of specialties(); track s.id) {
+              <option [ngValue]="s.id">{{ s.name }}</option>
+            }
+          </select>
+        </div>
+
+        <!-- Médico -->
+        <div class="form-group">
+          <label for="doctor">Médico profesional *</label>
+          <select id="doctor" formControlName="doctor_id" class="form-control">
+            <option [ngValue]="null">
+              @if (loadingDoctors()) { Cargando médicos... } @else { -- Seleccionar médico -- }
+            </option>
+            @for (d of doctors(); track d.id) {
+              <option [ngValue]="d.id">Dr/a. {{ d.first_name }} {{ d.last_name }}</option>
+            }
+          </select>
+          @if (!form.get('specialty_id')?.value) {
+            <small class="helper-text">Primero selecciona una especialidad.</small>
+          }
+        </div>
+
+        <!-- GT-37: Fecha con validación min y max -->
+        <div class="form-group">
+          <label for="date">Fecha de atención *</label>
+          <input 
+            type="date" 
+            id="date" 
+            formControlName="date" 
+            class="form-control"
+            [min]="minDate" 
+            [max]="maxDate" 
+          />
+          @if (form.get('date')?.errors?.['pastDate']) {
+            <span class="error-text">No se permiten fechas pasadas.</span>
+          }
+          @if (form.get('date')?.errors?.['futureDateExceeded']) {
+            <span class="error-text">No se permiten fechas superiores a 2 años.</span>
+          }
+        </div>
+      </div>
+
+      <!-- COLUMNA 2: Grilla de Franjas Horarias (GT-34 / GT-35 / GT-36) -->
+      <div class="card form-step">
+        <h3>2. Horarios Disponibles (15 min)</h3>
+
+        @if (loadingSlots()) {
+          <div class="loading-state">Buscando franjas disponibles...</div>
+        } @else if (!form.get('doctor_id')?.value || !form.get('date')?.value) {
+          <div class="placeholder-state">Selecciona un médico y una fecha para ver los horarios.</div>
+        } @else if (slots().length === 0) {
+          <div class="empty-state">No hay turnos disponibles para este profesional en la fecha seleccionada.</div>
+        } @else {
+          <div class="slots-grid">
+            @for (slot of slots(); track slot.start_time) {
+              <button 
+                type="button" 
+                class="slot-btn" 
+                [class.selected]="selectedSlot()?.start_time === slot.start_time"
+                (click)="selectSlot(slot)"
+              >
+                {{ slot.start_time }}
+              </button>
+            }
+          </div>
+          @if (selectedSlot()) {
+            <div class="selected-slot-banner">
+              Horario seleccionado: <strong>{{ selectedSlot()?.start_time }} a {{ selectedSlot()?.end_time }} hs</strong>
+            </div>
+          }
+        }
+      </div>
+
+      <!-- COLUMNA 3: Integración de Obra Social y Detalle de Costos (GT-38 / GT-40) -->
+      <div class="card form-step">
+        <h3>3. Cobertura y Detalle de Costos</h3>
+
+        <!-- Obra Social -->
+        <div class="form-group">
+          <label for="insurance">Obra Social / Cobertura</label>
+          <select id="insurance" formControlName="health_insurance_id" class="form-control">
+            <option [ngValue]="null">Sin Obra Social / Particular</option>
+            @for (hi of healthInsurances(); track hi.id) {
+              <option [ngValue]="hi.id">{{ hi.name }} ({{ hi.discount_percentage }}% desc.)</option>
+            }
+          </select>
+        </div>
+
+        <!-- Número de Afiliado (se habilita si hay obra social) -->
+        @if (form.get('health_insurance_id')?.value) {
+          <div class="form-group">
+            <label for="affiliate">Número de carnet de afiliado *</label>
+            <input 
+              type="text" 
+              id="affiliate" 
+              formControlName="affiliate_number" 
+              placeholder="Ej: OSDE-12345678" 
+              class="form-control" 
+            />
+            @if (form.get('affiliate_number')?.invalid && form.get('affiliate_number')?.touched) {
+              <span class="error-text">El número de afiliado es obligatorio para esta obra social.</span>
+            }
+          </div>
+        }
+
+        <!-- Detalle interactivo de Costos -->
+        <div class="pricing-card">
+          <h4>Resumen de Costos</h4>
+          <div class="pricing-line">
+            <span>Monto Base Particular:</span>
+            <span>${{ pricing().montoBase | number:'1.2-2' }}</span>
+          </div>
+          <div class="pricing-line discount-line">
+            <span>Descuento ({{ pricing().discountPercent }}%):</span>
+            <span>-${{ pricing().montoDescuento | number:'1.2-2' }}</span>
+          </div>
+          <hr />
+          <div class="pricing-line total-line">
+            <span>Monto Final:</span>
+            <span>${{ pricing().montoFinal | number:'1.2-2' }}</span>
+          </div>
+        </div>
+
+        @if (errorMessage()) {
+          <div class="alert-danger">{{ errorMessage() }}</div>
+        }
+
+        <button 
+          type="submit" 
+          class="btn btn-confirm" 
+          [disabled]="form.invalid || !selectedSlot() || submitting()"
+        >
+          @if (submitting()) { Confirmando... } @else { Confirmar Reserva de Turno }
+        </button>
+      </div>
+
+    </form>
+  }
+</div>
