@@ -112,4 +112,9 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/specialties/specialties').then(m => m.Specialties),
     canActivate: [adminGuard]
   },
+  {
+    path: 'appointments/new',
+    loadComponent: () => import('./pages/appointment-booking/appointment-booking').then(m => m.AppointmentBookingComponent),
+    canActivate: [authGuard]
+  },
 ];
