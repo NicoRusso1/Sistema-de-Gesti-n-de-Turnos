@@ -249,22 +249,57 @@ class DoctorScheduleController extends Controller
         ], 200);
     }
 
-    #[OA\Get(
+        #[OA\Get(
         path: '/api/doctors/{id}/slots',
-        summary: 'Obtener los turnos disponibles de un médico en una fecha',
+        summary: 'Obtener los turnos disponibles de un médico en una fecha específica',
+        description: 'Genera bloques de 15 minutos en el horario de atención del médico (08:00 a 20:00 hs) y excluye aquellos que ya tengan un turno reservado.',
         tags: ['Agenda de médicos'],
         security: [
             ['sanctum' => []]
         ],
         parameters: [
-            new OA\Parameter(name: 'id', description: 'ID del médico', in: 'path', required: true, schema: new OA\Schema(type: 'integer', minimum: 1), example: 3),
-            new OA\Parameter(name: 'date', description: 'Fecha en formato YYYY-MM-DD', in: 'query', required: true, schema: new OA\Schema(type: 'string'), example: '2026-10-12')
+            new OA\Parameter(
+                name: 'id',
+                description: 'ID del médico',
+                in: 'path',
+                required: true,
+                schema: new OA\Schema(type: 'integer', minimum: 1),
+                example: 3
+            ),
+            new OA\Parameter(
+                name: 'date',
+                description: 'Fecha en formato YYYY-MM-DD (entre hoy y los próximos 2 años)',
+                in: 'query',
+                required: true,
+                schema: new OA\Schema(type: 'string', format: 'date'),
+                example: '2026-10-15'
+            )
         ],
         responses: [
-            new OA\Response(response: 200, description: 'Slots de 15 minutos del día.'),
+            new OA\Response(
+                response: 200,
+                description: 'Listado de franjas horarias disponibles de 15 minutos.',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'doctor_id', type: 'integer', example: 3),
+                        new OA\Property(property: 'date', type: 'string', example: '2026-10-15'),
+                        new OA\Property(property: 'duration', type: 'integer', example: 15),
+                        new OA\Property(
+                            property: 'slots',
+                            type: 'array',
+                            items: new OA\Items(
+                                properties: [
+                                    new OA\Property(property: 'start_time', type: 'string', example: '08:00'),
+                                    new OA\Property(property: 'end_time', type: 'string', example: '08:15')
+                                ]
+                            )
+                        )
+                    ]
+                )
+            ),
             new OA\Response(response: 401, description: 'No autenticado.'),
-            new OA\Response(response: 404, description: 'Médico no encontrado.'),
-            new OA\Response(response: 422, description: 'Fecha inválida o fuera de rango.')
+            new OA\Response(response: 404, description: 'Médico no encontrado o inactivo.'),
+            new OA\Response(response: 422, description: 'Fecha inválida, en el pasado o superior a 2 años.')
         ]
     )]
     public function slots(Request $request, string $doctorId)
@@ -283,29 +318,44 @@ class DoctorScheduleController extends Controller
 
         $date = Carbon::createFromFormat('Y-m-d', $request->date)->startOfDay();
 
+        // Validación GT-37: no permitir fechas pasadas ni superiores a 2 años
         if ($date->lt(today()) || $date->gt(today()->addYears(self::MAX_YEARS))) {
             return response()->json([
                 'message' => 'La fecha debe estar entre hoy y los próximos ' . self::MAX_YEARS . ' años'
             ], 422);
         }
 
+        // 1. Obtener la franja de atención configurada para este día de la semana (1 = Lunes, 7 = Domingo)
         $schedules = DoctorSchedule::where('doctor_id', $doctor->id)
             ->where('day_of_week', $date->dayOfWeekIso)
             ->orderBy('start_time')
             ->get();
 
+        // 2. Obtener los turnos ya ocupados de ese médico en esa fecha para no ofrecerlos
+        $bookedTimes = \App\Models\Appointment::where('doctor_id', $doctor->id)
+            ->whereDate('scheduled_at', $date->format('Y-m-d'))
+            ->whereIn('status', ['reservado', 'scheduled', 'confirmed'])
+            ->get()
+            ->map(fn($app) => $app->scheduled_at->format('H:i'))
+            ->toArray();
+
         $now = now();
         $slots = [];
 
+        // 3. Generar franjas de 15 minutos dentro del rango de atención
         foreach ($schedules as $schedule) {
             $cursor = $date->copy()->setTimeFromTimeString($schedule->start_time);
             $end = $date->copy()->setTimeFromTimeString($schedule->end_time);
 
             while ($cursor->copy()->addMinutes(self::SLOT_MINUTES)->lte($end)) {
-                if ($cursor->gt($now)) {
+                $slotStartTime = $cursor->format('H:i');
+                $slotEndTime = $cursor->copy()->addMinutes(self::SLOT_MINUTES)->format('H:i');
+
+                // Solo agregar si es a futuro y NO está reservado
+                if ($cursor->gt($now) && !in_array($slotStartTime, $bookedTimes)) {
                     $slots[] = [
-                        'start_time' => $cursor->format('H:i'),
-                        'end_time' => $cursor->copy()->addMinutes(self::SLOT_MINUTES)->format('H:i'),
+                        'start_time' => $slotStartTime,
+                        'end_time'   => $slotEndTime,
                     ];
                 }
 
@@ -315,9 +365,9 @@ class DoctorScheduleController extends Controller
 
         return response()->json([
             'doctor_id' => $doctor->id,
-            'date' => $date->format('Y-m-d'),
-            'duration' => self::SLOT_MINUTES,
-            'slots' => $slots
+            'date'      => $date->format('Y-m-d'),
+            'duration'  => self::SLOT_MINUTES,
+            'slots'     => $slots
         ], 200);
     }
 

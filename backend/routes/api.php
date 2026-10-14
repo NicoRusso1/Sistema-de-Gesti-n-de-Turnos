@@ -11,6 +11,7 @@ use App\Http\Controllers\Api\HealthInsuranceController;
 use App\Http\Controllers\Api\SalaController;
 use App\Http\Controllers\Api\DoctorScheduleController;
 use App\Http\Controllers\Api\DoctorPatientController;
+use App\Http\Controllers\Api\AppointmentController;
 
 // Públicas
 Route::post('/register', [AuthController::class, 'register']);
@@ -65,6 +66,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/doctors/{id}/slots', [DoctorScheduleController::class, 'slots']);
     // Filtro del flujo de reserva: médicos asignados a una especialidad
     Route::get('/specialties/{id}/doctors', [DoctorSpecialtyController::class, 'doctorsBySpecialty']);
+
+    Route::post('/appointments', [AppointmentController::class, 'store']);
 
     Route::middleware('permission:edit_schedules,view_all_appointments')->group(function () {
         Route::get('/doctors/{id}/schedules', [DoctorScheduleController::class, 'index']);

@@ -1,0 +1,263 @@
+.booking-container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.booking-header {
+  margin-bottom: 25px;
+}
+
+.booking-header h2 {
+  color: #1b4b5a;
+  margin-bottom: 5px;
+}
+
+.booking-header p {
+  color: #6c757d;
+  margin: 0;
+}
+
+.booking-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 20px;
+  align-items: start;
+}
+
+.card {
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 22px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e9ecef;
+}
+
+.card h3 {
+  margin-top: 0;
+  margin-bottom: 18px;
+  font-size: 1.15rem;
+  color: #1b4b5a;
+  border-bottom: 2px solid #ed7d5c;
+  padding-bottom: 8px;
+}
+
+.form-group {
+  margin-bottom: 16px;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 600;
+  font-size: 0.9rem;
+  margin-bottom: 6px;
+  color: #343a40;
+}
+
+.form-control {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ced4da;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  box-sizing: border-box;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: #ed7d5c;
+  box-shadow: 0 0 0 3px rgba(237, 125, 92, 0.2);
+}
+
+.helper-text {
+  color: #6c757d;
+  font-size: 0.8rem;
+  display: block;
+  margin-top: 4px;
+}
+
+.error-text {
+  color: #dc3545;
+  font-size: 0.8rem;
+  display: block;
+  margin-top: 4px;
+}
+
+/* Grilla de slots */
+.slots-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  max-height: 320px;
+  overflow-y: auto;
+  padding-right: 5px;
+}
+
+.slot-btn {
+  background: #f8f9fa;
+  border: 1px solid #dee2e6;
+  border-radius: 6px;
+  padding: 10px;
+  font-weight: 600;
+  color: #1b4b5a;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.slot-btn:hover {
+  background: #e2f0f3;
+  border-color: #1b4b5a;
+}
+
+.slot-btn.selected {
+  background: #1b4b5a;
+  color: #ffffff;
+  border-color: #1b4b5a;
+}
+
+.selected-slot-banner {
+  margin-top: 15px;
+  padding: 10px;
+  background: #e8f4f8;
+  border-left: 4px solid #1b4b5a;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.placeholder-state, .empty-state, .loading-state {
+  text-align: center;
+  color: #6c757d;
+  padding: 30px 10px;
+  font-style: italic;
+}
+
+/* Resumen de costos */
+.pricing-card {
+  background: #fdfaf8;
+  border: 1px dashed #ed7d5c;
+  border-radius: 6px;
+  padding: 15px;
+  margin: 15px 0;
+}
+
+.pricing-card h4 {
+  margin: 0 0 10px 0;
+  font-size: 1rem;
+  color: #1b4b5a;
+}
+
+.pricing-line {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8px;
+  font-size: 0.95rem;
+}
+
+.discount-line {
+  color: #28a745;
+  font-weight: 600;
+}
+
+.total-line {
+  font-size: 1.15rem;
+  font-weight: bold;
+  color: #1b4b5a;
+}
+
+.alert-danger {
+  background: #f8d7da;
+  color: #721c24;
+  padding: 10px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  font-size: 0.9rem;
+}
+
+.btn {
+  padding: 12px 18px;
+  border-radius: 6px;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
+}
+
+.btn-confirm {
+  width: 100%;
+  background: #ed7d5c;
+  color: white;
+  font-size: 1rem;
+}
+
+.btn-confirm:hover:not(:disabled) {
+  background: #d96847;
+}
+
+.btn-confirm:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+/* Tarjeta de Éxito */
+.success-card {
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 35px;
+  max-width: 550px;
+  margin: 0 auto;
+  text-align: center;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+}
+
+.success-icon {
+  width: 60px;
+  height: 60px;
+  line-height: 60px;
+  background: #28a745;
+  color: white;
+  font-size: 32px;
+  border-radius: 50%;
+  margin: 0 auto 15px auto;
+}
+
+.summary-details {
+  background: #f8f9fa;
+  border-radius: 6px;
+  padding: 18px;
+  text-align: left;
+  margin: 20px 0;
+  line-height: 1.7;
+}
+
+.price-row {
+  display: flex;
+  justify-content: space-between;
+}
+
+.price-row.discount {
+  color: #28a745;
+  font-weight: 600;
+}
+
+.price-row.total {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #1b4b5a;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.btn-primary {
+  background: #1b4b5a;
+  color: white;
+}
+
+.btn-secondary {
+  background: #6c757d;
+  color: white;
+}
