@@ -1177,6 +1177,180 @@
                 ]
             }
         },
+        "/api/appointments/{id}/payments": {
+            "post": {
+                "tags": [
+                    "Pagos"
+                ],
+                "summary": "Iniciar el pago de un turno con MercadoPago",
+                "description": "Crea un pago pendiente para un turno en estado \"reservado\" y devuelve el link de checkout de MercadoPago.",
+                "operationId": "6d67b4809db1a0af0232e16eaafeb6d9",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID del turno a pagar",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        },
+                        "example": 10
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Pago iniciado.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Pago iniciado"
+                                        },
+                                        "payment_id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "checkout_url": {
+                                            "type": "string",
+                                            "example": "https://sandbox.mercadopago.com.ar/checkout/v1/redirect?pref_id=123"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado."
+                    },
+                    "403": {
+                        "description": "El turno pertenece a otro paciente."
+                    },
+                    "404": {
+                        "description": "Turno no encontrado."
+                    },
+                    "409": {
+                        "description": "El turno no está pendiente de pago."
+                    },
+                    "422": {
+                        "description": "El turno no tiene un monto a pagar."
+                    },
+                    "502": {
+                        "description": "No se pudo iniciar el pago con MercadoPago."
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/payments/{id}/verify": {
+            "post": {
+                "tags": [
+                    "Pagos"
+                ],
+                "summary": "Verificar el resultado de un pago con MercadoPago",
+                "description": "Consulta a MercadoPago el resultado del pago, actualiza su estado y, si fue aprobado, el turno pasa a \"abonado\".",
+                "operationId": "ba4d361b99f84680dcbf9b99d1360158",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID del pago (payment_id devuelto al iniciar el pago)",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        },
+                        "example": 1
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Estado actual del pago.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Pago actualizado"
+                                        },
+                                        "payment": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "amount": {
+                                                    "type": "string",
+                                                    "example": "9000.00"
+                                                },
+                                                "status": {
+                                                    "properties": {
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "approved"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "method": {
+                                                    "properties": {
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "credit"
+                                                        }
+                                                    },
+                                                    "type": "object",
+                                                    "nullable": true
+                                                },
+                                                "appointment": {
+                                                    "properties": {
+                                                        "status": {
+                                                            "type": "string",
+                                                            "example": "abonado"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado."
+                    },
+                    "403": {
+                        "description": "El pago pertenece a otro paciente."
+                    },
+                    "404": {
+                        "description": "Pago no encontrado."
+                    },
+                    "409": {
+                        "description": "El monto pagado no coincide con el del turno."
+                    },
+                    "502": {
+                        "description": "No se pudo consultar MercadoPago."
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/users": {
             "get": {
                 "tags": [
@@ -1881,6 +2055,10 @@
         {
             "name": "Obras sociales",
             "description": "Obras sociales"
+        },
+        {
+            "name": "Pagos",
+            "description": "Pagos"
         },
         {
             "name": "Usuarios",

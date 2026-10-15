@@ -7,7 +7,7 @@ export interface Appointment {
   doctor_id: number;
   specialty_id: number | null;
   scheduled_at: string;
-  status: 'reservado' | 'scheduled' | 'confirmed' | 'cancelled';
+  status: 'reservado' | 'abonado' | 'scheduled' | 'confirmed' | 'cancelled';
   health_insurance_id: number | null;
   affiliate_number: string | null;
   monto_base: number;

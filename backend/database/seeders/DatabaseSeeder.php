@@ -21,6 +21,8 @@ class DatabaseSeeder extends Seeder
             SpecialtySeeder::class,
             HealthInsuranceSeeder::class,
             DoctorScheduleSeeder::class,
+            PaymentMethodSeeder::class,
+            PaymentStatusSeeder::class,
         ]);
     }
 }

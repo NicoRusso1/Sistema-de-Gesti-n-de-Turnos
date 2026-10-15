@@ -12,6 +12,7 @@ use App\Http\Controllers\Api\SalaController;
 use App\Http\Controllers\Api\DoctorScheduleController;
 use App\Http\Controllers\Api\DoctorPatientController;
 use App\Http\Controllers\Api\AppointmentController;
+use App\Http\Controllers\Api\PaymentController;
 
 // Públicas
 Route::post('/register', [AuthController::class, 'register']);
@@ -68,6 +69,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/specialties/{id}/doctors', [DoctorSpecialtyController::class, 'doctorsBySpecialty']);
 
     Route::post('/appointments', [AppointmentController::class, 'store']);
+
+    Route::post('/appointments/{id}/payments', [PaymentController::class, 'store']);
+    Route::post('/payments/{id}/verify', [PaymentController::class, 'verify']);
 
     Route::middleware('permission:edit_schedules,view_all_appointments')->group(function () {
         Route::get('/doctors/{id}/schedules', [DoctorScheduleController::class, 'index']);
