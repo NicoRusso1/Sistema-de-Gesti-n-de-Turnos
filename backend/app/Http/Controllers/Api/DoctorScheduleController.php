@@ -334,7 +334,7 @@ class DoctorScheduleController extends Controller
         // 2. Obtener los turnos ya ocupados de ese médico en esa fecha para no ofrecerlos
         $bookedTimes = \App\Models\Appointment::where('doctor_id', $doctor->id)
             ->whereDate('scheduled_at', $date->format('Y-m-d'))
-            ->whereIn('status', ['reservado', 'scheduled', 'confirmed'])
+            ->whereIn('status', ['reservado', 'abonado', 'scheduled', 'confirmed'])
             ->get()
             ->map(fn($app) => $app->scheduled_at->format('H:i'))
             ->toArray();

@@ -84,7 +84,7 @@ class AppointmentController extends Controller
         // Verificar que el médico no tenga ya otro turno activo en ese horario exacto
         $exists = Appointment::where('doctor_id', $validated['doctor_id'])
             ->where('scheduled_at', $scheduledAt)
-            ->whereIn('status', ['reservado', 'scheduled', 'confirmed'])
+            ->whereIn('status', ['reservado', 'abonado', 'scheduled', 'confirmed'])
             ->exists();
 
         if ($exists) {

@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+        'mercadopago' => [
+        'access_token' => env('MERCADOPAGO_ACCESS_TOKEN'),
+        'return_url' => env('MERCADOPAGO_RETURN_URL'),
+        'sandbox' => env('MERCADOPAGO_SANDBOX', true),
+    ],
 ];
