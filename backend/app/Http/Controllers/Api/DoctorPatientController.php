@@ -39,12 +39,11 @@ class DoctorPatientController extends Controller
                 'last_name',
                 'email',
                 'phone',
-                'health_insurance_id',
-                'health_insurance_number',
             ])
             ->with([
                 'personalData:id,patient_id,national_id',
-                'healthInsurance:id,name,discount_percentage',
+                'healthInsurance',
+                'healthInsuranceRecord:id,patient_id,member_number',
             ])
             ->withCount([
                 'appointmentsAsPatient as appointments_count' =>
@@ -58,9 +57,13 @@ class DoctorPatientController extends Controller
                     ->orWhere('email', 'like', "%{$search}%");
             });
         }
-        return response()->json(
-            $query->orderBy('last_name')->orderBy('first_name')->get(),
-            200
-        );
+        $patients = $query->orderBy('last_name')->orderBy('first_name')->get();
+
+        $patients->each(function ($patient) {
+            $patient->health_insurance_number = $patient->healthInsuranceRecord?->member_number;
+            $patient->unsetRelation('healthInsuranceRecord');
+        });
+
+        return response()->json($patients, 200);
     }
 }

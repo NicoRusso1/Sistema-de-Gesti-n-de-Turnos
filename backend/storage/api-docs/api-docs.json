@@ -910,13 +910,10 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Listado de obras sociales."
+                        "description": "Listado de obras sociales. Quien no es administrador solo ve las activas."
                     },
                     "401": {
                         "description": "No autenticado."
-                    },
-                    "403": {
-                        "description": "Sin permisos de administrador."
                     }
                 },
                 "security": [
@@ -1012,11 +1009,8 @@
                     "401": {
                         "description": "No autenticado."
                     },
-                    "403": {
-                        "description": "Sin permisos de administrador."
-                    },
                     "404": {
-                        "description": "Obra social no encontrada."
+                        "description": "Obra social no encontrada, o inactiva para quien no es administrador."
                     }
                 },
                 "security": [
@@ -1168,6 +1162,144 @@
                     },
                     "404": {
                         "description": "Obra social no encontrada."
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/me/health-insurance": {
+            "get": {
+                "tags": [
+                    "Obra social del paciente"
+                ],
+                "summary": "Ver la obra social cargada del paciente autenticado",
+                "operationId": "de2cd941a595c5332fd36259f1778b63",
+                "responses": {
+                    "200": {
+                        "description": "Obra social del paciente, o null si no tiene ninguna cargada.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "affiliation": {
+                                            "properties": {
+                                                "health_insurance_id": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "member_number": {
+                                                    "type": "string",
+                                                    "example": "OSDE-98765432"
+                                                },
+                                                "health_insurance": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 2
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "OSDE"
+                                                        },
+                                                        "discount_percentage": {
+                                                            "type": "string",
+                                                            "example": "30.00"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object",
+                                            "nullable": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado."
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Obra social del paciente"
+                ],
+                "summary": "Cargar o modificar la obra social del paciente autenticado",
+                "description": "Asocia la obra social al paciente, o reemplaza la que ya tenía. La obra social tiene que estar activa.",
+                "operationId": "04bd06ebf9ad6d7eedae9cd663889318",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "health_insurance_id",
+                                    "member_number"
+                                ],
+                                "properties": {
+                                    "health_insurance_id": {
+                                        "description": "ID de una obra social activa",
+                                        "type": "integer",
+                                        "example": 2
+                                    },
+                                    "member_number": {
+                                        "description": "Número de carnet de afiliado",
+                                        "type": "string",
+                                        "example": "OSDE-98765432"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Obra social modificada."
+                    },
+                    "201": {
+                        "description": "Obra social cargada."
+                    },
+                    "401": {
+                        "description": "No autenticado."
+                    },
+                    "422": {
+                        "description": "Obra social inexistente o inactiva, o falta el número de afiliado."
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Obra social del paciente"
+                ],
+                "summary": "Eliminar la obra social del paciente autenticado",
+                "operationId": "5a081804bdcb37d7100f02192e1e1a5d",
+                "responses": {
+                    "200": {
+                        "description": "Obra social eliminada."
+                    },
+                    "401": {
+                        "description": "No autenticado."
+                    },
+                    "404": {
+                        "description": "El paciente no tiene una obra social cargada."
                     }
                 },
                 "security": [
@@ -2055,6 +2187,10 @@
         {
             "name": "Obras sociales",
             "description": "Obras sociales"
+        },
+        {
+            "name": "Obra social del paciente",
+            "description": "Obra social del paciente"
         },
         {
             "name": "Pagos",

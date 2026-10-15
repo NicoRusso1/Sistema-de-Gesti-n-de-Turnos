@@ -22,14 +22,17 @@ class HealthInsuranceController extends Controller
             new OA\Parameter(name: 'search', in: 'query', required: false, schema: new OA\Schema(type: 'string'))
         ],
         responses: [
-            new OA\Response(response: 200, description: 'Listado de obras sociales.'),
-            new OA\Response(response: 401, description: 'No autenticado.'),
-            new OA\Response(response: 403, description: 'Sin permisos de administrador.')
+            new OA\Response(response: 200, description: 'Listado de obras sociales. Quien no es administrador solo ve las activas.'),
+            new OA\Response(response: 401, description: 'No autenticado.')
         ]
     )]
     public function index(Request $request)
     {
         $query = HealthInsurance::query();
+
+        if (!$request->user()->hasAdminAccess()) {
+            $query->where('status', 1);
+        }
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
@@ -105,15 +108,14 @@ class HealthInsuranceController extends Controller
         responses: [
             new OA\Response(response: 200, description: 'Obra social encontrada.'),
             new OA\Response(response: 401, description: 'No autenticado.'),
-            new OA\Response(response: 403, description: 'Sin permisos de administrador.'),
-            new OA\Response(response: 404, description: 'Obra social no encontrada.')
+            new OA\Response(response: 404, description: 'Obra social no encontrada, o inactiva para quien no es administrador.')
         ]
     )]
-    public function show(string $id)
+    public function show(Request $request, string $id)
     {
         $healthInsurance = HealthInsurance::find($id);
 
-        if (!$healthInsurance) {
+        if (!$healthInsurance || (!$request->user()->hasAdminAccess() && $healthInsurance->status !== 1)) {
             return response()->json([
                 'message' => 'Obra social no encontrada'
             ], 404);

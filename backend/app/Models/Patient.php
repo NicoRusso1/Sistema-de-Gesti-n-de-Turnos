@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Database\Eloquent\Relations\HasOneThrough;
 
 /** @use HasFactory<PatientFactory> */
 class Patient extends Authenticatable
@@ -25,8 +26,6 @@ class Patient extends Authenticatable
         'email',
         'password_hash',
         'phone',
-        'health_insurance_id',
-        'health_insurance_number',
         'user_type_id',
         'role_id',
         'status',
@@ -84,9 +83,21 @@ class Patient extends Authenticatable
     {
         return $this->hasOne(UserPermission::class);
     }
-    public function healthInsurance(): BelongsTo
+        public function healthInsuranceRecord(): HasOne
     {
-        return $this->belongsTo(HealthInsurance::class);
+        return $this->hasOne(PatientHealthInsurance::class);
+    }
+
+    public function healthInsurance(): HasOneThrough
+    {
+        return $this->hasOneThrough(
+            HealthInsurance::class,
+            PatientHealthInsurance::class,
+            'patient_id',
+            'id',
+            'id',
+            'health_insurance_id'
+        );
     }
 
     // Especialidad del médico

@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\DoctorScheduleController;
 use App\Http\Controllers\Api\DoctorPatientController;
 use App\Http\Controllers\Api\AppointmentController;
 use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\Api\PatientHealthInsuranceController;
 
 // Públicas
 Route::post('/register', [AuthController::class, 'register']);
@@ -46,7 +47,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/doctors/{id}/specialties', [DoctorSpecialtyController::class, 'store']);
         Route::put('/doctors/{id}/specialties', [DoctorSpecialtyController::class, 'sync']);
         Route::delete('/doctors/{id}/specialties/{specialtyId}', [DoctorSpecialtyController::class, 'destroy']);
-        Route::apiResource('health-insurances', HealthInsuranceController::class);
+        Route::apiResource('health-insurances', HealthInsuranceController::class)->except(['index', 'show']);
         Route::post('/health-insurances/{id}/restore', [HealthInsuranceController::class, 'restore']);
 
         // GESTIÓN DE SALAS Y DISPONIBILIDAD
@@ -63,6 +64,13 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/users/{id}/permissions', [UserController::class, 'permissions']);
         Route::put('/users/{id}/permissions', [UserController::class, 'updatePermissions']);
     });
+
+    
+    Route::apiResource('health-insurances', HealthInsuranceController::class)->only(['index', 'show']);
+
+    Route::get('/me/health-insurance', [PatientHealthInsuranceController::class, 'show']);
+    Route::put('/me/health-insurance', [PatientHealthInsuranceController::class, 'update']);
+    Route::delete('/me/health-insurance', [PatientHealthInsuranceController::class, 'destroy']);
 
     Route::get('/doctors/{id}/slots', [DoctorScheduleController::class, 'slots']);
     // Filtro del flujo de reserva: médicos asignados a una especialidad
