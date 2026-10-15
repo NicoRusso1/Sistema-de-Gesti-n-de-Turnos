@@ -23,6 +23,10 @@
         @if (canBookAppointments()) {
         <li><a routerLink="/appointments/new">Reservar Turno</a></li>
         }
+
+        @if (isPatient()) {
+        <li><a routerLink="/profile">Mi perfil</a></li>
+        }
         
         <!-- Visible solo para médicos -->
         @if (isDoctor()) {

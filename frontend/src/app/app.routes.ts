@@ -123,4 +123,10 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/payment-result/payment-result').then(m => m.PaymentResultComponent),
     canActivate: [authGuard]
   },
+
+    {
+    path: 'profile',
+    loadComponent: () => import('./pages/profile/profile').then(m => m.ProfileComponent),
+    canActivate: [authGuard]
+  },
 ];
