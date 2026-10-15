@@ -1,0 +1,81 @@
+<div class="profile-container">
+  <div class="profile-header">
+    <h2>Mi perfil</h2>
+  </div>
+
+  @if (user(); as u) {
+    <div class="card">
+      <h3>Mis datos</h3>
+      <div class="data-row"><strong>Nombre:</strong> {{ u.first_name }} {{ u.last_name }}</div>
+      <div class="data-row"><strong>Email:</strong> {{ u.email }}</div>
+    </div>
+  }
+
+  <div class="card">
+    <h3>Mi obra social</h3>
+
+    @if (successMessage()) {
+      <div class="alert-success">{{ successMessage() }}</div>
+    }
+
+    @if (errorMessage()) {
+      <div class="alert-danger">{{ errorMessage() }}</div>
+    }
+
+    @if (loading()) {
+      <p>Cargando...</p>
+    } @else if (affiliation() && !editing()) {
+      @if (affiliation(); as a) {
+        <div class="affiliation-box">
+          <div class="data-row"><strong>Obra social:</strong> {{ a.health_insurance?.name }}</div>
+          <div class="data-row"><strong>Descuento:</strong> {{ a.health_insurance?.discount_percentage }}%</div>
+          <div class="data-row"><strong>N° de afiliado:</strong> {{ a.member_number }}</div>
+        </div>
+
+        @if (isInactive()) {
+          <div class="alert-danger">Tu obra social ya no está activa, por eso no se aplica el descuento. Elegí otra.</div>
+        }
+
+        <div class="actions">
+          <button type="button" class="btn btn-primary" (click)="startEditing()">Modificar</button>
+          <button type="button" class="btn btn-danger" [disabled]="deleting()" (click)="remove()">
+            @if (deleting()) { Eliminando... } @else { Eliminar }
+          </button>
+        </div>
+      }
+    } @else {
+      <form [formGroup]="form" (ngSubmit)="save()">
+        @if (!affiliation()) {
+          <p class="helper-text">Todavía no cargaste una obra social. Si tenés una, cargala para que se aplique el descuento al pagar tus turnos.</p>
+        }
+
+        <div class="form-group">
+          <label for="insurance">Obra social *</label>
+          <select id="insurance" formControlName="health_insurance_id" class="form-control">
+            <option [ngValue]="null">-- Seleccionar obra social --</option>
+            @for (hi of catalog(); track hi.id) {
+              <option [ngValue]="hi.id">{{ hi.name }} ({{ hi.discount_percentage }}% desc.)</option>
+            }
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="member">Número de afiliado *</label>
+          <input id="member" type="text" formControlName="member_number" class="form-control" placeholder="Ej: OSDE-12345678" />
+          @if (form.get('member_number')?.invalid && form.get('member_number')?.touched) {
+            <span class="error-text">El número de afiliado es obligatorio.</span>
+          }
+        </div>
+
+        <div class="actions">
+          <button type="submit" class="btn btn-confirm" [disabled]="form.invalid || saving()">
+            @if (saving()) { Guardando... } @else { Guardar obra social }
+          </button>
+          @if (affiliation()) {
+            <button type="button" class="btn btn-secondary" (click)="cancelEditing()">Cancelar</button>
+          }
+        </div>
+      </form>
+    }
+  </div>
+</div>
