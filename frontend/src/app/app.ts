@@ -24,6 +24,14 @@ export class App {
     return this.user()?.user_type?.name === 'doctor';
   }
 
+  isPatient(): boolean {
+    return this.user()?.user_type?.name === 'patient';
+  }
+
+  canBookAppointments(): boolean {
+    return this.isAdmin() || this.isPatient();
+  }
+
   // Función para abrir/cerrar menú
   toggleSidebar(): void {
     this.isSidebarOpen = !this.isSidebarOpen;

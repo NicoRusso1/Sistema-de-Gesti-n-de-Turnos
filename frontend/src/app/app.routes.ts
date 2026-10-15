@@ -117,4 +117,10 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/appointment-booking/appointment-booking').then(m => m.AppointmentBookingComponent),
     canActivate: [authGuard]
   },
+
+    {
+    path: 'payments/result',
+    loadComponent: () => import('./pages/payment-result/payment-result').then(m => m.PaymentResultComponent),
+    canActivate: [authGuard]
+  },
 ];

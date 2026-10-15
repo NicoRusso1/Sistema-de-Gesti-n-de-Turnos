@@ -12,6 +12,7 @@ import { DoctorScheduleService } from '../../services/doctor-schedule.service';
 import { DoctorOption, DoctorSpecialtyService } from '../../services/doctor-specialty.service';
 import { HealthInsuranceService } from '../../services/health-insurance.service';
 import { SpecialtyService } from '../../services/specialty.service';
+import { PaymentService } from '../../services/payment.service';
 
 @Component({
   selector: 'app-appointment-booking',
@@ -28,12 +29,14 @@ export class AppointmentBookingComponent implements OnInit {
   private healthInsuranceService = inject(HealthInsuranceService);
   private appointmentService = inject(AppointmentService);
   private router = inject(Router);
+  private paymentService = inject(PaymentService);
 
   // Estados reactivos con Signals
   protected readonly specialties = signal<Specialty[]>([]);
   protected readonly doctors = signal<DoctorOption[]>([]);
   protected readonly slots = signal<DoctorSlot[]>([]);
   protected readonly healthInsurances = signal<HealthInsurance[]>([]);
+  protected readonly paying = signal(false);
   
   protected readonly loadingDoctors = signal(false);
   protected readonly loadingSlots = signal(false);
@@ -215,6 +218,25 @@ export class AppointmentBookingComponent implements OnInit {
         } else {
           this.errorMessage.set(err.error?.message || 'Error al registrar el turno.');
         }
+      }
+    });
+  }
+
+  protected payNow(appointment: Appointment): void {
+    this.paying.set(true);
+    this.errorMessage.set('');
+
+    this.paymentService.startPayment(appointment.id).subscribe({
+      next: (res) => {
+        this.paying.set(false);
+        this.paymentService.rememberCheckoutUrl(res.payment_id, res.checkout_url);
+        this.router.navigate(['/payments/result'], {
+          queryParams: { external_reference: res.payment_id }
+        });
+      },
+      error: (err: HttpErrorResponse) => {
+        this.paying.set(false);
+        this.errorMessage.set(err.error?.message || 'No se pudo iniciar el pago.');
       }
     });
   }
