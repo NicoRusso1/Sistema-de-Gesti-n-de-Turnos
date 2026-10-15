@@ -1,0 +1,112 @@
+.result-container {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.result-card {
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 35px;
+  text-align: center;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+.result-card h2 {
+  color: #1b4b5a;
+}
+
+.result-icon {
+  width: 60px;
+  height: 60px;
+  line-height: 60px;
+  color: white;
+  font-size: 32px;
+  border-radius: 50%;
+  margin: 0 auto 15px auto;
+}
+
+.result-icon.ok {
+  background: #28a745;
+}
+
+.result-icon.fail {
+  background: #dc3545;
+}
+
+.result-icon.wait {
+  background: #6c757d;
+}
+
+.summary-details {
+  background: #f8f9fa;
+  border-radius: 6px;
+  padding: 18px;
+  text-align: left;
+  margin: 20px 0;
+  line-height: 1.7;
+}
+
+.price-row {
+  display: flex;
+  justify-content: space-between;
+}
+
+.price-row.total {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #1b4b5a;
+}
+
+.alert-danger {
+  background: #f8d7da;
+  color: #721c24;
+  padding: 10px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+  font-size: 0.9rem;
+}
+
+.btn {
+  padding: 12px 18px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 1rem;
+  font-family: inherit;
+  cursor: pointer;
+  border: none;
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
+}
+
+.btn-confirm {
+  background: #ed7d5c;
+  color: white;
+}
+
+.btn-confirm:hover:not(:disabled) {
+  background: #d96847;
+}
+
+.btn-confirm:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: #1b4b5a;
+  color: white;
+}
+
+.btn-secondary {
+  background: #6c757d;
+  color: white;
+}
+
+.actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+  margin-top: 20px;
+}

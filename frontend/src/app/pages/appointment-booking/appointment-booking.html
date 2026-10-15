@@ -12,7 +12,7 @@
       <p>Tu turno ha sido agendado en estado <strong>{{ app.status | uppercase }}</strong>.</p>
       
       <div class="summary-details">
-        <div><strong>Fecha y Hora:</strong> {{ app.scheduled_at | date:'dd/MM/yyyy HH:mm' }} hs</div>
+        <div><strong>Fecha y Hora:</strong> {{ app.scheduled_at | date:'dd/MM/yyyy HH:mm':'UTC' }} hs</div>
         <div><strong>Médico:</strong> Dr/a. {{ app.doctor?.first_name }} {{ app.doctor?.last_name }}</div>
         <div><strong>Especialidad:</strong> {{ app.specialty?.name || 'General' }}</div>
         <div><strong>Obra Social:</strong> {{ app.healthInsurance?.name || 'Particular' }}</div>
@@ -24,6 +24,19 @@
         <div class="price-row discount"><span>Descuento:</span> <span>-${{ app.monto_descuento | number:'1.2-2' }}</span></div>
         <div class="price-row total"><span>Total Abonado/A pagar:</span> <span>${{ app.monto_final | number:'1.2-2' }}</span></div>
       </div>
+
+      @if (errorMessage()) {
+        <div class="alert-danger">{{ errorMessage() }}</div>
+      }
+
+      @if (app.status === 'reservado') {
+        <p>Para confirmar tu turno tenés que abonarlo.</p>
+        <div class="actions">
+          <button type="button" class="btn btn-confirm" [disabled]="paying()" (click)="payNow(app)">
+            @if (paying()) { Iniciando pago... } @else { Pagar ahora }
+          </button>
+        </div>
+      }
 
       <div class="actions">
         <button type="button" class="btn btn-primary" (click)="resetBooking()">Reservar otro turno</button>

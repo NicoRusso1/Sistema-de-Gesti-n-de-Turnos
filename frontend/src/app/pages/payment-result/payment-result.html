@@ -1,0 +1,75 @@
+<div class="result-container">
+  @switch (state()) {
+    @case ('checking') {
+      <div class="result-card">
+        <h2>Verificando el pago...</h2>
+        <p>Estamos consultando el estado de tu pago.</p>
+      </div>
+    }
+
+    @case ('waiting') {
+      <div class="result-card">
+        <div class="result-icon wait">…</div>
+        <h2>Esperando la confirmación del pago</h2>
+        <p>Completá el pago en MercadoPago. Esta pantalla se actualiza sola cuando se acredite.</p>
+        <div class="actions">
+          @if (checkoutUrl()) {
+            <a class="btn btn-confirm" [href]="checkoutUrl()" target="_blank" rel="noopener">Ir a pagar en MercadoPago</a>
+          }
+          <button type="button" class="btn btn-secondary" (click)="verifyAgain()">Verificar de nuevo</button>
+        </div>
+      </div>
+    }
+
+    @case ('approved') {
+      @if (payment(); as p) {
+        <div class="result-card">
+          <div class="result-icon ok">✓</div>
+          <h2>¡Pago acreditado!</h2>
+          <p>Tu turno quedó confirmado en estado <strong>{{ p.appointment.status | uppercase }}</strong>.</p>
+
+          <div class="summary-details">
+            <div><strong>Fecha y Hora:</strong> {{ p.appointment.scheduled_at | date:'dd/MM/yyyy HH:mm':'UTC' }} hs</div>
+            <div><strong>Medio de pago:</strong> {{ methodLabel() }}</div>
+            <div class="price-row total"><span>Total pagado:</span> <span>${{ p.amount | number:'1.2-2' }}</span></div>
+          </div>
+
+          <div class="actions">
+            <a routerLink="/appointments/new" class="btn btn-primary">Reservar otro turno</a>
+            <a routerLink="/home" class="btn btn-secondary">Volver al inicio</a>
+          </div>
+        </div>
+      }
+    }
+
+    @case ('rejected') {
+      <div class="result-card">
+        <div class="result-icon fail">!</div>
+        <h2>El pago fue rechazado</h2>
+        <p>Tu turno sigue reservado. Podés intentar pagar de nuevo.</p>
+
+        @if (errorMessage()) {
+          <div class="alert-danger">{{ errorMessage() }}</div>
+        }
+
+        <div class="actions">
+          <button type="button" class="btn btn-confirm" [disabled]="retrying()" (click)="retry()">
+            @if (retrying()) { Iniciando pago... } @else { Reintentar el pago }
+          </button>
+          <a routerLink="/home" class="btn btn-secondary">Volver al inicio</a>
+        </div>
+      </div>
+    }
+
+    @case ('error') {
+      <div class="result-card">
+        <div class="result-icon fail">!</div>
+        <h2>No pudimos verificar el pago</h2>
+        <div class="alert-danger">{{ errorMessage() }}</div>
+        <div class="actions">
+          <a routerLink="/home" class="btn btn-secondary">Volver al inicio</a>
+        </div>
+      </div>
+    }
+  }
+</div>
