@@ -12,6 +12,7 @@ class Appointment extends Model
         'patient_id',
         'doctor_id',
         'specialty_id',
+        'sala_id',
         'health_insurance_id',
         'affiliate_number',
         'monto_base',
@@ -19,6 +20,7 @@ class Appointment extends Model
         'monto_final',
         'scheduled_at',
         'status',
+        'cancellation_reason',
     ];
 
     protected function casts(): array
@@ -46,13 +48,23 @@ class Appointment extends Model
         return $this->belongsTo(Specialty::class);
     }
 
+    public function sala(): BelongsTo
+    {
+        return $this->belongsTo(Sala::class, 'sala_id');
+    }
+
     public function healthInsurance(): BelongsTo
     {
         return $this->belongsTo(HealthInsurance::class, 'health_insurance_id');
     }
 
-        public function payments(): HasMany
+    public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);
+    }
+
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(Notification::class, 'appointment_id');
     }
 }

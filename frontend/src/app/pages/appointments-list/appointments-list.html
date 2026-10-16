@@ -1,0 +1,129 @@
+<div class="turnos-container">
+  <div class="header-section">
+    <h2>Gestión y Listado de Turnos</h2>
+    <a routerLink="/appointments/new" class="btn btn-primary">+ Reservar Nuevo Turno</a>
+  </div>
+
+  @if (successMessage()) {
+    <div class="alert alert-success">{{ successMessage() }}</div>
+  }
+  @if (errorMessage()) {
+    <div class="alert alert-danger">{{ errorMessage() }}</div>
+  }
+
+  @if (loading()) {
+    <div class="loading-state">Cargando turnos...</div>
+  } @else {
+    <div class="table-responsive">
+      <table class="turnos-table">
+        <thead>
+          <tr>
+            <th>Fecha y Hora</th>
+            <th>Médico</th>
+            <th>Especialidad</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (app of appointments(); track app.id) {
+            <tr>
+              <td>{{ app.scheduled_at | date:'dd/MM/yyyy HH:mm' }}</td>
+              <td>Dr/a. {{ app.doctor?.first_name }} {{ app.doctor?.last_name }}</td>
+              <td>{{ app.specialty?.name || 'General' }}</td>
+              <td>
+                <span class="badge" [class.badge-cancelled]="app.status === 'cancelado'" [class.badge-active]="app.status !== 'cancelado'">
+                  {{ app.status | uppercase }}
+                </span>
+                @if (app.cancellation_reason) {
+                  <small class="reason-text">({{ app.cancellation_reason }})</small>
+                }
+              </td>
+              <td>
+                @if (canManage(app)) {
+                  <div class="action-buttons">
+                    <button class="btn btn-outline-warning" (click)="openRescheduleModal(app)">Reprogramar</button>
+                    <button class="btn btn-outline-danger" (click)="openCancelModal(app)">Cancelar</button>
+                  </div>
+                } @else {
+                  <span class="text-muted">Sin acciones</span>
+                }
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="5" class="empty-state">No se registraron turnos.</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+
+  <!-- MODAL DE CANCELACIÓN -->
+  @if (cancellingAppointment(); as target) {
+    <div class="modal-backdrop">
+      <div class="modal-card">
+        <h3>Confirmar Cancelación de Turno</h3>
+        <p>¿Seguro que deseas cancelar el turno con <strong>Dr/a. {{ target.doctor?.first_name }} {{ target.doctor?.last_name }}</strong> el <strong>{{ target.scheduled_at | date:'dd/MM/yyyy HH:mm' }}</strong>?</p>
+        <p class="text-warning">Esta acción liberará la agenda del médico y la sala asignada.</p>
+
+        <form [formGroup]="cancelForm" (ngSubmit)="submitCancellation()">
+          <div class="form-group">
+            <label for="reason">Motivo (opcional):</label>
+            <input id="reason" type="text" formControlName="reason" class="form-control" placeholder="Ej: Motivos personales, imprevisto laboral..." />
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" [disabled]="actionInProgress()" (click)="closeCancelModal()">Volver</button>
+            <button type="submit" class="btn btn-danger" [disabled]="actionInProgress()">
+              {{ actionInProgress() ? 'Cancelando...' : 'Confirmar Cancelación' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- MODAL DE REPROGRAMACIÓN -->
+  @if (reschedulingAppointment(); as target) {
+    <div class="modal-backdrop">
+      <div class="modal-card">
+        <h3>Reprogramar Turno</h3>
+        <p>Turno actual: <strong>{{ target.scheduled_at | date:'dd/MM/yyyy HH:mm' }}</strong> con <strong>Dr/a. {{ target.doctor?.first_name }} {{ target.doctor?.last_name }}</strong></p>
+
+        <form [formGroup]="rescheduleForm" (ngSubmit)="submitRescheduling()">
+          <div class="form-group">
+            <label for="newDate">Nueva Fecha:</label>
+            <input id="newDate" type="date" formControlName="date" class="form-control" (change)="onRescheduleDateChange()" />
+          </div>
+
+          @if (loadingSlots()) {
+            <p>Buscando horarios disponibles...</p>
+          }
+
+          @if (availableSlots().length > 0) {
+            <div class="form-group">
+              <label for="newSlot">Horarios Disponibles:</label>
+              <select id="newSlot" formControlName="slot" class="form-control">
+                <option value="">Selecciona una franja horaria</option>
+                @for (slot of availableSlots(); track slot.start_time) {
+                  <option [value]="slot.start_time">{{ slot.start_time }} - {{ slot.end_time }}</option>
+                }
+              </select>
+            </div>
+          } @else if (rescheduleForm.value.date && !loadingSlots()) {
+            <p class="text-danger">No hay horarios libres para la fecha seleccionada.</p>
+          }
+
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" [disabled]="actionInProgress()" (click)="closeRescheduleModal()">Cerrar</button>
+            <button type="submit" class="btn btn-warning" [disabled]="rescheduleForm.invalid || actionInProgress()">
+              {{ actionInProgress() ? 'Guardando...' : 'Guardar Nueva Fecha' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>
