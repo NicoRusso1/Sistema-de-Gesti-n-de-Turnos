@@ -21,6 +21,7 @@ Route::post('/login', [AuthController::class, 'login'])->middleware('throttle:5,
 Route::apiResource('specialties', SpecialtyController::class)->only(['index', 'show']);
 Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
 Route::post('/reset-password', [AuthController::class, 'resetPassword']);
+Route::post('/mercadopago/webhook', [PaymentController::class, 'webhook']);
 
 // Requieren token
 Route::middleware('auth:sanctum')->group(function () {
@@ -77,6 +78,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/specialties/{id}/doctors', [DoctorSpecialtyController::class, 'doctorsBySpecialty']);
 
     Route::post('/appointments', [AppointmentController::class, 'store']);
+    Route::get('/appointments', [AppointmentController::class, 'index']);
+    Route::post('/appointments', [AppointmentController::class, 'store']);
+    Route::patch('/appointments/{id}/cancel', [AppointmentController::class, 'cancel']);
+    Route::patch('/appointments/{id}/reschedule', [AppointmentController::class, 'reschedule']);
 
     Route::post('/appointments/{id}/payments', [PaymentController::class, 'store']);
     Route::post('/payments/{id}/verify', [PaymentController::class, 'verify']);

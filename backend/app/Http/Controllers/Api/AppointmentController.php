@@ -3,21 +3,78 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\CancelAppointmentRequest;
+use App\Http\Requests\RescheduleAppointmentRequest;
 use App\Http\Requests\StoreAppointmentRequest;
 use App\Models\Appointment;
-use App\Models\Patient;
+use App\Services\AppointmentNotificationService;
 use App\Services\AppointmentPricingService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use OpenApi\Attributes as OA;
 
 class AppointmentController extends Controller
 {
     protected AppointmentPricingService $pricingService;
+    protected AppointmentNotificationService $notificationService;
 
-    public function __construct(AppointmentPricingService $pricingService)
-    {
+    public function __construct(
+        AppointmentPricingService $pricingService,
+        AppointmentNotificationService $notificationService
+    ) {
         $this->pricingService = $pricingService;
+        $this->notificationService = $notificationService;
+    }
+
+    #[OA\Get(
+        path: '/api/appointments',
+        summary: 'Listar turnos con filtros',
+        description: 'Retorna el listado de turnos. Los pacientes solo ven sus turnos; administradores y secretarias con permiso pueden ver todos.',
+        tags: ['Turnos'],
+        security: [['sanctum' => []]],
+        parameters: [
+            new OA\Parameter(name: 'status', in: 'query', required: false, schema: new OA\Schema(type: 'string', enum: ['reservado', 'abonado', 'scheduled', 'confirmed', 'cancelado'])),
+            new OA\Parameter(name: 'date', in: 'query', required: false, schema: new OA\Schema(type: 'string', format: 'date'), example: '2026-10-15'),
+            new OA\Parameter(name: 'doctor_id', in: 'query', required: false, schema: new OA\Schema(type: 'integer')),
+            new OA\Parameter(name: 'patient_id', in: 'query', required: false, schema: new OA\Schema(type: 'integer'))
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Listado de turnos devuelto correctamente.'),
+            new OA\Response(response: 401, description: 'No autenticado.')
+        ]
+    )]
+    public function index(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $query = Appointment::with(['doctor', 'patient', 'specialty', 'sala', 'healthInsurance']);
+
+        // Si es paciente y no tiene permiso para ver todos los turnos, solo ve los suyos
+        if (!$user->hasAdminAccess() && !$user->hasPermissionFlag('view_all_appointments')) {
+            if ($user->isDoctor()) {
+                $query->where('doctor_id', $user->id);
+            } else {
+                $query->where('patient_id', $user->id);
+            }
+        } elseif ($request->filled('patient_id')) {
+            $query->where('patient_id', $request->patient_id);
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('doctor_id')) {
+            $query->where('doctor_id', $request->doctor_id);
+        }
+
+        if ($request->filled('date')) {
+            $query->whereDate('scheduled_at', $request->date);
+        }
+
+        $appointments = $query->orderBy('scheduled_at', 'desc')->paginate(15);
+
+        return response()->json($appointments, 200);
     }
 
     #[OA\Post(
@@ -25,9 +82,7 @@ class AppointmentController extends Controller
         summary: 'Registrar la reserva de un turno con cálculo de obra social',
         description: 'Crea una reserva de turno en estado "reservado", valida solapamiento de horarios y calcula el descuento de obra social.',
         tags: ['Turnos'],
-        security: [
-            ['sanctum' => []]
-        ],
+        security: [['sanctum' => []]],
         requestBody: new OA\RequestBody(
             required: true,
             description: 'Datos para la reserva del turno',
@@ -36,6 +91,7 @@ class AppointmentController extends Controller
                 properties: [
                     new OA\Property(property: 'doctor_id', type: 'integer', example: 3, description: 'ID del médico'),
                     new OA\Property(property: 'specialty_id', type: 'integer', nullable: true, example: 1, description: 'ID de la especialidad'),
+                    new OA\Property(property: 'sala_id', type: 'integer', nullable: true, example: 2, description: 'ID de la sala opcional'),
                     new OA\Property(property: 'scheduled_at', type: 'string', example: '2026-10-15 09:15', description: 'Fecha y hora en formato YYYY-MM-DD HH:mm'),
                     new OA\Property(property: 'health_insurance_id', type: 'integer', nullable: true, example: 2, description: 'ID de obra social (omitir o null si es particular)'),
                     new OA\Property(property: 'affiliate_number', type: 'string', nullable: true, example: 'OSDE-98765432', description: 'Número de carnet de afiliado'),
@@ -44,31 +100,7 @@ class AppointmentController extends Controller
             )
         ),
         responses: [
-            new OA\Response(
-                response: 201,
-                description: 'Turno reservado exitosamente.',
-                content: new OA\JsonContent(
-                    properties: [
-                        new OA\Property(property: 'message', type: 'string', example: 'Turno reservado exitosamente'),
-                        new OA\Property(
-                            property: 'appointment',
-                            type: 'object',
-                            properties: [
-                                new OA\Property(property: 'id', type: 'integer', example: 10),
-                                new OA\Property(property: 'patient_id', type: 'integer', example: 5),
-                                new OA\Property(property: 'doctor_id', type: 'integer', example: 3),
-                                new OA\Property(property: 'scheduled_at', type: 'string', example: '2026-10-15 09:15:00'),
-                                new OA\Property(property: 'status', type: 'string', example: 'reservado'),
-                                new OA\Property(property: 'health_insurance_id', type: 'integer', nullable: true, example: 2),
-                                new OA\Property(property: 'affiliate_number', type: 'string', nullable: true, example: 'OSDE-98765432'),
-                                new OA\Property(property: 'monto_base', type: 'number', example: 15000.00),
-                                new OA\Property(property: 'monto_descuento', type: 'number', example: 6000.00),
-                                new OA\Property(property: 'monto_final', type: 'number', example: 9000.00)
-                            ]
-                        )
-                    ]
-                )
-            ),
+            new OA\Response(response: 201, description: 'Turno reservado exitosamente.'),
             new OA\Response(response: 401, description: 'No autenticado.'),
             new OA\Response(response: 409, description: 'El médico ya tiene un turno reservado en ese horario.'),
             new OA\Response(response: 422, description: 'Error de validación en los campos enviados.')
@@ -104,6 +136,7 @@ class AppointmentController extends Controller
             'patient_id'          => $user->id,
             'doctor_id'           => $validated['doctor_id'],
             'specialty_id'        => $validated['specialty_id'] ?? null,
+            'sala_id'             => $validated['sala_id'] ?? null,
             'scheduled_at'        => $scheduledAt,
             'status'              => 'reservado',
             'health_insurance_id' => $validated['health_insurance_id'] ?? null,
@@ -115,7 +148,134 @@ class AppointmentController extends Controller
 
         return response()->json([
             'message'     => 'Turno reservado exitosamente',
-            'appointment' => $appointment->load(['doctor', 'specialty', 'healthInsurance'])
+            'appointment' => $appointment->load(['doctor', 'specialty', 'sala', 'healthInsurance'])
         ], 201);
+    }
+
+    #[OA\Patch(
+        path: '/api/appointments/{id}/cancel',
+        summary: 'Cancelar un turno (GT-57 y GT-58)',
+        description: 'Cambia el estado del turno a "cancelado", libera la sala/horario en la agenda y genera la notificación correspondiente (GT-59).',
+        tags: ['Turnos'],
+        security: [['sanctum' => []]],
+        parameters: [
+            new OA\Parameter(name: 'id', description: 'ID del turno a cancelar', in: 'path', required: true, schema: new OA\Schema(type: 'integer', minimum: 1))
+        ],
+        requestBody: new OA\RequestBody(
+            required: false,
+            content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: 'reason', type: 'string', example: 'Imprevisto laboral', description: 'Motivo de la cancelación')
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Turno cancelado exitosamente y agenda liberada.'),
+            new OA\Response(response: 400, description: 'El turno ya se encuentra cancelado.'),
+            new OA\Response(response: 401, description: 'No autenticado.'),
+            new OA\Response(response: 403, description: 'No tenés permiso para cancelar turnos.'),
+            new OA\Response(response: 404, description: 'Turno no encontrado.')
+        ]
+    )]
+    public function cancel(CancelAppointmentRequest $request, string $id): JsonResponse
+    {
+        $appointment = Appointment::with(['doctor', 'patient'])->find($id);
+
+        if (!$appointment) {
+            return response()->json(['message' => 'Turno no encontrado.'], 404);
+        }
+
+        if ($appointment->status === 'cancelado') {
+            return response()->json(['message' => 'El turno ya ha sido cancelado previamente.'], 400);
+        }
+
+        $reason = $request->input('reason');
+
+        // GT-58: Actualizar estado a 'cancelado' para liberar la agenda y la sala
+        $appointment->update([
+            'status'              => 'cancelado',
+            'cancellation_reason' => $reason,
+        ]);
+
+        // GT-59: Registrar la notificación en la tabla de notificaciones
+        $this->notificationService->notifyCancellation($appointment, $reason);
+
+        return response()->json([
+            'message'     => 'Turno cancelado correctamente. La agenda y la sala han sido liberadas.',
+            'appointment' => $appointment->fresh(['doctor', 'specialty', 'sala'])
+        ], 200);
+    }
+
+    #[OA\Patch(
+        path: '/api/appointments/{id}/reschedule',
+        summary: 'Reprogramar un turno existente',
+        description: 'Modifica la fecha y hora de un turno existente validando la disponibilidad del horario en la agenda del médico.',
+        tags: ['Turnos'],
+        security: [['sanctum' => []]],
+        parameters: [
+            new OA\Parameter(name: 'id', description: 'ID del turno a reprogramar', in: 'path', required: true, schema: new OA\Schema(type: 'integer', minimum: 1))
+        ],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['scheduled_at'],
+                properties: [
+                    new OA\Property(property: 'scheduled_at', type: 'string', example: '2026-10-20 11:30', description: 'Nueva fecha y hora (YYYY-MM-DD HH:mm)'),
+                    new OA\Property(property: 'sala_id', type: 'integer', nullable: true, example: 1, description: 'ID de sala opcional')
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Turno reprogramado exitosamente.'),
+            new OA\Response(response: 401, description: 'No autenticado.'),
+            new OA\Response(response: 403, description: 'No tenés permiso para modificar horarios.'),
+            new OA\Response(response: 404, description: 'Turno no encontrado.'),
+            new OA\Response(response: 409, description: 'El nuevo horario ya no está disponible.')
+        ]
+    )]
+    public function reschedule(RescheduleAppointmentRequest $request, string $id): JsonResponse
+    {
+        $appointment = Appointment::with(['doctor', 'patient'])->find($id);
+
+        if (!$appointment) {
+            return response()->json(['message' => 'Turno no encontrado.'], 404);
+        }
+
+        if ($appointment->status === 'cancelado') {
+            return response()->json(['message' => 'No es posible reprogramar un turno que ya está cancelado. Debe reservar uno nuevo.'], 400);
+        }
+
+        $validated = $request->validated();
+        $newScheduledAt = Carbon::createFromFormat('Y-m-d H:i', $validated['scheduled_at']);
+
+        // Validar que el médico no tenga ya otro turno activo en ese nuevo horario
+        $conflict = Appointment::where('doctor_id', $appointment->doctor_id)
+            ->where('id', '!=', $appointment->id)
+            ->where('scheduled_at', $newScheduledAt)
+            ->whereIn('status', ['reservado', 'abonado', 'scheduled', 'confirmed'])
+            ->exists();
+
+        if ($conflict) {
+            return response()->json([
+                'message' => 'El horario seleccionado ya se encuentra ocupado por otro turno.'
+            ], 409);
+        }
+
+        $previousDate = $appointment->scheduled_at->format('d/m/Y H:i');
+
+        $appointment->update([
+            'scheduled_at' => $newScheduledAt,
+            'sala_id'      => $validated['sala_id'] ?? $appointment->sala_id,
+            // Si estaba reservado o confirmado, se mantiene activo
+            'status'       => $appointment->status === 'cancelado' ? 'reservado' : $appointment->status,
+        ]);
+
+        // Registrar notificación de reprogramación (GT-59)
+        $this->notificationService->notifyRescheduling($appointment, $previousDate);
+
+        return response()->json([
+            'message'     => 'Turno reprogramado correctamente.',
+            'appointment' => $appointment->fresh(['doctor', 'specialty', 'sala'])
+        ], 200);
     }
 }

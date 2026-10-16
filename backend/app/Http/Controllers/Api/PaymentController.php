@@ -172,9 +172,9 @@ class PaymentController extends Controller
     )]
 
 
-    public function verify(Request $request, $id): JsonResponse
+        public function verify(Request $request, $id): JsonResponse
     {
-        $payment = Payment::with('appointment')->find($id);
+        $payment = Payment::with(['appointment.doctor', 'appointment.specialty', 'appointment.healthInsurance', 'appointment.patient', 'appointment.sala'])->find($id);
 
         if (!$payment) {
             return response()->json(['message' => 'Pago no encontrado'], 404);
@@ -195,7 +195,8 @@ class PaymentController extends Controller
 
         try {
             $result = $this->mercadoPago->findPaymentByReference((string) $payment->id);
-        } catch (RequestException $e) {
+        } catch (\Throwable $e) {
+            logger()->error('Error consultando MercadoPago: ' . $e->getMessage());
             return response()->json(['message' => 'No se pudo consultar MercadoPago'], 502);
         }
 
@@ -218,7 +219,7 @@ class PaymentController extends Controller
 
         $methodName = match ($result['payment_type_id'] ?? null) {
             'credit_card' => PaymentMethodName::Credit,
-            'debit_card' => PaymentMethodName::Debit,
+            'debit_card'  => PaymentMethodName::Debit,
             'bank_transfer' => PaymentMethodName::Transfer,
             default => null,
         };
@@ -227,15 +228,69 @@ class PaymentController extends Controller
         $method = $methodName ? PaymentMethod::where('name', $methodName->value)->first() : null;
 
         $payment->update([
-            'payment_status_id' => $status->id,
-            'payment_method_id' => $method?->id,
+            'payment_status_id'   => $status->id,
+            'payment_method_id'   => $method?->id,
             'provider_payment_id' => (string) $result['id'],
-            'payment_date' => $statusName === PaymentStatusName::Approved ? now() : null,
+            'payment_date'        => $statusName === PaymentStatusName::Approved ? now() : null,
         ]);
+
+        // SI EL PAGO FUE APROBADO: Actualizamos el turno y enviamos el correo
+        if ($statusName === PaymentStatusName::Approved) {
+            $appointment = $payment->appointment;
+            $appointment->update(['status' => 'abonado']);
+
+            // Enviar correo de confirmación de forma segura
+            try {
+                if ($destinatario = $appointment->patient?->email) {
+                    \Illuminate\Support\Facades\Mail::to($destinatario)
+                        ->send(new \App\Mail\TurnoConfirmadoMail($appointment, $payment));
+                }
+            } catch (\Throwable $mailError) {
+                logger()->error('Error al enviar correo de confirmación de turno: ' . $mailError->getMessage());
+            }
+        }
 
         return response()->json([
             'message' => 'Pago actualizado',
             'payment' => $payment->fresh()->load(['method', 'status', 'appointment']),
         ], 200);
+    }
+
+    /**
+     * Webhook IPN de MercadoPago (notificaciones asíncronas)
+     */
+    public function webhook(Request $request): JsonResponse
+    {
+        $type = $request->input('type') ?? $request->input('topic');
+        $dataId = $request->input('data.id') ?? $request->input('id');
+
+        if ($type === 'payment' && $dataId) {
+            try {
+                $mpPayment = $this->mercadoPago->getPaymentById((string) $dataId);
+                if ($mpPayment && isset($mpPayment['external_reference'])) {
+                    $payment = Payment::with(['appointment.doctor', 'appointment.patient'])->find($mpPayment['external_reference']);
+                    if ($payment && $mpPayment['status'] === 'approved') {
+                        $approved = PaymentStatus::where('name', PaymentStatusName::Approved->value)->first();
+                        if ($approved) {
+                            $payment->update([
+                                'payment_status_id'   => $approved->id,
+                                'provider_payment_id' => (string) $mpPayment['id'],
+                                'payment_date'        => now(),
+                            ]);
+                            $payment->appointment->update(['status' => 'abonado']);
+
+                            if ($email = $payment->appointment->patient?->email) {
+                                \Illuminate\Support\Facades\Mail::to($email)
+                                    ->send(new \App\Mail\TurnoConfirmadoMail($payment->appointment, $payment));
+                            }
+                        }
+                    }
+                }
+            } catch (\Throwable $e) {
+                logger()->error('Error procesando Webhook de MercadoPago: ' . $e->getMessage());
+            }
+        }
+
+        return response()->json(['status' => 'ok'], 200);
     }
 }
