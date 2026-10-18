@@ -170,6 +170,12 @@ class Patient extends Authenticatable
 
     public function hasPermissionFlag(string $flag): bool
     {
-        return (bool) ($this->permissions?->{$flag} ?? false);
+        // Si el usuario todavía no tiene fila en user_permissions (ej: paciente recién registrado)
+        // se usan los permisos por defecto de su tipo de usuario
+        if (!$this->permissions) {
+            return (bool) (UserPermission::defaultsFor($this->userType?->name)[$flag] ?? false);
+        }
+
+        return (bool) ($this->permissions->{$flag} ?? false);
     }
 }

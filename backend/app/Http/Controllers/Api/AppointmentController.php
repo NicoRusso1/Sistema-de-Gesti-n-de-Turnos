@@ -29,43 +29,62 @@ class AppointmentController extends Controller
 
     #[OA\Get(
         path: '/api/appointments',
-        summary: 'Listar turnos con filtros',
-        description: 'Retorna el listado de turnos. Los pacientes solo ven sus turnos; administradores y secretarias con permiso pueden ver todos.',
+        summary: 'Listar la agenda de turnos según el rol / scope del usuario (GT-54 y GT-55)',
+        description: 'Retorna los turnos visibles para el usuario logueado según su tipo de usuario y permisos activos: '
+            . 'Paciente con view_own_appointments → solo sus turnos (scope "own"); '
+            . 'Médico con view_assigned_patients → solo los turnos donde es el médico asignado (scope "assigned"); '
+            . 'Secretaria con view_all_appointments o Administrador → todos los turnos (scope "all"). '
+            . 'Los filtros doctor_id y patient_id solo se aplican con scope "all". '
+            . 'La respuesta es paginada e incluye el campo "scope" aplicado.',
         tags: ['Turnos'],
         security: [['sanctum' => []]],
         parameters: [
             new OA\Parameter(name: 'status', in: 'query', required: false, schema: new OA\Schema(type: 'string', enum: ['reservado', 'abonado', 'scheduled', 'confirmed', 'cancelado'])),
             new OA\Parameter(name: 'date', in: 'query', required: false, schema: new OA\Schema(type: 'string', format: 'date'), example: '2026-10-15'),
-            new OA\Parameter(name: 'doctor_id', in: 'query', required: false, schema: new OA\Schema(type: 'integer')),
-            new OA\Parameter(name: 'patient_id', in: 'query', required: false, schema: new OA\Schema(type: 'integer'))
+            new OA\Parameter(name: 'doctor_id', in: 'query', required: false, description: 'Solo con scope "all"', schema: new OA\Schema(type: 'integer')),
+            new OA\Parameter(name: 'patient_id', in: 'query', required: false, description: 'Solo con scope "all"', schema: new OA\Schema(type: 'integer'))
         ],
         responses: [
-            new OA\Response(response: 200, description: 'Listado de turnos devuelto correctamente.'),
-            new OA\Response(response: 401, description: 'No autenticado.')
+            new OA\Response(
+                response: 200,
+                description: 'Listado de turnos devuelto correctamente.',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'scope', type: 'string', enum: ['own', 'assigned', 'all'], example: 'own', description: 'Alcance aplicado a la consulta'),
+                        new OA\Property(property: 'current_page', type: 'integer', example: 1),
+                        new OA\Property(property: 'data', type: 'array', items: new OA\Items(type: 'object')),
+                        new OA\Property(property: 'last_page', type: 'integer', example: 1),
+                        new OA\Property(property: 'per_page', type: 'integer', example: 15),
+                        new OA\Property(property: 'total', type: 'integer', example: 3)
+                    ]
+                )
+            ),
+            new OA\Response(response: 401, description: 'No autenticado.'),
+            new OA\Response(response: 403, description: 'El usuario no tiene permisos activos para ver la agenda de turnos.')
         ]
     )]
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
-        $query = Appointment::with(['doctor', 'patient', 'specialty', 'sala', 'healthInsurance']);
+        // Resuelto por el middleware appointment_scope (GT-54)
+        $scope = $request->attributes->get('appointment_scope');
 
-        // Si es paciente y no tiene permiso para ver todos los turnos, solo ve los suyos
-        if (!$user->hasAdminAccess() && !$user->hasPermissionFlag('view_all_appointments')) {
-            if ($user->isDoctor()) {
-                $query->where('doctor_id', $user->id);
-            } else {
-                $query->where('patient_id', $user->id);
+        // GT-55: filtro por scope del usuario logueado
+        $query = Appointment::with(['doctor', 'patient', 'specialty', 'sala', 'healthInsurance'])
+            ->visibleTo($scope, $user);
+
+        if ($scope === Appointment::SCOPE_ALL) {
+            if ($request->filled('patient_id')) {
+                $query->where('patient_id', $request->patient_id);
             }
-        } elseif ($request->filled('patient_id')) {
-            $query->where('patient_id', $request->patient_id);
+
+            if ($request->filled('doctor_id')) {
+                $query->where('doctor_id', $request->doctor_id);
+            }
         }
 
         if ($request->filled('status')) {
             $query->where('status', $request->status);
-        }
-
-        if ($request->filled('doctor_id')) {
-            $query->where('doctor_id', $request->doctor_id);
         }
 
         if ($request->filled('date')) {
@@ -74,7 +93,7 @@ class AppointmentController extends Controller
 
         $appointments = $query->orderBy('scheduled_at', 'desc')->paginate(15);
 
-        return response()->json($appointments, 200);
+        return response()->json(array_merge(['scope' => $scope], $appointments->toArray()), 200);
     }
 
     #[OA\Post(

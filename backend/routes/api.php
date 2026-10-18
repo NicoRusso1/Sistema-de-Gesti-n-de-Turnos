@@ -78,8 +78,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/specialties/{id}/doctors', [DoctorSpecialtyController::class, 'doctorsBySpecialty']);
 
     Route::post('/appointments', [AppointmentController::class, 'store']);
-    Route::get('/appointments', [AppointmentController::class, 'index']);
-    Route::post('/appointments', [AppointmentController::class, 'store']);
+    Route::get('/appointments', [AppointmentController::class, 'index'])->middleware('appointment_scope');
     Route::patch('/appointments/{id}/cancel', [AppointmentController::class, 'cancel']);
     Route::patch('/appointments/{id}/reschedule', [AppointmentController::class, 'reschedule']);
 

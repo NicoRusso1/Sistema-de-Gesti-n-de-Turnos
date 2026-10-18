@@ -61,7 +61,11 @@ export interface AppointmentFilters {
   page?: number;
 }
 
+// Alcance de la agenda que resuelve el backend según rol y permisos
+export type AppointmentScope = 'own' | 'assigned' | 'all';
+
 export interface PaginatedAppointments {
+  scope: AppointmentScope;
   current_page: number;
   data: Appointment[];
   total: number;

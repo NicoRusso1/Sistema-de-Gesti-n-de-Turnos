@@ -10,7 +10,7 @@
     <nav>
       <ul>
         <li><a routerLink="/home">Inicio</a></li>
-        <li><a routerLink="/appointments">Mis Turnos / Agenda</a></li>
+        <li><a routerLink="/appointments">{{ agendaLabel() }}</a></li>
         <!-- Accesible y visible para Admin y SuperAdmin -->
         @if (isAdmin()) {
         <li><a routerLink="/users">Gestión de Usuarios</a></li>

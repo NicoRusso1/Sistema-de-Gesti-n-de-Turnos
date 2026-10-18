@@ -3,7 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { Appointment } from '../../models/appointment';
+import { Appointment, AppointmentScope } from '../../models/appointment';
 import { DoctorSlot } from '../../models/doctor-schedule';
 import { AppointmentService } from '../../services/appointment.service';
 import { AuthService } from '../../services/auth.service';
@@ -24,6 +24,8 @@ export class AppointmentsListComponent implements OnInit {
 
   currentUser = this.authService.user;
   appointments = signal<Appointment[]>([]);
+  // Alcance de la agenda resuelto por el backend (own / assigned / all)
+  scope = signal<AppointmentScope | null>(null);
   loading = signal<boolean>(false);
   errorMessage = signal<string>('');
   successMessage = signal<string>('');
@@ -55,22 +57,57 @@ export class AppointmentsListComponent implements OnInit {
     this.errorMessage.set('');
     this.appointmentService.getAppointments().subscribe({
       next: (res) => {
-        this.appointments.set(res.data ?? res);
+        this.appointments.set(res.data);
+        this.scope.set(res.scope);
         this.loading.set(false);
       },
-      error: () => {
-        this.errorMessage.set('Error al cargar la lista de turnos.');
+      error: (err: HttpErrorResponse) => {
+        this.appointments.set([]);
+        this.scope.set(null);
+        this.errorMessage.set(
+          err.status === 403
+            ? 'No tenés permiso para ver la agenda de turnos. Pedile a un administrador que lo active.'
+            : 'Error al cargar la lista de turnos.'
+        );
         this.loading.set(false);
       },
     });
   }
 
+  title(): string {
+    switch (this.scope()) {
+      case 'own':
+        return 'Mis Turnos';
+      case 'assigned':
+        return 'Mi Agenda';
+      default:
+        return 'Agenda de Turnos';
+    }
+  }
+
+  // El paciente ya sabe que los turnos son suyos y el médico que son de él
+  showPatientColumn(): boolean {
+    return this.scope() !== 'own';
+  }
+
+  showDoctorColumn(): boolean {
+    return this.scope() !== 'assigned';
+  }
+
+  isAdmin(): boolean {
+    const role = this.currentUser()?.role?.name;
+    return role === 'Administrator' || role === 'SuperAdmin';
+  }
+
+  canBook(): boolean {
+    return this.isAdmin() || this.currentUser()?.user_type?.name === 'patient';
+  }
+
   canManage(app: Appointment): boolean {
     const user = this.currentUser();
     if (!user) return false;
-    const isAdmin = user.role.name === 'Administrator' || user.role.name === 'SuperAdmin';
     const isOwnerPatient = user.id === app.patient_id;
-    return (isAdmin || isOwnerPatient) && app.status !== 'cancelado';
+    return (this.isAdmin() || isOwnerPatient) && app.status !== 'cancelado';
   }
 
   // --- Flujo Cancelar ---
