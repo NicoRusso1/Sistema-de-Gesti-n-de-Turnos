@@ -99,6 +99,116 @@
             }
         },
         "/api/appointments": {
+            "get": {
+                "tags": [
+                    "Turnos"
+                ],
+                "summary": "Listar la agenda de turnos según el rol / scope del usuario (GT-54 y GT-55)",
+                "description": "Retorna los turnos visibles para el usuario logueado según su tipo de usuario y permisos activos: Paciente con view_own_appointments → solo sus turnos (scope \"own\"); Médico con view_assigned_patients → solo los turnos donde es el médico asignado (scope \"assigned\"); Secretaria con view_all_appointments o Administrador → todos los turnos (scope \"all\"). Los filtros doctor_id y patient_id solo se aplican con scope \"all\". La respuesta es paginada e incluye el campo \"scope\" aplicado.",
+                "operationId": "812c4f15927f3d0e3e959538a6f1104b",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "reservado",
+                                "abonado",
+                                "scheduled",
+                                "confirmed",
+                                "cancelado"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "date",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        },
+                        "example": "2026-10-15"
+                    },
+                    {
+                        "name": "doctor_id",
+                        "in": "query",
+                        "description": "Solo con scope \"all\"",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "patient_id",
+                        "in": "query",
+                        "description": "Solo con scope \"all\"",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Listado de turnos devuelto correctamente.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "scope": {
+                                            "description": "Alcance aplicado a la consulta",
+                                            "type": "string",
+                                            "example": "own",
+                                            "enum": [
+                                                "own",
+                                                "assigned",
+                                                "all"
+                                            ]
+                                        },
+                                        "current_page": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        },
+                                        "last_page": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "per_page": {
+                                            "type": "integer",
+                                            "example": 15
+                                        },
+                                        "total": {
+                                            "type": "integer",
+                                            "example": 3
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado."
+                    },
+                    "403": {
+                        "description": "El usuario no tiene permisos activos para ver la agenda de turnos."
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
             "post": {
                 "tags": [
                     "Turnos"
@@ -127,6 +237,12 @@
                                         "description": "ID de la especialidad",
                                         "type": "integer",
                                         "example": 1,
+                                        "nullable": true
+                                    },
+                                    "sala_id": {
+                                        "description": "ID de la sala opcional",
+                                        "type": "integer",
+                                        "example": 2,
                                         "nullable": true
                                     },
                                     "scheduled_at": {
@@ -160,67 +276,7 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Turno reservado exitosamente.",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Turno reservado exitosamente"
-                                        },
-                                        "appointment": {
-                                            "properties": {
-                                                "id": {
-                                                    "type": "integer",
-                                                    "example": 10
-                                                },
-                                                "patient_id": {
-                                                    "type": "integer",
-                                                    "example": 5
-                                                },
-                                                "doctor_id": {
-                                                    "type": "integer",
-                                                    "example": 3
-                                                },
-                                                "scheduled_at": {
-                                                    "type": "string",
-                                                    "example": "2026-10-15 09:15:00"
-                                                },
-                                                "status": {
-                                                    "type": "string",
-                                                    "example": "reservado"
-                                                },
-                                                "health_insurance_id": {
-                                                    "type": "integer",
-                                                    "example": 2,
-                                                    "nullable": true
-                                                },
-                                                "affiliate_number": {
-                                                    "type": "string",
-                                                    "example": "OSDE-98765432",
-                                                    "nullable": true
-                                                },
-                                                "monto_base": {
-                                                    "type": "number",
-                                                    "example": 15000
-                                                },
-                                                "monto_descuento": {
-                                                    "type": "number",
-                                                    "example": 6000
-                                                },
-                                                "monto_final": {
-                                                    "type": "number",
-                                                    "example": 9000
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
+                        "description": "Turno reservado exitosamente."
                     },
                     "401": {
                         "description": "No autenticado."
@@ -230,6 +286,137 @@
                     },
                     "422": {
                         "description": "Error de validación en los campos enviados."
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/appointments/{id}/cancel": {
+            "patch": {
+                "tags": [
+                    "Turnos"
+                ],
+                "summary": "Cancelar un turno (GT-57 y GT-58)",
+                "description": "Cambia el estado del turno a \"cancelado\", libera la sala/horario en la agenda y genera la notificación correspondiente (GT-59).",
+                "operationId": "6902e3822a0adb8212078bfff7357f09",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID del turno a cancelar",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "reason": {
+                                        "description": "Motivo de la cancelación",
+                                        "type": "string",
+                                        "example": "Imprevisto laboral"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Turno cancelado exitosamente y agenda liberada."
+                    },
+                    "400": {
+                        "description": "El turno ya se encuentra cancelado."
+                    },
+                    "401": {
+                        "description": "No autenticado."
+                    },
+                    "403": {
+                        "description": "No tenés permiso para cancelar turnos."
+                    },
+                    "404": {
+                        "description": "Turno no encontrado."
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/appointments/{id}/reschedule": {
+            "patch": {
+                "tags": [
+                    "Turnos"
+                ],
+                "summary": "Reprogramar un turno existente",
+                "description": "Modifica la fecha y hora de un turno existente validando la disponibilidad del horario en la agenda del médico.",
+                "operationId": "d9a6ef7eec20c156f5ce63026c0066ed",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID del turno a reprogramar",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "scheduled_at"
+                                ],
+                                "properties": {
+                                    "scheduled_at": {
+                                        "description": "Nueva fecha y hora (YYYY-MM-DD HH:mm)",
+                                        "type": "string",
+                                        "example": "2026-10-20 11:30"
+                                    },
+                                    "sala_id": {
+                                        "description": "ID de sala opcional",
+                                        "type": "integer",
+                                        "example": 1,
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Turno reprogramado exitosamente."
+                    },
+                    "401": {
+                        "description": "No autenticado."
+                    },
+                    "403": {
+                        "description": "No tenés permiso para modificar horarios."
+                    },
+                    "404": {
+                        "description": "Turno no encontrado."
+                    },
+                    "409": {
+                        "description": "El nuevo horario ya no está disponible."
                     }
                 },
                 "security": [

@@ -471,12 +471,6 @@ class UserController extends Controller
 
     private function defaultPermissions(?string $typeName): array
     {
-        return [
-            'view_own_appointments' => $typeName === UserTypeName::Patient->value,
-            'view_all_appointments' => $typeName === UserTypeName::Secretary->value,
-            'view_assigned_patients' => $typeName === UserTypeName::Doctor->value,
-            'cancel_appointments' => $typeName === UserTypeName::Secretary->value,
-            'edit_schedules' => $typeName === UserTypeName::Secretary->value,
-        ];
+        return UserPermission::defaultsFor($typeName);
     }
 }

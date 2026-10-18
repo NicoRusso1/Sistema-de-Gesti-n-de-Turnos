@@ -28,6 +28,13 @@ export class App {
     return this.user()?.user_type?.name === 'patient';
   }
 
+  agendaLabel(): string {
+    if (this.isAdmin()) return 'Agenda de Turnos';
+    if (this.isPatient()) return 'Mis Turnos';
+    if (this.isDoctor()) return 'Mi Agenda';
+    return 'Agenda de Turnos';
+  }
+
   canBookAppointments(): boolean {
     return this.isAdmin() || this.isPatient();
   }

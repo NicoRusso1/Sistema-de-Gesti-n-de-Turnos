@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\UserTypeName;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -17,6 +18,18 @@ class UserPermission extends Model
         'cancel_appointments',
         'edit_schedules',
     ];
+
+    // Permisos por defecto según el tipo de usuario (patient, doctor, secretary)
+    public static function defaultsFor(?string $typeName): array
+    {
+        return [
+            'view_own_appointments' => $typeName === UserTypeName::Patient->value,
+            'view_all_appointments' => $typeName === UserTypeName::Secretary->value,
+            'view_assigned_patients' => $typeName === UserTypeName::Doctor->value,
+            'cancel_appointments' => $typeName === UserTypeName::Secretary->value,
+            'edit_schedules' => $typeName === UserTypeName::Secretary->value,
+        ];
+    }
 
     public function patient(): BelongsTo
     {

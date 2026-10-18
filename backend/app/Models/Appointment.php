@@ -2,12 +2,18 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Appointment extends Model
 {
+    // Alcances de visualización de la agenda (GT-54 / GT-55)
+    public const SCOPE_ALL = 'all';
+    public const SCOPE_ASSIGNED = 'assigned';
+    public const SCOPE_OWN = 'own';
+
     protected $fillable = [
         'patient_id',
         'doctor_id',
@@ -66,5 +72,15 @@ class Appointment extends Model
     public function notifications(): HasMany
     {
         return $this->hasMany(Notification::class, 'appointment_id');
+    }
+
+    // GT-55: filtra la consulta según el alcance del usuario logueado
+    public function scopeVisibleTo(Builder $query, string $scope, Patient $user): Builder
+    {
+        return match ($scope) {
+            self::SCOPE_OWN => $query->where('patient_id', $user->id),
+            self::SCOPE_ASSIGNED => $query->where('doctor_id', $user->id),
+            default => $query,
+        };
     }
 }

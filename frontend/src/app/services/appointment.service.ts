@@ -4,7 +4,9 @@ import { Observable } from 'rxjs';
 import { API_URL } from '../config/api';
 import {
   AppointmentCreatePayload,
+  AppointmentFilters,
   AppointmentResponse,
+  PaginatedAppointments,
 } from '../models/appointment';
 
 @Injectable({
@@ -18,14 +20,14 @@ export class AppointmentService {
     return this.http.post<AppointmentResponse>(this.endpoint, payload);
   }
 
-  getAppointments(filters: { status?: string; date?: string; doctor_id?: number } = {}): Observable<any> {
+  getAppointments(filters: AppointmentFilters = {}): Observable<PaginatedAppointments> {
     let params = new HttpParams();
     Object.entries(filters).forEach(([key, val]) => {
       if (val !== undefined && val !== null && val !== '') {
         params = params.set(key, String(val));
       }
     });
-    return this.http.get<any>(this.endpoint, { params });
+    return this.http.get<PaginatedAppointments>(this.endpoint, { params });
   }
 
   cancelAppointment(id: number, reason?: string): Observable<AppointmentResponse> {

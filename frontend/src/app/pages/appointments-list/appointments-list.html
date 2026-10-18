@@ -1,7 +1,9 @@
 <div class="turnos-container">
   <div class="header-section">
-    <h2>Gestión y Listado de Turnos</h2>
-    <a routerLink="/appointments/new" class="btn btn-primary">+ Reservar Nuevo Turno</a>
+    <h2>{{ title() }}</h2>
+    @if (canBook()) {
+      <a routerLink="/appointments/new" class="btn btn-primary">+ Reservar Nuevo Turno</a>
+    }
   </div>
 
   @if (successMessage()) {
@@ -13,13 +15,18 @@
 
   @if (loading()) {
     <div class="loading-state">Cargando turnos...</div>
-  } @else {
+  } @else if (scope()) {
     <div class="table-responsive">
       <table class="turnos-table">
         <thead>
           <tr>
             <th>Fecha y Hora</th>
-            <th>Médico</th>
+            @if (showPatientColumn()) {
+              <th>Paciente</th>
+            }
+            @if (showDoctorColumn()) {
+              <th>Médico</th>
+            }
             <th>Especialidad</th>
             <th>Estado</th>
             <th>Acciones</th>
@@ -29,7 +36,12 @@
           @for (app of appointments(); track app.id) {
             <tr>
               <td>{{ app.scheduled_at | date:'dd/MM/yyyy HH:mm' }}</td>
-              <td>Dr/a. {{ app.doctor?.first_name }} {{ app.doctor?.last_name }}</td>
+              @if (showPatientColumn()) {
+                <td>{{ app.patient?.first_name }} {{ app.patient?.last_name }}</td>
+              }
+              @if (showDoctorColumn()) {
+                <td>Dr/a. {{ app.doctor?.first_name }} {{ app.doctor?.last_name }}</td>
+              }
               <td>{{ app.specialty?.name || 'General' }}</td>
               <td>
                 <span class="badge" [class.badge-cancelled]="app.status === 'cancelado'" [class.badge-active]="app.status !== 'cancelado'">
@@ -52,7 +64,7 @@
             </tr>
           } @empty {
             <tr>
-              <td colspan="5" class="empty-state">No se registraron turnos.</td>
+              <td colspan="6" class="empty-state">No se registraron turnos.</td>
             </tr>
           }
         </tbody>
