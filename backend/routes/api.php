@@ -81,6 +81,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/appointments', [AppointmentController::class, 'index'])->middleware('appointment_scope');
     Route::patch('/appointments/{id}/cancel', [AppointmentController::class, 'cancel']);
     Route::patch('/appointments/{id}/reschedule', [AppointmentController::class, 'reschedule']);
+    // GT-43: asignación manual de sala (Secretaria / Administrador, se valida en el controlador)
+    Route::get('/appointments/{id}/available-salas', [AppointmentController::class, 'availableSalas']);
+    Route::patch('/appointments/{id}/sala', [AppointmentController::class, 'assignSala']);
 
     Route::post('/appointments/{id}/payments', [PaymentController::class, 'store']);
     Route::post('/payments/{id}/verify', [PaymentController::class, 'verify']);

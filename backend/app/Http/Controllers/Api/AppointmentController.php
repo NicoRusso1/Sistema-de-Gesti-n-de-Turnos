@@ -3,28 +3,35 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\AssignSalaRequest;
 use App\Http\Requests\CancelAppointmentRequest;
 use App\Http\Requests\RescheduleAppointmentRequest;
 use App\Http\Requests\StoreAppointmentRequest;
 use App\Models\Appointment;
+use App\Models\Sala;
 use App\Services\AppointmentNotificationService;
 use App\Services\AppointmentPricingService;
+use App\Services\SalaAssignmentService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use OpenApi\Attributes as OA;
 
 class AppointmentController extends Controller
 {
     protected AppointmentPricingService $pricingService;
     protected AppointmentNotificationService $notificationService;
+    protected SalaAssignmentService $salaService;
 
     public function __construct(
         AppointmentPricingService $pricingService,
-        AppointmentNotificationService $notificationService
+        AppointmentNotificationService $notificationService,
+        SalaAssignmentService $salaService
     ) {
         $this->pricingService = $pricingService;
         $this->notificationService = $notificationService;
+        $this->salaService = $salaService;
     }
 
     #[OA\Get(
@@ -99,7 +106,9 @@ class AppointmentController extends Controller
     #[OA\Post(
         path: '/api/appointments',
         summary: 'Registrar la reserva de un turno con cálculo de obra social',
-        description: 'Crea una reserva de turno en estado "reservado", valida solapamiento de horarios y calcula el descuento de obra social.',
+        description: 'Crea una reserva de turno en estado "reservado", valida solapamiento de horarios y calcula el descuento de obra social. '
+            . 'GT-41: asigna automáticamente la primera sala en estado "disponible" de la especialidad del turno que no tenga otro turno en ese bloque de 15 minutos. '
+            . 'Si no hay ninguna libre el turno se crea igual con sala_id null y la Secretaria/Administrador la puede asignar a mano. El campo sala_id del body se ignora.',
         tags: ['Turnos'],
         security: [['sanctum' => []]],
         requestBody: new OA\RequestBody(
@@ -110,7 +119,6 @@ class AppointmentController extends Controller
                 properties: [
                     new OA\Property(property: 'doctor_id', type: 'integer', example: 3, description: 'ID del médico'),
                     new OA\Property(property: 'specialty_id', type: 'integer', nullable: true, example: 1, description: 'ID de la especialidad'),
-                    new OA\Property(property: 'sala_id', type: 'integer', nullable: true, example: 2, description: 'ID de la sala opcional'),
                     new OA\Property(property: 'scheduled_at', type: 'string', example: '2026-10-15 09:15', description: 'Fecha y hora en formato YYYY-MM-DD HH:mm'),
                     new OA\Property(property: 'health_insurance_id', type: 'integer', nullable: true, example: 2, description: 'ID de obra social (omitir o null si es particular)'),
                     new OA\Property(property: 'affiliate_number', type: 'string', nullable: true, example: 'OSDE-98765432', description: 'Número de carnet de afiliado'),
@@ -135,7 +143,7 @@ class AppointmentController extends Controller
         // Verificar que el médico no tenga ya otro turno activo en ese horario exacto
         $exists = Appointment::where('doctor_id', $validated['doctor_id'])
             ->where('scheduled_at', $scheduledAt)
-            ->whereIn('status', ['reservado', 'abonado', 'scheduled', 'confirmed'])
+            ->whereIn('status', Appointment::ACTIVE_STATUSES)
             ->exists();
 
         if ($exists) {
@@ -150,23 +158,33 @@ class AppointmentController extends Controller
             $validated['health_insurance_id'] ?? null
         );
 
-        // Crear turno en estado 'reservado' (GT-39)
-        $appointment = Appointment::create([
-            'patient_id'          => $user->id,
-            'doctor_id'           => $validated['doctor_id'],
-            'specialty_id'        => $validated['specialty_id'] ?? null,
-            'sala_id'             => $validated['sala_id'] ?? null,
-            'scheduled_at'        => $scheduledAt,
-            'status'              => 'reservado',
-            'health_insurance_id' => $validated['health_insurance_id'] ?? null,
-            'affiliate_number'    => $validated['affiliate_number'] ?? null,
-            'monto_base'          => $pricing['monto_base'],
-            'monto_descuento'     => $pricing['monto_descuento'],
-            'monto_final'         => $pricing['monto_final'],
-        ]);
+        $specialtyId = $validated['specialty_id'] ?? null;
+
+        // GT-41: la sala se elige y se guarda en la misma transacción, así dos
+        // reservas simultáneas no se quedan con la misma sala
+        $appointment = DB::transaction(function () use ($validated, $user, $scheduledAt, $pricing, $specialtyId) {
+            $sala = $this->salaService->findAvailableSala($specialtyId, $scheduledAt);
+
+            // Crear turno en estado 'reservado' (GT-39)
+            return Appointment::create([
+                'patient_id'          => $user->id,
+                'doctor_id'           => $validated['doctor_id'],
+                'specialty_id'        => $specialtyId,
+                'sala_id'             => $sala?->id,
+                'scheduled_at'        => $scheduledAt,
+                'status'              => 'reservado',
+                'health_insurance_id' => $validated['health_insurance_id'] ?? null,
+                'affiliate_number'    => $validated['affiliate_number'] ?? null,
+                'monto_base'          => $pricing['monto_base'],
+                'monto_descuento'     => $pricing['monto_descuento'],
+                'monto_final'         => $pricing['monto_final'],
+            ]);
+        });
 
         return response()->json([
-            'message'     => 'Turno reservado exitosamente',
+            'message'     => $appointment->sala_id
+                ? 'Turno reservado exitosamente'
+                : 'Turno reservado exitosamente. Todavía no hay una sala libre para esa especialidad: se asignará más adelante.',
             'appointment' => $appointment->load(['doctor', 'specialty', 'sala', 'healthInsurance'])
         ], 201);
     }
@@ -228,7 +246,8 @@ class AppointmentController extends Controller
     #[OA\Patch(
         path: '/api/appointments/{id}/reschedule',
         summary: 'Reprogramar un turno existente',
-        description: 'Modifica la fecha y hora de un turno existente validando la disponibilidad del horario en la agenda del médico.',
+        description: 'Modifica la fecha y hora de un turno existente validando la disponibilidad del horario en la agenda del médico. '
+            . 'Si la sala actual queda ocupada en el nuevo horario se reasigna automáticamente (GT-41); sala_id solo lo pueden enviar la Secretaria o el Administrador (GT-43) y se valida contra cruces (GT-42).',
         tags: ['Turnos'],
         security: [['sanctum' => []]],
         parameters: [
@@ -240,16 +259,17 @@ class AppointmentController extends Controller
                 required: ['scheduled_at'],
                 properties: [
                     new OA\Property(property: 'scheduled_at', type: 'string', example: '2026-10-20 11:30', description: 'Nueva fecha y hora (YYYY-MM-DD HH:mm)'),
-                    new OA\Property(property: 'sala_id', type: 'integer', nullable: true, example: 1, description: 'ID de sala opcional')
+                    new OA\Property(property: 'sala_id', type: 'integer', nullable: true, example: 1, description: 'Sala a usar (solo Secretaria/Administrador). Si se omite, se mantiene la actual o se reasigna sola si queda ocupada.')
                 ]
             )
         ),
         responses: [
             new OA\Response(response: 200, description: 'Turno reprogramado exitosamente.'),
             new OA\Response(response: 401, description: 'No autenticado.'),
-            new OA\Response(response: 403, description: 'No tenés permiso para modificar horarios.'),
+            new OA\Response(response: 403, description: 'No tenés permiso para modificar horarios o para elegir la sala.'),
             new OA\Response(response: 404, description: 'Turno no encontrado.'),
-            new OA\Response(response: 409, description: 'El nuevo horario ya no está disponible.')
+            new OA\Response(response: 409, description: 'El nuevo horario ya no está disponible para el médico o la sala elegida ya está ocupada.'),
+            new OA\Response(response: 422, description: 'La sala elegida está fuera de servicio.')
         ]
     )]
     public function reschedule(RescheduleAppointmentRequest $request, string $id): JsonResponse
@@ -271,7 +291,7 @@ class AppointmentController extends Controller
         $conflict = Appointment::where('doctor_id', $appointment->doctor_id)
             ->where('id', '!=', $appointment->id)
             ->where('scheduled_at', $newScheduledAt)
-            ->whereIn('status', ['reservado', 'abonado', 'scheduled', 'confirmed'])
+            ->whereIn('status', Appointment::ACTIVE_STATUSES)
             ->exists();
 
         if ($conflict) {
@@ -280,14 +300,44 @@ class AppointmentController extends Controller
             ], 409);
         }
 
+        $user = $request->user();
+        $requestedSalaId = $validated['sala_id'] ?? null;
+
+        // GT-43: elegir la sala a mano es solo de la Secretaria y el Administrador
+        if ($requestedSalaId && !($user->hasAdminAccess() || $user->isSecretary())) {
+            return response()->json([
+                'message' => 'Solo la Secretaria o el Administrador pueden elegir la sala del turno.'
+            ], 403);
+        }
+
         $previousDate = $appointment->scheduled_at->format('d/m/Y H:i');
 
-        $appointment->update([
-            'scheduled_at' => $newScheduledAt,
-            'sala_id'      => $validated['sala_id'] ?? $appointment->sala_id,
-            // Si estaba reservado o confirmado, se mantiene activo
-            'status'       => $appointment->status === 'cancelado' ? 'reservado' : $appointment->status,
-        ]);
+        $result = DB::transaction(function () use ($appointment, $newScheduledAt, $requestedSalaId) {
+            if ($requestedSalaId) {
+                $salaError = $this->validateSalaFor($requestedSalaId, $newScheduledAt, $appointment->id);
+                if ($salaError) {
+                    return $salaError;
+                }
+                $salaId = $requestedSalaId;
+            } elseif ($appointment->sala_id && !$this->salaService->hasConflict($appointment->sala_id, $newScheduledAt, $appointment->id)) {
+                // La sala actual sigue libre en el nuevo horario
+                $salaId = $appointment->sala_id;
+            } else {
+                // GT-41: la sala actual quedó ocupada (o no tenía): se busca otra
+                $salaId = $this->salaService->findAvailableSala($appointment->specialty_id, $newScheduledAt, $appointment->id)?->id;
+            }
+
+            $appointment->update([
+                'scheduled_at' => $newScheduledAt,
+                'sala_id'      => $salaId,
+            ]);
+
+            return null;
+        });
+
+        if ($result instanceof JsonResponse) {
+            return $result;
+        }
 
         // Registrar notificación de reprogramación (GT-59)
         $this->notificationService->notifyRescheduling($appointment, $previousDate);
@@ -296,5 +346,143 @@ class AppointmentController extends Controller
             'message'     => 'Turno reprogramado correctamente.',
             'appointment' => $appointment->fresh(['doctor', 'specialty', 'sala'])
         ], 200);
+    }
+
+    #[OA\Get(
+        path: '/api/appointments/{id}/available-salas',
+        summary: 'Salas que se pueden asignar a un turno (GT-43)',
+        description: 'Lista las salas en estado "disponible" que no tienen otro turno activo en el mismo bloque de 15 minutos (GT-42). '
+            . 'Primero aparecen las de la especialidad del turno (matches_specialty = true). Solo para Secretaria y Administrador.',
+        tags: ['Turnos'],
+        security: [['sanctum' => []]],
+        parameters: [
+            new OA\Parameter(name: 'id', description: 'ID del turno', in: 'path', required: true, schema: new OA\Schema(type: 'integer', minimum: 1))
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Salas asignables.',
+                content: new OA\JsonContent(
+                    type: 'array',
+                    items: new OA\Items(
+                        properties: [
+                            new OA\Property(property: 'id', type: 'integer', example: 2),
+                            new OA\Property(property: 'numero', type: 'string', example: '204'),
+                            new OA\Property(property: 'piso', type: 'integer', example: 2),
+                            new OA\Property(property: 'especialidad', type: 'string', example: 'Cardiología'),
+                            new OA\Property(property: 'matches_specialty', type: 'boolean', example: true)
+                        ]
+                    )
+                )
+            ),
+            new OA\Response(response: 401, description: 'No autenticado.'),
+            new OA\Response(response: 403, description: 'Solo la Secretaria o el Administrador.'),
+            new OA\Response(response: 404, description: 'Turno no encontrado.')
+        ]
+    )]
+    public function availableSalas(Request $request, string $id): JsonResponse
+    {
+        $user = $request->user();
+        if (!($user->hasAdminAccess() || $user->isSecretary())) {
+            return response()->json(['message' => 'Solo la Secretaria o el Administrador pueden asignar salas.'], 403);
+        }
+
+        $appointment = Appointment::find($id);
+        if (!$appointment) {
+            return response()->json(['message' => 'Turno no encontrado.'], 404);
+        }
+
+        $salas = $this->salaService->assignableSalas($appointment)->map(fn (Sala $sala) => [
+            'id'                => $sala->id,
+            'numero'            => $sala->numero,
+            'piso'              => $sala->piso,
+            'especialidad'      => $sala->specialty?->name ?? 'General',
+            'matches_specialty' => $sala->especialidad_id === $appointment->specialty_id,
+        ]);
+
+        return response()->json($salas, 200);
+    }
+
+    #[OA\Patch(
+        path: '/api/appointments/{id}/sala',
+        summary: 'Asignar o cambiar manualmente la sala de un turno (GT-43)',
+        description: 'La Secretaria o el Administrador asignan cualquier sala en estado "disponible", aunque no sea de la especialidad del turno. '
+            . 'Se rechaza si la sala ya tiene otro turno activo en el mismo bloque de 15 minutos (GT-42).',
+        tags: ['Turnos'],
+        security: [['sanctum' => []]],
+        parameters: [
+            new OA\Parameter(name: 'id', description: 'ID del turno', in: 'path', required: true, schema: new OA\Schema(type: 'integer', minimum: 1))
+        ],
+        requestBody: new OA\RequestBody(
+            required: true,
+            content: new OA\JsonContent(
+                required: ['sala_id'],
+                properties: [
+                    new OA\Property(property: 'sala_id', type: 'integer', example: 2, description: 'ID de la sala')
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(response: 200, description: 'Sala asignada correctamente.'),
+            new OA\Response(response: 400, description: 'El turno está cancelado.'),
+            new OA\Response(response: 401, description: 'No autenticado.'),
+            new OA\Response(response: 403, description: 'Solo la Secretaria o el Administrador.'),
+            new OA\Response(response: 404, description: 'Turno no encontrado.'),
+            new OA\Response(response: 409, description: 'La sala ya tiene otro turno en ese horario.'),
+            new OA\Response(response: 422, description: 'Sala inexistente o fuera de servicio.')
+        ]
+    )]
+    public function assignSala(AssignSalaRequest $request, string $id): JsonResponse
+    {
+        $appointment = Appointment::find($id);
+
+        if (!$appointment) {
+            return response()->json(['message' => 'Turno no encontrado.'], 404);
+        }
+
+        if ($appointment->status === 'cancelado') {
+            return response()->json(['message' => 'No se puede asignar sala a un turno cancelado.'], 400);
+        }
+
+        $salaId = (int) $request->validated()['sala_id'];
+
+        $error = DB::transaction(function () use ($appointment, $salaId) {
+            $salaError = $this->validateSalaFor($salaId, $appointment->scheduled_at, $appointment->id);
+            if ($salaError) {
+                return $salaError;
+            }
+
+            $appointment->update(['sala_id' => $salaId]);
+
+            return null;
+        });
+
+        if ($error) {
+            return $error;
+        }
+
+        return response()->json([
+            'message'     => 'Sala asignada correctamente.',
+            'appointment' => $appointment->fresh(['doctor', 'patient', 'specialty', 'sala'])
+        ], 200);
+    }
+
+    // GT-42: una sala elegida a mano tiene que estar en servicio y libre en ese bloque.
+    // Bloquea la fila de la sala hasta que termine la transacción que la llama.
+    private function validateSalaFor(int $salaId, Carbon $start, int $appointmentId): ?JsonResponse
+    {
+        $sala = Sala::lockForUpdate()->find($salaId);
+
+        if (!$sala || $sala->estado !== 'disponible') {
+            return response()->json(['message' => 'La sala seleccionada está fuera de servicio.'], 422);
+        }
+
+        if ($this->salaService->hasConflict($sala->id, $start, $appointmentId)) {
+            return response()->json([
+                'message' => "La sala {$sala->numero} (piso {$sala->piso}) ya tiene otro turno en ese horario."
+            ], 409);
+        }
+
+        return null;
     }
 }

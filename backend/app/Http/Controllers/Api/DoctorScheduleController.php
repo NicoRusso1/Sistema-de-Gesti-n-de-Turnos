@@ -13,7 +13,7 @@ class DoctorScheduleController extends Controller
 {
     private const OPEN_TIME = '08:00';
     private const CLOSE_TIME = '20:00';
-    private const SLOT_MINUTES = 15;
+    private const SLOT_MINUTES = \App\Models\Appointment::DURATION_MINUTES;
     private const MAX_YEARS = 2;
 
     #[OA\Get(

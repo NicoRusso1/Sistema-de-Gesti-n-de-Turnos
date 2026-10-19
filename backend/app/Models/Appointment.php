@@ -14,6 +14,12 @@ class Appointment extends Model
     public const SCOPE_ASSIGNED = 'assigned';
     public const SCOPE_OWN = 'own';
 
+    // Duración de cada turno (bloque de la agenda del médico)
+    public const DURATION_MINUTES = 15;
+
+    // Estados que ocupan agenda y sala
+    public const ACTIVE_STATUSES = ['reservado', 'abonado', 'scheduled', 'confirmed'];
+
     protected $fillable = [
         'patient_id',
         'doctor_id',
