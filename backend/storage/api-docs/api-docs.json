@@ -214,7 +214,7 @@
                     "Turnos"
                 ],
                 "summary": "Registrar la reserva de un turno con cálculo de obra social",
-                "description": "Crea una reserva de turno en estado \"reservado\", valida solapamiento de horarios y calcula el descuento de obra social.",
+                "description": "Crea una reserva de turno en estado \"reservado\", valida solapamiento de horarios y calcula el descuento de obra social. GT-41: asigna automáticamente la primera sala en estado \"disponible\" de la especialidad del turno que no tenga otro turno en ese bloque de 15 minutos. Si no hay ninguna libre el turno se crea igual con sala_id null y la Secretaria/Administrador la puede asignar a mano. El campo sala_id del body se ignora.",
                 "operationId": "2b481df28ec53d2afb2ec7c9a3a77846",
                 "requestBody": {
                     "description": "Datos para la reserva del turno",
@@ -237,12 +237,6 @@
                                         "description": "ID de la especialidad",
                                         "type": "integer",
                                         "example": 1,
-                                        "nullable": true
-                                    },
-                                    "sala_id": {
-                                        "description": "ID de la sala opcional",
-                                        "type": "integer",
-                                        "example": 2,
                                         "nullable": true
                                     },
                                     "scheduled_at": {
@@ -362,7 +356,7 @@
                     "Turnos"
                 ],
                 "summary": "Reprogramar un turno existente",
-                "description": "Modifica la fecha y hora de un turno existente validando la disponibilidad del horario en la agenda del médico.",
+                "description": "Modifica la fecha y hora de un turno existente validando la disponibilidad del horario en la agenda del médico. Si la sala actual queda ocupada en el nuevo horario se reasigna automáticamente (GT-41); sala_id solo lo pueden enviar la Secretaria o el Administrador (GT-43) y se valida contra cruces (GT-42).",
                 "operationId": "d9a6ef7eec20c156f5ce63026c0066ed",
                 "parameters": [
                     {
@@ -391,7 +385,7 @@
                                         "example": "2026-10-20 11:30"
                                     },
                                     "sala_id": {
-                                        "description": "ID de sala opcional",
+                                        "description": "Sala a usar (solo Secretaria/Administrador). Si se omite, se mantiene la actual o se reasigna sola si queda ocupada.",
                                         "type": "integer",
                                         "example": 1,
                                         "nullable": true
@@ -410,13 +404,159 @@
                         "description": "No autenticado."
                     },
                     "403": {
-                        "description": "No tenés permiso para modificar horarios."
+                        "description": "No tenés permiso para modificar horarios o para elegir la sala."
                     },
                     "404": {
                         "description": "Turno no encontrado."
                     },
                     "409": {
-                        "description": "El nuevo horario ya no está disponible."
+                        "description": "El nuevo horario ya no está disponible para el médico o la sala elegida ya está ocupada."
+                    },
+                    "422": {
+                        "description": "La sala elegida está fuera de servicio."
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/appointments/{id}/available-salas": {
+            "get": {
+                "tags": [
+                    "Turnos"
+                ],
+                "summary": "Salas que se pueden asignar a un turno (GT-43)",
+                "description": "Lista las salas en estado \"disponible\" que no tienen otro turno activo en el mismo bloque de 15 minutos (GT-42). Primero aparecen las de la especialidad del turno (matches_specialty = true). Solo para Secretaria y Administrador.",
+                "operationId": "cf5fff204542336a8c952a7544732747",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID del turno",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Salas asignables.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer",
+                                                "example": 2
+                                            },
+                                            "numero": {
+                                                "type": "string",
+                                                "example": "204"
+                                            },
+                                            "piso": {
+                                                "type": "integer",
+                                                "example": 2
+                                            },
+                                            "especialidad": {
+                                                "type": "string",
+                                                "example": "Cardiología"
+                                            },
+                                            "matches_specialty": {
+                                                "type": "boolean",
+                                                "example": true
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado."
+                    },
+                    "403": {
+                        "description": "Solo la Secretaria o el Administrador."
+                    },
+                    "404": {
+                        "description": "Turno no encontrado."
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/appointments/{id}/sala": {
+            "patch": {
+                "tags": [
+                    "Turnos"
+                ],
+                "summary": "Asignar o cambiar manualmente la sala de un turno (GT-43)",
+                "description": "La Secretaria o el Administrador asignan cualquier sala en estado \"disponible\", aunque no sea de la especialidad del turno. Se rechaza si la sala ya tiene otro turno activo en el mismo bloque de 15 minutos (GT-42).",
+                "operationId": "068573352aacef399c21621dc0a73e08",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID del turno",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "sala_id"
+                                ],
+                                "properties": {
+                                    "sala_id": {
+                                        "description": "ID de la sala",
+                                        "type": "integer",
+                                        "example": 2
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Sala asignada correctamente."
+                    },
+                    "400": {
+                        "description": "El turno está cancelado."
+                    },
+                    "401": {
+                        "description": "No autenticado."
+                    },
+                    "403": {
+                        "description": "Solo la Secretaria o el Administrador."
+                    },
+                    "404": {
+                        "description": "Turno no encontrado."
+                    },
+                    "409": {
+                        "description": "La sala ya tiene otro turno en ese horario."
+                    },
+                    "422": {
+                        "description": "Sala inexistente o fuera de servicio."
                     }
                 },
                 "security": [

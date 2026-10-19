@@ -3,7 +3,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { Appointment, AppointmentScope } from '../../models/appointment';
+import { Appointment, AppointmentScope, AssignableSala } from '../../models/appointment';
 import { DoctorSlot } from '../../models/doctor-schedule';
 import { AppointmentService } from '../../services/appointment.service';
 import { AuthService } from '../../services/auth.service';
@@ -36,6 +36,14 @@ export class AppointmentsListComponent implements OnInit {
   availableSlots = signal<DoctorSlot[]>([]);
   loadingSlots = signal<boolean>(false);
   actionInProgress = signal<boolean>(false);
+  assigningSalaAppointment = signal<Appointment | null>(null);
+  assignableSalas = signal<AssignableSala[]>([]);
+  loadingSalas = signal<boolean>(false);
+
+  // Formulario de Asignación de Sala (GT-43)
+  salaForm = this.fb.group({
+    sala_id: ['', [Validators.required]],
+  });
 
   // Formulario de Cancelación
   cancelForm = this.fb.group({
@@ -103,11 +111,59 @@ export class AppointmentsListComponent implements OnInit {
     return this.isAdmin() || this.currentUser()?.user_type?.name === 'patient';
   }
 
+  // GT-43: la Secretaria y el Administrador asignan o cambian la sala
+  canAssignSala(app: Appointment): boolean {
+    const isSecretary = this.currentUser()?.user_type?.name === 'secretary';
+    return (this.isAdmin() || isSecretary) && app.status !== 'cancelado';
+  }
+
   canManage(app: Appointment): boolean {
     const user = this.currentUser();
     if (!user) return false;
     const isOwnerPatient = user.id === app.patient_id;
     return (this.isAdmin() || isOwnerPatient) && app.status !== 'cancelado';
+  }
+
+  // --- Flujo Asignar Sala ---
+  openSalaModal(app: Appointment): void {
+    this.salaForm.reset({ sala_id: '' });
+    this.assignableSalas.set([]);
+    this.assigningSalaAppointment.set(app);
+    this.loadingSalas.set(true);
+    this.appointmentService.getAssignableSalas(app.id).subscribe({
+      next: (salas) => {
+        this.assignableSalas.set(salas);
+        this.loadingSalas.set(false);
+      },
+      error: () => {
+        this.assignableSalas.set([]);
+        this.loadingSalas.set(false);
+      },
+    });
+  }
+
+  closeSalaModal(): void {
+    this.assigningSalaAppointment.set(null);
+  }
+
+  submitSala(): void {
+    const target = this.assigningSalaAppointment();
+    const salaId = Number(this.salaForm.value.sala_id);
+    if (!target || !salaId) return;
+
+    this.actionInProgress.set(true);
+    this.appointmentService.assignSala(target.id, salaId).subscribe({
+      next: (res) => {
+        this.actionInProgress.set(false);
+        this.closeSalaModal();
+        this.successMessage.set(res.message);
+        this.fetchAppointments();
+      },
+      error: (err: HttpErrorResponse) => {
+        this.actionInProgress.set(false);
+        this.errorMessage.set(err.error?.message || 'Error al asignar la sala.');
+      },
+    });
   }
 
   // --- Flujo Cancelar ---

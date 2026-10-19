@@ -28,6 +28,7 @@
               <th>Médico</th>
             }
             <th>Especialidad</th>
+            <th>Sala</th>
             <th>Estado</th>
             <th>Acciones</th>
           </tr>
@@ -44,6 +45,13 @@
               }
               <td>{{ app.specialty?.name || 'General' }}</td>
               <td>
+                @if (app.sala) {
+                  Sala {{ app.sala.numero }} · Piso {{ app.sala.piso }}
+                } @else {
+                  <span class="text-muted">Sin asignar</span>
+                }
+              </td>
+              <td>
                 <span class="badge" [class.badge-cancelled]="app.status === 'cancelado'" [class.badge-active]="app.status !== 'cancelado'">
                   {{ app.status | uppercase }}
                 </span>
@@ -52,10 +60,15 @@
                 }
               </td>
               <td>
-                @if (canManage(app)) {
+                @if (canManage(app) || canAssignSala(app)) {
                   <div class="action-buttons">
-                    <button class="btn btn-outline-warning" (click)="openRescheduleModal(app)">Reprogramar</button>
-                    <button class="btn btn-outline-danger" (click)="openCancelModal(app)">Cancelar</button>
+                    @if (canAssignSala(app)) {
+                      <button class="btn btn-outline-primary" (click)="openSalaModal(app)">{{ app.sala ? 'Cambiar sala' : 'Asignar sala' }}</button>
+                    }
+                    @if (canManage(app)) {
+                      <button class="btn btn-outline-warning" (click)="openRescheduleModal(app)">Reprogramar</button>
+                      <button class="btn btn-outline-danger" (click)="openCancelModal(app)">Cancelar</button>
+                    }
                   </div>
                 } @else {
                   <span class="text-muted">Sin acciones</span>
@@ -64,11 +77,51 @@
             </tr>
           } @empty {
             <tr>
-              <td colspan="6" class="empty-state">No se registraron turnos.</td>
+              <td colspan="7" class="empty-state">No se registraron turnos.</td>
             </tr>
           }
         </tbody>
       </table>
+    </div>
+  }
+
+  <!-- MODAL DE ASIGNACIÓN DE SALA (GT-43) -->
+  @if (assigningSalaAppointment(); as target) {
+    <div class="modal-backdrop">
+      <div class="modal-card">
+        <h3>{{ target.sala ? 'Cambiar Sala' : 'Asignar Sala' }}</h3>
+        <p>Turno del <strong>{{ target.scheduled_at | date:'dd/MM/yyyy HH:mm' }}</strong> con <strong>Dr/a. {{ target.doctor?.first_name }} {{ target.doctor?.last_name }}</strong></p>
+        @if (target.sala) {
+          <p>Sala actual: <strong>Sala {{ target.sala.numero }} · Piso {{ target.sala.piso }}</strong></p>
+        }
+
+        <form [formGroup]="salaForm" (ngSubmit)="submitSala()">
+          @if (loadingSalas()) {
+            <p>Buscando salas libres...</p>
+          } @else if (assignableSalas().length > 0) {
+            <div class="form-group">
+              <label for="salaSelect">Salas libres en ese horario:</label>
+              <select id="salaSelect" formControlName="sala_id" class="form-control">
+                <option value="">Selecciona una sala</option>
+                @for (sala of assignableSalas(); track sala.id) {
+                  <option [value]="sala.id">
+                    Sala {{ sala.numero }} · Piso {{ sala.piso }} · {{ sala.especialidad }}{{ sala.matches_specialty ? '' : ' (otra especialidad)' }}
+                  </option>
+                }
+              </select>
+            </div>
+          } @else {
+            <p class="text-danger">No hay salas disponibles en ese horario.</p>
+          }
+
+          <div class="modal-actions">
+            <button type="button" class="btn btn-secondary" [disabled]="actionInProgress()" (click)="closeSalaModal()">Cerrar</button>
+            <button type="submit" class="btn btn-primary" [disabled]="salaForm.invalid || actionInProgress()">
+              {{ actionInProgress() ? 'Guardando...' : 'Guardar Sala' }}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   }
 

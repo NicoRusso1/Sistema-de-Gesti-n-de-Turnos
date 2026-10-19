@@ -38,6 +38,15 @@ export interface Appointment {
   healthInsurance?: HealthInsurance;
 }
 
+// Sala que se puede asignar a mano a un turno (GET /appointments/{id}/available-salas)
+export interface AssignableSala {
+  id: number;
+  numero: string;
+  piso: number;
+  especialidad: string;
+  matches_specialty: boolean;
+}
+
 export interface AppointmentCreatePayload {
   doctor_id: number;
   specialty_id?: number | null;

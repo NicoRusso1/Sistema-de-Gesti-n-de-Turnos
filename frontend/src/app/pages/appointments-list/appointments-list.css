@@ -89,6 +89,12 @@
   color: white;
 }
 
+.btn-outline-primary {
+  border: 1px solid #1976d2;
+  color: #1976d2;
+  background: transparent;
+}
+
 .btn-outline-warning {
   border: 1px solid #f57c00;
   color: #f57c00;

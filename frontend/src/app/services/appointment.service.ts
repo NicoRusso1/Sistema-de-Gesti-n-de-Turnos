@@ -6,6 +6,7 @@ import {
   AppointmentCreatePayload,
   AppointmentFilters,
   AppointmentResponse,
+  AssignableSala,
   PaginatedAppointments,
 } from '../models/appointment';
 
@@ -38,5 +39,13 @@ export class AppointmentService {
 
   rescheduleAppointment(id: number, payload: { scheduled_at: string; sala_id?: number | null }): Observable<AppointmentResponse> {
     return this.http.patch<AppointmentResponse>(`${this.endpoint}/${id}/reschedule`, payload);
+  }
+
+  getAssignableSalas(id: number): Observable<AssignableSala[]> {
+    return this.http.get<AssignableSala[]>(`${this.endpoint}/${id}/available-salas`);
+  }
+
+  assignSala(id: number, salaId: number): Observable<AppointmentResponse> {
+    return this.http.patch<AppointmentResponse>(`${this.endpoint}/${id}/sala`, { sala_id: salaId });
   }
 }
