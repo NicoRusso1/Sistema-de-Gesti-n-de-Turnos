@@ -2,7 +2,6 @@
 
 namespace App\Http\Middleware;
 
-use App\Models\Appointment;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -19,7 +18,7 @@ class EnsureAppointmentScope
 {
     public function handle(Request $request, Closure $next): Response
     {
-        $scope = $this->resolveScope($request->user());
+        $scope = $request->user()->appointmentScope();
 
         if (!$scope) {
             return response()->json([
@@ -30,22 +29,5 @@ class EnsureAppointmentScope
         $request->attributes->set('appointment_scope', $scope);
 
         return $next($request);
-    }
-
-    private function resolveScope($user): ?string
-    {
-        if ($user->hasAdminAccess() || $user->hasPermissionFlag('view_all_appointments')) {
-            return Appointment::SCOPE_ALL;
-        }
-
-        if ($user->isDoctor() && $user->hasPermissionFlag('view_assigned_patients')) {
-            return Appointment::SCOPE_ASSIGNED;
-        }
-
-        if ($user->isPatientType() && $user->hasPermissionFlag('view_own_appointments')) {
-            return Appointment::SCOPE_OWN;
-        }
-
-        return null;
     }
 }

@@ -80,6 +80,18 @@ class Appointment extends Model
         return $this->hasMany(Notification::class, 'appointment_id');
     }
 
+    // Mismo criterio que scopeVisibleTo, para un turno puntual: el médico solo
+    // ve los turnos donde está asignado y el paciente solo los propios
+    public function isVisibleTo(Patient $user): bool
+    {
+        return match ($user->appointmentScope()) {
+            self::SCOPE_ALL => true,
+            self::SCOPE_ASSIGNED => (int) $this->doctor_id === (int) $user->id,
+            self::SCOPE_OWN => (int) $this->patient_id === (int) $user->id,
+            default => false,
+        };
+    }
+
     // GT-55: filtra la consulta según el alcance del usuario logueado
     public function scopeVisibleTo(Builder $query, string $scope, Patient $user): Builder
     {

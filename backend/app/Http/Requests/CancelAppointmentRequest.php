@@ -14,23 +14,22 @@ class CancelAppointmentRequest extends FormRequest
             return false;
         }
 
-        // Administradores y SuperAdmin tienen acceso completo
-        if ($user->hasAdminAccess()) {
-            return true;
-        }
-
-        // Secretarias u operarios con permiso 'cancel_appointments' o 'cancelar_turnos'
-        if ($user->hasPermissionFlag('cancel_appointments') || $user->hasPermissionFlag('cancelar_turnos')) {
-            return true;
-        }
-
-        // El paciente titular puede cancelar su propio turno
+        // Turno inexistente: que el controlador responda 404
         $appointment = Appointment::find($this->route('id'));
-        if ($appointment && $appointment->patient_id === $user->id) {
+        if (!$appointment) {
             return true;
         }
 
-        return false;
+        // Solo se cancela un turno que el usuario puede ver: el médico los que
+        // tiene asignados, el paciente los propios, la secretaria/admin todos
+        if (!$appointment->isVisibleTo($user)) {
+            return false;
+        }
+
+        // Admin, quien tenga 'cancel_appointments' o el paciente titular
+        return $user->hasAdminAccess()
+            || $user->hasPermissionFlag('cancel_appointments')
+            || $user->appointmentScope() === Appointment::SCOPE_OWN;
     }
 
     public function rules(): array

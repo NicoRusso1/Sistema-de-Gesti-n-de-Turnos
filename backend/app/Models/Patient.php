@@ -168,6 +168,30 @@ class Patient extends Authenticatable
         return $this->userType?->name === \App\Enums\UserTypeName::Patient->value;
     }
 
+    /**
+     * Alcance de la agenda de turnos (GT-54) según tipo de usuario y permisos:
+     * - Administrador / SuperAdmin, o flag view_all_appointments → "all"
+     * - Médico con view_assigned_patients                         → "assigned"
+     * - Paciente con view_own_appointments                        → "own"
+     * null si no tiene ningún permiso para ver turnos.
+     */
+    public function appointmentScope(): ?string
+    {
+        if ($this->hasAdminAccess() || $this->hasPermissionFlag('view_all_appointments')) {
+            return Appointment::SCOPE_ALL;
+        }
+
+        if ($this->isDoctor() && $this->hasPermissionFlag('view_assigned_patients')) {
+            return Appointment::SCOPE_ASSIGNED;
+        }
+
+        if ($this->isPatientType() && $this->hasPermissionFlag('view_own_appointments')) {
+            return Appointment::SCOPE_OWN;
+        }
+
+        return null;
+    }
+
     public function hasPermissionFlag(string $flag): bool
     {
         // Si el usuario todavía no tiene fila en user_permissions (ej: paciente recién registrado)
