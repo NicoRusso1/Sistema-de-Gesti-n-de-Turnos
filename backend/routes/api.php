@@ -77,16 +77,28 @@ Route::middleware('auth:sanctum')->group(function () {
     // Filtro del flujo de reserva: médicos asignados a una especialidad
     Route::get('/specialties/{id}/doctors', [DoctorSpecialtyController::class, 'doctorsBySpecialty']);
 
-    Route::post('/appointments', [AppointmentController::class, 'store']);
-    Route::get('/appointments', [AppointmentController::class, 'index'])->middleware('appointment_scope');
-    Route::patch('/appointments/{id}/cancel', [AppointmentController::class, 'cancel']);
-    Route::patch('/appointments/{id}/reschedule', [AppointmentController::class, 'reschedule']);
-    // GT-43: asignación manual de sala (Secretaria / Administrador, se valida en el controlador)
-    Route::get('/appointments/{id}/available-salas', [AppointmentController::class, 'availableSalas']);
-    Route::patch('/appointments/{id}/sala', [AppointmentController::class, 'assignSala']);
+    // TURNOS: permission: valida el flag (el admin pasa siempre) y después el
+    // controlador / FormRequest filtra por turno: el médico solo los que tiene
+    // asignados y el paciente solo los propios (Appointment::isVisibleTo)
+    Route::post('/appointments', [AppointmentController::class, 'store'])
+        ->middleware('permission:view_own_appointments');
+    Route::get('/appointments', [AppointmentController::class, 'index'])
+        ->middleware(['permission:view_own_appointments,view_assigned_patients,view_all_appointments', 'appointment_scope']);
+    Route::patch('/appointments/{id}/cancel', [AppointmentController::class, 'cancel'])
+        ->middleware('permission:cancel_appointments,view_own_appointments');
+    Route::patch('/appointments/{id}/reschedule', [AppointmentController::class, 'reschedule'])
+        ->middleware('permission:edit_schedules,view_own_appointments');
+    // GT-43: asignación manual de sala (Secretaria / Administrador, el tipo se valida en el controlador)
+    Route::get('/appointments/{id}/available-salas', [AppointmentController::class, 'availableSalas'])
+        ->middleware('permission:view_all_appointments');
+    Route::patch('/appointments/{id}/sala', [AppointmentController::class, 'assignSala'])
+        ->middleware('permission:view_all_appointments');
 
-    Route::post('/appointments/{id}/payments', [PaymentController::class, 'store']);
-    Route::post('/payments/{id}/verify', [PaymentController::class, 'verify']);
+    // Pagos: solo el paciente titular del turno (se valida en el controlador)
+    Route::middleware('permission:view_own_appointments')->group(function () {
+        Route::post('/appointments/{id}/payments', [PaymentController::class, 'store']);
+        Route::post('/payments/{id}/verify', [PaymentController::class, 'verify']);
+    });
 
     Route::middleware('permission:edit_schedules,view_all_appointments')->group(function () {
         Route::get('/doctors/{id}/schedules', [DoctorScheduleController::class, 'index']);

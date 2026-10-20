@@ -129,6 +129,7 @@ class AppointmentController extends Controller
         responses: [
             new OA\Response(response: 201, description: 'Turno reservado exitosamente.'),
             new OA\Response(response: 401, description: 'No autenticado.'),
+            new OA\Response(response: 403, description: 'Requiere el permiso view_own_appointments (pacientes) o ser Administrador.'),
             new OA\Response(response: 409, description: 'El médico ya tiene un turno reservado en ese horario.'),
             new OA\Response(response: 422, description: 'Error de validación en los campos enviados.')
         ]
@@ -192,7 +193,8 @@ class AppointmentController extends Controller
     #[OA\Patch(
         path: '/api/appointments/{id}/cancel',
         summary: 'Cancelar un turno (GT-57 y GT-58)',
-        description: 'Cambia el estado del turno a "cancelado", libera la sala/horario en la agenda y genera la notificación correspondiente (GT-59).',
+        description: 'Cambia el estado del turno a "cancelado", libera la sala/horario en la agenda y genera la notificación correspondiente (GT-59). '
+            . 'Permisos: middleware permission:cancel_appointments,view_own_appointments. El paciente solo cancela sus turnos y el médico (con cancel_appointments) solo los que tiene asignados; Secretaria/Administrador cualquiera.',
         tags: ['Turnos'],
         security: [['sanctum' => []]],
         parameters: [
@@ -210,7 +212,7 @@ class AppointmentController extends Controller
             new OA\Response(response: 200, description: 'Turno cancelado exitosamente y agenda liberada.'),
             new OA\Response(response: 400, description: 'El turno ya se encuentra cancelado.'),
             new OA\Response(response: 401, description: 'No autenticado.'),
-            new OA\Response(response: 403, description: 'No tenés permiso para cancelar turnos.'),
+            new OA\Response(response: 403, description: 'No tenés permiso para cancelar turnos, o el turno no es tuyo / no lo tenés asignado.'),
             new OA\Response(response: 404, description: 'Turno no encontrado.')
         ]
     )]
@@ -247,7 +249,8 @@ class AppointmentController extends Controller
         path: '/api/appointments/{id}/reschedule',
         summary: 'Reprogramar un turno existente',
         description: 'Modifica la fecha y hora de un turno existente validando la disponibilidad del horario en la agenda del médico. '
-            . 'Si la sala actual queda ocupada en el nuevo horario se reasigna automáticamente (GT-41); sala_id solo lo pueden enviar la Secretaria o el Administrador (GT-43) y se valida contra cruces (GT-42).',
+            . 'Si la sala actual queda ocupada en el nuevo horario se reasigna automáticamente (GT-41); sala_id solo lo pueden enviar la Secretaria o el Administrador (GT-43) y se valida contra cruces (GT-42). '
+            . 'Permisos: middleware permission:edit_schedules,view_own_appointments. El paciente solo reprograma sus turnos y el médico (con edit_schedules) solo los que tiene asignados.',
         tags: ['Turnos'],
         security: [['sanctum' => []]],
         parameters: [
@@ -266,7 +269,7 @@ class AppointmentController extends Controller
         responses: [
             new OA\Response(response: 200, description: 'Turno reprogramado exitosamente.'),
             new OA\Response(response: 401, description: 'No autenticado.'),
-            new OA\Response(response: 403, description: 'No tenés permiso para modificar horarios o para elegir la sala.'),
+            new OA\Response(response: 403, description: 'No tenés permiso para modificar horarios o para elegir la sala, o el turno no es tuyo / no lo tenés asignado.'),
             new OA\Response(response: 404, description: 'Turno no encontrado.'),
             new OA\Response(response: 409, description: 'El nuevo horario ya no está disponible para el médico o la sala elegida ya está ocupada.'),
             new OA\Response(response: 422, description: 'La sala elegida está fuera de servicio.')

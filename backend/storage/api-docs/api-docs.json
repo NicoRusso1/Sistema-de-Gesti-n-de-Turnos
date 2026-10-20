@@ -275,6 +275,9 @@
                     "401": {
                         "description": "No autenticado."
                     },
+                    "403": {
+                        "description": "Requiere el permiso view_own_appointments (pacientes) o ser Administrador."
+                    },
                     "409": {
                         "description": "El médico ya tiene un turno reservado en ese horario."
                     },
@@ -295,7 +298,7 @@
                     "Turnos"
                 ],
                 "summary": "Cancelar un turno (GT-57 y GT-58)",
-                "description": "Cambia el estado del turno a \"cancelado\", libera la sala/horario en la agenda y genera la notificación correspondiente (GT-59).",
+                "description": "Cambia el estado del turno a \"cancelado\", libera la sala/horario en la agenda y genera la notificación correspondiente (GT-59). Permisos: middleware permission:cancel_appointments,view_own_appointments. El paciente solo cancela sus turnos y el médico (con cancel_appointments) solo los que tiene asignados; Secretaria/Administrador cualquiera.",
                 "operationId": "6902e3822a0adb8212078bfff7357f09",
                 "parameters": [
                     {
@@ -337,7 +340,7 @@
                         "description": "No autenticado."
                     },
                     "403": {
-                        "description": "No tenés permiso para cancelar turnos."
+                        "description": "No tenés permiso para cancelar turnos, o el turno no es tuyo / no lo tenés asignado."
                     },
                     "404": {
                         "description": "Turno no encontrado."
@@ -356,7 +359,7 @@
                     "Turnos"
                 ],
                 "summary": "Reprogramar un turno existente",
-                "description": "Modifica la fecha y hora de un turno existente validando la disponibilidad del horario en la agenda del médico. Si la sala actual queda ocupada en el nuevo horario se reasigna automáticamente (GT-41); sala_id solo lo pueden enviar la Secretaria o el Administrador (GT-43) y se valida contra cruces (GT-42).",
+                "description": "Modifica la fecha y hora de un turno existente validando la disponibilidad del horario en la agenda del médico. Si la sala actual queda ocupada en el nuevo horario se reasigna automáticamente (GT-41); sala_id solo lo pueden enviar la Secretaria o el Administrador (GT-43) y se valida contra cruces (GT-42). Permisos: middleware permission:edit_schedules,view_own_appointments. El paciente solo reprograma sus turnos y el médico (con edit_schedules) solo los que tiene asignados.",
                 "operationId": "d9a6ef7eec20c156f5ce63026c0066ed",
                 "parameters": [
                     {
@@ -404,7 +407,7 @@
                         "description": "No autenticado."
                     },
                     "403": {
-                        "description": "No tenés permiso para modificar horarios o para elegir la sala."
+                        "description": "No tenés permiso para modificar horarios o para elegir la sala, o el turno no es tuyo / no lo tenés asignado."
                     },
                     "404": {
                         "description": "Turno no encontrado."

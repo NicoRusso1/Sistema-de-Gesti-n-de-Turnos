@@ -14,23 +14,22 @@ class RescheduleAppointmentRequest extends FormRequest
             return false;
         }
 
-        // Administradores y SuperAdmin tienen acceso completo
-        if ($user->hasAdminAccess()) {
-            return true;
-        }
-
-        // Operarios con permiso 'edit_schedules' o 'modificar_horarios'
-        if ($user->hasPermissionFlag('edit_schedules') || $user->hasPermissionFlag('modificar_horarios')) {
-            return true;
-        }
-
-        // El paciente titular puede reprogramar su propio turno si no está cancelado
+        // Turno inexistente: que el controlador responda 404
         $appointment = Appointment::find($this->route('id'));
-        if ($appointment && $appointment->patient_id === $user->id) {
+        if (!$appointment) {
             return true;
         }
 
-        return false;
+        // Solo se reprograma un turno que el usuario puede ver: el médico los
+        // que tiene asignados, el paciente los propios, la secretaria/admin todos
+        if (!$appointment->isVisibleTo($user)) {
+            return false;
+        }
+
+        // Admin, quien tenga 'edit_schedules' o el paciente titular
+        return $user->hasAdminAccess()
+            || $user->hasPermissionFlag('edit_schedules')
+            || $user->appointmentScope() === Appointment::SCOPE_OWN;
     }
 
     public function rules(): array
