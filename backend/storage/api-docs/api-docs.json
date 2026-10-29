@@ -569,6 +569,170 @@
                 ]
             }
         },
+        "/api/me/next-appointment": {
+            "get": {
+                "tags": [
+                    "Turnos"
+                ],
+                "summary": "Próximo turno del paciente autenticado",
+                "description": "Retorna el próximo turno reservado o abonado del paciente logueado, ordenado por fecha ascendente.",
+                "operationId": "113cf0394f46ea64335f636cf0380df2",
+                "responses": {
+                    "200": {
+                        "description": "Turno encontrado o null si no tiene turnos próximos.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer",
+                                            "example": 4
+                                        },
+                                        "scheduled_at": {
+                                            "type": "string",
+                                            "format": "date-time",
+                                            "example": "2026-11-05T10:00:00"
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "example": "reservado"
+                                        }
+                                    },
+                                    "type": "object",
+                                    "nullable": true
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado."
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/appointments/{id}/certificate": {
+            "post": {
+                "tags": [
+                    "Certificados"
+                ],
+                "summary": "Emitir certificado médico digital (Médicos y Administradores)",
+                "description": "Genera un PDF de certificado de atención, lo guarda en storage, actualiza el turno y envía el certificado por email al paciente.",
+                "operationId": "d9ac3cec1eb42d3ece08bfe691fa7350",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID del turno",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "observaciones": {
+                                        "type": "string",
+                                        "example": "Paciente en reposo por 48hs.",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Certificado emitido y enviado por correo exitosamente.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Certificado emitido y enviado por correo exitosamente"
+                                        },
+                                        "certificado_url": {
+                                            "type": "string",
+                                            "example": "certificados/certificado_turno_4_1793279024.pdf"
+                                        },
+                                        "fecha_emision": {
+                                            "type": "string",
+                                            "format": "date-time"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Solo los médicos o administradores pueden emitir certificados."
+                    },
+                    "404": {
+                        "description": "Turno no encontrado."
+                    },
+                    "401": {
+                        "description": "No autenticado."
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/appointments/{id}/certificate/download": {
+            "get": {
+                "tags": [
+                    "Certificados"
+                ],
+                "summary": "Descargar certificado médico en PDF",
+                "description": "Descarga el PDF del certificado del turno. Accesible por el paciente titular, el médico asignado o un administrador.",
+                "operationId": "4c8db2968113a2608ec1930e7239102a",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID del turno",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Archivo PDF del certificado."
+                    },
+                    "403": {
+                        "description": "No tenés permiso para descargar este certificado."
+                    },
+                    "404": {
+                        "description": "El turno no cuenta con un certificado emitido o el archivo no fue encontrado."
+                    },
+                    "401": {
+                        "description": "No autenticado."
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/login": {
             "post": {
                 "tags": [
@@ -1501,6 +1665,198 @@
                 ]
             }
         },
+        "/api/me/notifications": {
+            "get": {
+                "tags": [
+                    "Notificaciones"
+                ],
+                "summary": "Notificaciones del usuario autenticado",
+                "description": "Retorna las últimas 10 notificaciones del usuario logueado, ordenadas por fecha descendente.",
+                "operationId": "b8d6462ea245835fd9b978c7f3b3e732",
+                "responses": {
+                    "200": {
+                        "description": "Lista de notificaciones.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "mensaje": {
+                                                "type": "string",
+                                                "example": "Recordatorio: tenés un turno mañana."
+                                            },
+                                            "leido": {
+                                                "type": "boolean",
+                                                "example": false
+                                            },
+                                            "created_at": {
+                                                "type": "string",
+                                                "format": "date-time"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado."
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/notifications/{id}/read": {
+            "patch": {
+                "tags": [
+                    "Notificaciones"
+                ],
+                "summary": "Marcar notificación como leída",
+                "description": "Marcar notificación como leída.",
+                "operationId": "30e6f52536b48ec9a68144d03ce24731",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Notificación marcada como leída."
+                    },
+                    "404": {
+                        "description": "Notificación no encontrada."
+                    },
+                    "401": {
+                        "description": "No autenticado."
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/notifications": {
+            "get": {
+                "tags": [
+                    "Notificaciones"
+                ],
+                "summary": "Historial global de notificaciones (Médicos y Administradores)",
+                "description": "Los administradores ven todas las notificaciones. Los médicos solo ven las de sus turnos asignados.",
+                "operationId": "6d56a555955089a73fdf3f7229e8ead8",
+                "responses": {
+                    "200": {
+                        "description": "Lista paginada de notificaciones."
+                    },
+                    "403": {
+                        "description": "No autorizado."
+                    },
+                    "401": {
+                        "description": "No autenticado."
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/notifications/send-reminders": {
+            "post": {
+                "tags": [
+                    "Notificaciones"
+                ],
+                "summary": "Disparar envío de recordatorios de turno (Médicos y Admins)",
+                "description": "Ejecuta el comando Artisan que envía recordatorios por email a los pacientes con turnos al día siguiente.",
+                "operationId": "db5125bcc1b54c5521d7505af3b7aa9b",
+                "responses": {
+                    "200": {
+                        "description": "Recordatorios procesados.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Recordatorios procesados exitosamente"
+                                        },
+                                        "output": {
+                                            "type": "string",
+                                            "example": "2 recordatorio(s) enviado(s)."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "No autorizado."
+                    },
+                    "401": {
+                        "description": "No autenticado."
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/notifications/{id}": {
+            "delete": {
+                "tags": [
+                    "Notificaciones"
+                ],
+                "summary": "Eliminar una notificación",
+                "description": "Eliminar una notificación.",
+                "operationId": "ab7264b840570ab1351fff8ba6732bdc",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Notificación eliminada."
+                    },
+                    "404": {
+                        "description": "Notificación no encontrada."
+                    },
+                    "401": {
+                        "description": "No autenticado."
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/me/health-insurance": {
             "get": {
                 "tags": [
@@ -1630,6 +1986,79 @@
                     },
                     "404": {
                         "description": "El paciente no tiene una obra social cargada."
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/pagos": {
+            "get": {
+                "tags": [
+                    "Pagos"
+                ],
+                "summary": "Consultar listado de pagos con filtros",
+                "description": "Retorna pagos paginados. Los pacientes solo ven sus pagos; administradores pueden consultar el historial global y filtrar por paciente, estado o rango de fechas.",
+                "operationId": "8b9dc3fc7949cd4785e93ac93d0c3f10",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Nombre del estado: pending, approved, rejected",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "fecha_desde",
+                        "in": "query",
+                        "description": "Fecha inicio YYYY-MM-DD",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "fecha_hasta",
+                        "in": "query",
+                        "description": "Fecha fin YYYY-MM-DD",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "patient_id",
+                        "in": "query",
+                        "description": "ID del paciente (solo admins)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Elementos por página (default 15)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Listado de pagos paginado."
+                    },
+                    "401": {
+                        "description": "No autenticado."
                     }
                 },
                 "security": [
@@ -2499,6 +2928,10 @@
             "description": "Turnos"
         },
         {
+            "name": "Certificados",
+            "description": "Certificados"
+        },
+        {
             "name": "Autenticación",
             "description": "Autenticación"
         },
@@ -2517,6 +2950,10 @@
         {
             "name": "Obras sociales",
             "description": "Obras sociales"
+        },
+        {
+            "name": "Notificaciones",
+            "description": "Notificaciones"
         },
         {
             "name": "Obra social del paciente",

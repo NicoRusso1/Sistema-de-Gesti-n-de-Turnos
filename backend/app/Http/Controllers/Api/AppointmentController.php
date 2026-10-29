@@ -491,7 +491,29 @@ class AppointmentController extends Controller
 
         return null;
     }
-        /**
+    #[OA\Get(
+        path: '/api/me/next-appointment',
+        summary: 'Próximo turno del paciente autenticado',
+        description: 'Retorna el próximo turno reservado o abonado del paciente logueado, ordenado por fecha ascendente.',
+        tags: ['Turnos'],
+        security: [['sanctum' => []]],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Turno encontrado o null si no tiene turnos próximos.',
+                content: new OA\JsonContent(
+                    nullable: true,
+                    properties: [
+                        new OA\Property(property: 'id', type: 'integer', example: 4),
+                        new OA\Property(property: 'scheduled_at', type: 'string', format: 'date-time', example: '2026-11-05T10:00:00'),
+                        new OA\Property(property: 'status', type: 'string', example: 'reservado'),
+                    ]
+                )
+            ),
+            new OA\Response(response: 401, description: 'No autenticado.'),
+        ]
+    )]
+    /**
      * Obtener el próximo turno asignado del paciente logueado para mostrar en Home.
      */
     public function nextAppointment(Request $request): JsonResponse
@@ -507,7 +529,41 @@ class AppointmentController extends Controller
 
         return response()->json($next, 200);
     }
-        /**
+    #[OA\Post(
+        path: '/api/appointments/{id}/certificate',
+        summary: 'Emitir certificado médico digital (Médicos y Administradores)',
+        description: 'Genera un PDF de certificado de atención, lo guarda en storage, actualiza el turno y envía el certificado por email al paciente.',
+        tags: ['Certificados'],
+        security: [['sanctum' => []]],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'), description: 'ID del turno')
+        ],
+        requestBody: new OA\RequestBody(
+            required: false,
+            content: new OA\JsonContent(
+                properties: [
+                    new OA\Property(property: 'observaciones', type: 'string', nullable: true, example: 'Paciente en reposo por 48hs.')
+                ]
+            )
+        ),
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Certificado emitido y enviado por correo exitosamente.',
+                content: new OA\JsonContent(
+                    properties: [
+                        new OA\Property(property: 'message', type: 'string', example: 'Certificado emitido y enviado por correo exitosamente'),
+                        new OA\Property(property: 'certificado_url', type: 'string', example: 'certificados/certificado_turno_4_1793279024.pdf'),
+                        new OA\Property(property: 'fecha_emision', type: 'string', format: 'date-time'),
+                    ]
+                )
+            ),
+            new OA\Response(response: 403, description: 'Solo los médicos o administradores pueden emitir certificados.'),
+            new OA\Response(response: 404, description: 'Turno no encontrado.'),
+            new OA\Response(response: 401, description: 'No autenticado.'),
+        ]
+    )]
+    /**
      * Emitir Certificado Digital (Médicos y Administradores).
      */
     public function issueCertificate(Request $request, $id, CertificateService $certificateService): JsonResponse
@@ -532,6 +588,22 @@ class AppointmentController extends Controller
         ], 200);
     }
 
+    #[OA\Get(
+        path: '/api/appointments/{id}/certificate/download',
+        summary: 'Descargar certificado médico en PDF',
+        description: 'Descarga el PDF del certificado del turno. Accesible por el paciente titular, el médico asignado o un administrador.',
+        tags: ['Certificados'],
+        security: [['sanctum' => []]],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'), description: 'ID del turno')
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Archivo PDF del certificado.'),
+            new OA\Response(response: 403, description: 'No tenés permiso para descargar este certificado.'),
+            new OA\Response(response: 404, description: 'El turno no cuenta con un certificado emitido o el archivo no fue encontrado.'),
+            new OA\Response(response: 401, description: 'No autenticado.'),
+        ]
+    )]
     /**
      * Descargar Certificado Digital en PDF (Paciente titular, Médico o Administrador).
      */
