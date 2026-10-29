@@ -1,0 +1,54 @@
+<div class="admin-notif-container">
+  <div class="header-actions">
+    <div>
+      <h2>Centro de Notificaciones</h2>
+      <p>Control y emisión de recordatorios de turnos vía email y alertas internas.</p>
+    </div>
+    <button class="btn btn-action" [disabled]="sending()" (click)="onTriggerReminders()">
+      @if (sending()) { ⏳ Enviando recordatorios... } @else { 🚀 Enviar recordatorios para mañana }
+    </button>
+  </div>
+
+  @if (messageSuccess()) {
+    <div class="alert alert-success">{{ messageSuccess() }}</div>
+  }
+  @if (messageError()) {
+    <div class="alert alert-danger">{{ messageError() }}</div>
+  }
+
+  <div class="card">
+    <h3>Historial de Notificaciones Emitidas</h3>
+
+    @if (loading()) {
+      <p>Cargando registro...</p>
+    } @else if (notifications().length > 0) {
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Destinatario</th>
+            <th>Tipo</th>
+            <th>Título</th>
+            <th>Mensaje</th>
+            <th>Fecha Emisión</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (n of notifications(); track n.id) {
+            <tr>
+              <td>
+                <strong>{{ n.patient?.first_name }} {{ n.patient?.last_name }}</strong>
+                <div class="sub-text">{{ n.patient?.email }}</div>
+              </td>
+              <td><span class="badge">{{ n.tipo | uppercase }}</span></td>
+              <td>{{ n.titulo }}</td>
+              <td>{{ n.mensaje }}</td>
+              <td>{{ n.created_at | date:'dd/MM/yyyy HH:mm' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    } @else {
+      <p class="empty-text">No hay notificaciones emitidas recientemente.</p>
+    }
+  </div>
+</div>

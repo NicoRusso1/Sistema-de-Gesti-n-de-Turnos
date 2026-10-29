@@ -62,4 +62,27 @@ class AppointmentNotificationService
             'leido'          => false,
         ]);
     }
+    /**
+     * Registrar notificación interna con el día y hora del próximo turno asignado.
+     */
+    public function notifyReminder(Appointment $appointment): void
+    {
+        $doctorName = $appointment->doctor 
+            ? "Dr/a. {$appointment->doctor->first_name} {$appointment->doctor->last_name}"
+            : "su médico asignado";
+
+        $especialidad = $appointment->specialty?->name ?? 'Consulta General';
+        $fecha = $appointment->scheduled_at->format('d/m/Y');
+        $hora = $appointment->scheduled_at->format('H:i');
+        $salaInfo = $appointment->sala ? " en Sala {$appointment->sala->numero} (Piso {$appointment->sala->piso})" : "";
+
+        Notification::create([
+            'patient_id'     => $appointment->patient_id,
+            'appointment_id' => $appointment->id,
+            'tipo'           => 'recordatorio',
+            'titulo'         => "Tu próximo turno es el {$fecha} a las {$hora} hs",
+            'mensaje'        => "Recordá que tu próximo turno está agendado para el día {$fecha} a las {$hora} hs con {$doctorName} ({$especialidad}){$salaInfo}. Estado del turno: " . strtoupper($appointment->status) . ".",
+            'leido'          => false,
+        ]);
+    }
 }

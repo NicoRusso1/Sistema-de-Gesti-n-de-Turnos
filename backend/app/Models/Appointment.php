@@ -33,12 +33,17 @@ class Appointment extends Model
         'scheduled_at',
         'status',
         'cancellation_reason',
+        'certificado_url',
+        'fecha_emision',
+        'certificado_token',
+        'observaciones_cert',
     ];
 
     protected function casts(): array
     {
         return [
             'scheduled_at'    => 'datetime',
+            'fecha_emision'   => 'datetime',
             'monto_base'      => 'decimal:2',
             'monto_descuento' => 'decimal:2',
             'monto_final'     => 'decimal:2',

@@ -1,0 +1,87 @@
+<div class="payments-container">
+  <div class="header-section">
+    <h2>Historial y Estado de Pagos</h2>
+    <p>Consulta las transacciones y comprobantes registrados en el sistema.</p>
+  </div>
+
+  <!-- Formulario de Filtros -->
+  <form [formGroup]="filterForm" (ngSubmit)="onFilter()" class="filters-card">
+    <div class="filter-group">
+      <label for="status">Estado</label>
+      <select id="status" formControlName="status">
+        <option value="">Todos los estados</option>
+        <option value="approved">Aprobado</option>
+        <option value="pending">Pendiente</option>
+        <option value="rejected">Rechazado</option>
+      </select>
+    </div>
+
+    <div class="filter-group">
+      <label for="fecha_desde">Desde</label>
+      <input type="date" id="fecha_desde" formControlName="fecha_desde">
+    </div>
+
+    <div class="filter-group">
+      <label for="fecha_hasta">Hasta</label>
+      <input type="date" id="fecha_hasta" formControlName="fecha_hasta">
+    </div>
+
+    <div class="filter-actions">
+      <button type="submit" class="btn btn-primary">Filtrar</button>
+      <button type="button" (click)="resetFilters()" class="btn btn-secondary">Limpiar</button>
+    </div>
+  </form>
+
+  <div *ngIf="loading()" class="loading-state">Cargando pagos...</div>
+  <div *ngIf="errorMessage()" class="alert alert-danger">{{ errorMessage() }}</div>
+
+  <!-- Tabla de Pagos -->
+  <div *ngIf="!loading() && payments().length > 0" class="table-card">
+    <table class="payments-table">
+      <thead>
+        <tr>
+          <th>Turno</th>
+          <th>Paciente</th>
+          <th>Monto</th>
+          <th>Método</th>
+          <th>Fecha Pago</th>
+          <th>Estado</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let p of payments()">
+          <td>
+            <div class="sub-text">{{ p.appointment_id ? 'Turno #' + p.appointment_id : '-' }}</div>
+          </td>
+          <td>
+            <div>{{ p.appointment?.specialty?.name ?? 'Consulta' }}</div>
+            <div class="sub-text">Dr/a. {{ p.appointment?.doctor?.last_name }}</div>
+          </td>
+          <td>{{ p.appointment?.patient?.first_name }} {{ p.appointment?.patient?.last_name }}</td>
+          <td class="amount-cell">${{ p.amount }}</td>
+          <td>{{ p.method?.name ?? 'MercadoPago' }}</td>
+          <td>{{ p.payment_date ? (p.payment_date | date:'dd/MM/yyyy HH:mm') : 'Pendiente' }}</td>
+          <td>
+            <span class="badge" [ngClass]="getStatusBadgeClass(p.status.name)">
+              {{ getStatusLabel(p.status.name) }}
+            </span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+
+    <!-- Paginador -->
+    <div class="pagination-footer">
+      <span>Total: {{ totalRecords() }} registros</span>
+      <div class="page-controls">
+        <button [disabled]="currentPage() === 1" (click)="cambiarPagina(currentPage() - 1)">Anterior</button>
+        <span>Página {{ currentPage() }} de {{ totalPages() }}</span>
+        <button [disabled]="currentPage() === totalPages()" (click)="cambiarPagina(currentPage() + 1)">Siguiente</button>
+      </div>
+    </div>
+  </div>
+
+  <div *ngIf="!loading() && payments().length === 0" class="empty-state">
+    <p>No se encontraron pagos con los filtros seleccionados.</p>
+  </div>
+</div>

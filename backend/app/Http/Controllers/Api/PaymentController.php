@@ -14,11 +14,88 @@ use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use OpenApi\Attributes as OA;
+use Carbon\Carbon;
 
 class PaymentController extends Controller
 {
     protected MercadoPagoService $mercadoPago;
 
+        #[OA\Get(
+        path: '/api/pagos',
+        summary: 'Consultar listado de pagos con filtros',
+        description: 'Retorna pagos paginados. Los pacientes solo ven sus pagos; administradores pueden consultar el historial global y filtrar por paciente, estado o rango de fechas.',
+        tags: ['Pagos'],
+        security: [['sanctum' => []]],
+        parameters: [
+            new OA\Parameter(name: 'status', description: 'Nombre del estado: pending, approved, rejected', in: 'query', required: false, schema: new OA\Schema(type: 'string')),
+            new OA\Parameter(name: 'fecha_desde', description: 'Fecha inicio YYYY-MM-DD', in: 'query', required: false, schema: new OA\Schema(type: 'string', format: 'date')),
+            new OA\Parameter(name: 'fecha_hasta', description: 'Fecha fin YYYY-MM-DD', in: 'query', required: false, schema: new OA\Schema(type: 'string', format: 'date')),
+            new OA\Parameter(name: 'patient_id', description: 'ID del paciente (solo admins)', in: 'query', required: false, schema: new OA\Schema(type: 'integer')),
+            new OA\Parameter(name: 'per_page', description: 'Elementos por página (default 15)', in: 'query', required: false, schema: new OA\Schema(type: 'integer', default: 15))
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Listado de pagos paginado.'),
+            new OA\Response(response: 401, description: 'No autenticado.')
+        ]
+    )]
+    public function index(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        $isGlobalAdmin = $user->hasAdminAccess() || $user->hasPermissionFlag('view_all_appointments');
+
+        $query = Payment::with([
+            'status',
+            'method',
+            'appointment.patient',
+            'appointment.doctor',
+            'appointment.specialty'
+        ]);
+
+        // Restricción por rol de usuario
+        if (!$isGlobalAdmin) {
+            $query->whereHas('appointment', function ($q) use ($user) {
+                $q->where('patient_id', $user->id);
+            });
+        } elseif ($request->filled('patient_id')) {
+            $query->whereHas('appointment', function ($q) use ($request) {
+                $q->where('patient_id', $request->query('patient_id'));
+            });
+        }
+
+        // Filtro por estado del pago
+        if ($request->filled('status')) {
+            $statusName = $request->query('status');
+            $query->whereHas('status', function ($q) use ($statusName) {
+                $q->where('name', $statusName);
+            });
+        }
+
+        // Filtro por rango de fechas (considera payment_date o created_at)
+        if ($request->filled('fecha_desde')) {
+            $desde = Carbon::parse($request->query('fecha_desde'))->startOfDay();
+            $query->where(function ($q) use ($desde) {
+                $q->where('payment_date', '>=', $desde)
+                  ->orWhere(function ($sub) use ($desde) {
+                      $sub->whereNull('payment_date')->where('created_at', '>=', $desde);
+                  });
+            });
+        }
+
+        if ($request->filled('fecha_hasta')) {
+            $hasta = Carbon::parse($request->query('fecha_hasta'))->endOfDay();
+            $query->where(function ($q) use ($hasta) {
+                $q->where('payment_date', '<=', $hasta)
+                  ->orWhere(function ($sub) use ($hasta) {
+                      $sub->whereNull('payment_date')->where('created_at', '<=', $hasta);
+                  });
+            });
+        }
+
+        $perPage = (int) $request->query('per_page', 15);
+        $paginated = $query->orderBy('created_at', 'desc')->paginate($perPage);
+
+        return response()->json($paginated, 200);
+    }
     public function __construct(MercadoPagoService $mercadoPago)
     {
         $this->mercadoPago = $mercadoPago;

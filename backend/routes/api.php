@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\DoctorScheduleController;
 use App\Http\Controllers\Api\DoctorPatientController;
 use App\Http\Controllers\Api\AppointmentController;
 use App\Http\Controllers\Api\PaymentController;
+use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PatientHealthInsuranceController;
 
 // Públicas
@@ -64,8 +65,20 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/users/{id}/restore', [UserController::class, 'restore']);
         Route::get('/users/{id}/permissions', [UserController::class, 'permissions']);
         Route::put('/users/{id}/permissions', [UserController::class, 'updatePermissions']);
+        
+        // CERTIFICADO DIGITAL
+        Route::post('/appointments/{id}/certificate', [AppointmentController::class, 'issueCertificate']);
+        Route::get('/appointments/{id}/certificate/download', [AppointmentController::class, 'downloadCertificate']);
     });
 
+    Route::get('/pagos', [PaymentController::class, 'index']);
+    Route::get('/me/notifications', [NotificationController::class, 'myNotifications']);
+    Route::patch('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
+    Route::get('/notifications', [NotificationController::class, 'index']);
+    Route::post('/notifications/send-reminders', [NotificationController::class, 'sendReminders']);
+    Route::delete('/notifications/{id}', [NotificationController::class, 'destroy']);
+
+    Route::get('/me/next-appointment', [AppointmentController::class, 'nextAppointment']);
     
     Route::apiResource('health-insurances', HealthInsuranceController::class)->only(['index', 'show']);
 

@@ -20,3 +20,20 @@ export interface PaymentVerifyResponse {
   message: string;
   payment: Payment;
 }
+
+export interface PaymentFilters {
+  status?: string;
+  fecha_desde?: string;
+  fecha_hasta?: string;
+  patient_id?: number;
+  page?: number;
+  per_page?: number;
+}
+
+export interface PaginatedPayments {
+  current_page: number;
+  data: Payment[];
+  total: number;
+  last_page: number;
+  per_page: number;
+}

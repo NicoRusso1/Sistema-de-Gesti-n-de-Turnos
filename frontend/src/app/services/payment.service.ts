@@ -3,6 +3,8 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { API_URL } from '../config/api';
 import { PaymentStartResponse, PaymentVerifyResponse } from '../models/payment';
+import { HttpParams } from '@angular/common/http';
+import { PaginatedPayments, PaymentFilters } from '../models/payment';
 
 @Injectable({
   providedIn: 'root'
@@ -24,5 +26,18 @@ export class PaymentService {
 
   getCheckoutUrl(paymentId: number): string | null {
     return sessionStorage.getItem(`checkout_${paymentId}`);
+  }
+  
+   getPayments(filters?: PaymentFilters): Observable<PaginatedPayments> {
+    let params = new HttpParams();
+    if (filters) {
+      if (filters.status) params = params.set('status', filters.status);
+      if (filters.fecha_desde) params = params.set('fecha_desde', filters.fecha_desde);
+      if (filters.fecha_hasta) params = params.set('fecha_hasta', filters.fecha_hasta);
+      if (filters.patient_id) params = params.set('patient_id', filters.patient_id.toString());
+      if (filters.page) params = params.set('page', filters.page.toString());
+      if (filters.per_page) params = params.set('per_page', filters.per_page.toString());
+    }
+    return this.http.get<PaginatedPayments>(`${API_URL}/pagos`, { params });
   }
 }

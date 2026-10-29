@@ -17,6 +17,9 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use OpenApi\Attributes as OA;
+use App\Services\CertificateService;
+use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class AppointmentController extends Controller
 {
@@ -487,5 +490,71 @@ class AppointmentController extends Controller
         }
 
         return null;
+    }
+        /**
+     * Obtener el próximo turno asignado del paciente logueado para mostrar en Home.
+     */
+    public function nextAppointment(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        $next = Appointment::with(['doctor', 'specialty', 'sala', 'healthInsurance'])
+            ->where('patient_id', $user->id)
+            ->where('scheduled_at', '>=', now())
+            ->whereIn('status', ['reservado', 'abonado', 'scheduled', 'confirmed'])
+            ->orderBy('scheduled_at', 'asc')
+            ->first();
+
+        return response()->json($next, 200);
+    }
+        /**
+     * Emitir Certificado Digital (Médicos y Administradores).
+     */
+    public function issueCertificate(Request $request, $id, CertificateService $certificateService): JsonResponse
+    {
+        $user = $request->user();
+        if (!$user->isDoctor() && !$user->hasAdminAccess()) {
+            return response()->json(['message' => 'Solo los médicos o administradores pueden emitir certificados'], 403);
+        }
+
+        $appointment = Appointment::find($id);
+        if (!$appointment) {
+            return response()->json(['message' => 'Turno no encontrado'], 404);
+        }
+
+        $observaciones = $request->input('observaciones');
+        $filePath = $certificateService->generateAndSend($appointment, $observaciones);
+
+        return response()->json([
+            'message'         => 'Certificado emitido y enviado por correo exitosamente',
+            'certificado_url' => $filePath,
+            'fecha_emision'   => $appointment->fresh()->fecha_emision,
+        ], 200);
+    }
+
+    /**
+     * Descargar Certificado Digital en PDF (Paciente titular, Médico o Administrador).
+     */
+    public function downloadCertificate(Request $request, $id)
+    {
+        $appointment = Appointment::find($id);
+        if (!$appointment || !$appointment->certificado_url) {
+            return response()->json(['message' => 'El turno no cuenta con un certificado emitido'], 404);
+        }
+
+        $user = $request->user();
+        $isOwner = (int) $appointment->patient_id === (int) $user->id;
+        $isDoctor = (int) $appointment->doctor_id === (int) $user->id;
+        $isAdmin = $user->hasAdminAccess();
+
+        if (!$isOwner && !$isDoctor && !$isAdmin) {
+            return response()->json(['message' => 'No tenés permiso para descargar este certificado'], 403);
+        }
+
+        if (!Storage::disk('public')->exists($appointment->certificado_url)) {
+            return response()->json(['message' => 'El archivo físico no fue encontrado'], 404);
+        }
+
+        return Storage::disk('public')->download($appointment->certificado_url, "Certificado_Turno_{$appointment->id}.pdf");
     }
 }

@@ -134,4 +134,14 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/profile/profile').then(m => m.ProfileComponent),
     canActivate: [authGuard]
   },
+  {
+    path: 'payments',
+    loadComponent: () => import('./pages/payments-list/payments-list').then(m => m.PaymentsListComponent),
+    canActivate: [authGuard]
+  },
+  {
+    path: 'notifications',
+    loadComponent: () => import('./pages/notifications/notifications').then(m => m.NotificationsComponent),
+    canActivate: [authGuard]
+  },
 ];
