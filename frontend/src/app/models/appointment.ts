@@ -36,6 +36,9 @@ export interface Appointment {
   specialty?: Specialty;
   sala?: Sala;
   healthInsurance?: HealthInsurance;
+  
+  certificado_url?: string | null;
+  fecha_emision?: string | null;
 }
 
 // Sala que se puede asignar a mano a un turno (GET /appointments/{id}/available-salas)

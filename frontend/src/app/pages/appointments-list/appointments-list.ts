@@ -107,6 +107,12 @@ export class AppointmentsListComponent implements OnInit {
     return role === 'Administrator' || role === 'SuperAdmin';
   }
 
+  // Check if the logged‑in user is a doctor (used for certificate buttons)
+  isDoctor(): boolean {
+    const type = this.currentUser()?.user_type?.name?.toLowerCase();
+    return type === 'doctor';
+  }
+
   canBook(): boolean {
     return this.isAdmin() || this.currentUser()?.user_type?.name === 'patient';
   }
@@ -245,6 +251,32 @@ export class AppointmentsListComponent implements OnInit {
         this.actionInProgress.set(false);
         this.errorMessage.set(err.error?.message || 'Error al reprogramar el turno.');
       },
+    });
+  }
+    downloadCert(app: Appointment): void {
+    this.appointmentService.downloadCertificate(app.id).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `Certificado_Turno_${app.id}.pdf`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+      },
+      error: () => alert('Error al descargar el certificado.')
+    });
+  }
+
+  emitirCert(app: Appointment): void {
+    const obs = prompt('Ingrese observaciones o diagnóstico para el certificado:');
+    if (obs === null) return;
+
+    this.appointmentService.issueCertificate(app.id, obs).subscribe({
+      next: (res) => {
+        alert('Certificado emitido y enviado por correo.');
+        this.fetchAppointments();
+      },
+      error: (err) => alert(err.error?.message || 'Error al emitir el certificado.')
     });
   }
 }

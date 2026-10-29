@@ -1,0 +1,17 @@
+.admin-notif-container { max-width: 1100px; margin: 20px auto; padding: 0 15px; }
+.header-actions { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px; }
+.header-actions h2 { margin: 0; color: #1B4B5A; }
+.header-actions p { margin: 4px 0 0 0; color: #64748b; }
+.btn-action { background: #ED7D5C; color: white; border: none; padding: 10px 18px; border-radius: 6px; font-weight: bold; cursor: pointer; }
+.btn-action:disabled { opacity: 0.6; cursor: not-allowed; }
+
+.card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+.table { width: 100%; border-collapse: collapse; text-align: left; }
+.table th, .table td { padding: 12px 14px; border-bottom: 1px solid #f1f5f9; }
+.table th { background: #f8fafc; color: #475569; font-size: 13px; }
+.sub-text { font-size: 12px; color: #64748b; }
+.badge { background: #e0f2fe; color: #0369a1; padding: 3px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; }
+.alert { padding: 12px; border-radius: 6px; margin-bottom: 15px; }
+.alert-success { background: #dcfce7; color: #166534; border: 1px solid #86efac; white-space: pre-line; }
+.alert-danger { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+.empty-text { text-align: center; color: #94a3b8; padding: 30px; }

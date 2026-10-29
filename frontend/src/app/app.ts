@@ -43,4 +43,15 @@ export class App {
   toggleSidebar(): void {
     this.isSidebarOpen = !this.isSidebarOpen;
   }
+    canViewPayments(): boolean {
+    return this.isAdmin() || this.isPatient();
+  }
+
+  paymentsLabel(): string {
+    return this.isAdmin() ? 'Gestión de Pagos' : 'Mis Pagos';
+  }
+
+  canAccessNotifications(): boolean {
+    return this.isAdmin() || this.isDoctor();
+  }
 }

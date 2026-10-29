@@ -11,3 +11,7 @@ Artisan::command('inspire', function () {
 Schedule::command('turnos:cancelar-expirados')
     ->everyFiveMinutes()
     ->withoutOverlapping();
+
+Schedule::command('turnos:enviar-recordatorios')
+    ->dailyAt('08:00')
+    ->withoutOverlapping();

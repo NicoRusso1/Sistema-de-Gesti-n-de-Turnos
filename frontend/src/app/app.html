@@ -11,20 +11,17 @@
       <ul>
         <li><a routerLink="/home">Inicio</a></li>
         <li><a routerLink="/appointments">{{ agendaLabel() }}</a></li>
+        
         <!-- Accesible y visible para Admin y SuperAdmin -->
         @if (isAdmin()) {
         <li><a routerLink="/users">Gestión de Usuarios</a></li>
-        <!-- Si ya tienes 'Gestión de Turnos', colócalo aquí arriba -->
         <li><a routerLink="/salas">Salas</a></li>
         <li><a routerLink="/health-insurances">Obras Sociales</a></li>
         <li><a routerLink="/specialties">Especialidades</a></li>
-       
         }
-
         @if (canBookAppointments()) {
         <li><a routerLink="/appointments/new">Reservar Turno</a></li>
         }
-
         @if (isPatient()) {
         <li><a routerLink="/profile">Mi perfil</a></li>
         }
@@ -32,6 +29,13 @@
         <!-- Visible solo para médicos -->
         @if (isDoctor()) {
         <li><a routerLink="/my-patients">Mis pacientes</a></li>
+        }
+        
+        @if (canViewPayments()) {
+        <li><a routerLink="/payments">{{ paymentsLabel() }}</a></li>
+        }
+        @if (canAccessNotifications()) {
+        <li><a routerLink="/notifications">Notificaciones</a></li>
         }
       </ul>
     </nav>

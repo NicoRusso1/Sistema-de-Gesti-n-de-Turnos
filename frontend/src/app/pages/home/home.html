@@ -1,6 +1,105 @@
-@if (user(); as u) {
-  <h1>Hola, {{ u.first_name }} {{ u.last_name }}</h1>
-  <p>Rol: <strong>{{ u.role.name }}</strong></p>
-}
+<div class="home-container">
+  @if (user(); as u) {
+    <!-- Tarjeta de Bienvenida -->
+    <div class="welcome-card">
+      <div class="welcome-info">
+        <h1>¡Hola, {{ u.first_name }} {{ u.last_name }}! </h1>
+        <p class="role-badge">Rol: <strong>{{ u.role.name }}</strong></p>
+      </div>
+      <button type="button" class="btn-logout" (click)="logout()">Cerrar sesión</button>
+    </div>
 
-<button type="button" (click)="logout()">Cerrar sesión</button>
+    <!-- TARJETA DESTACADA: PRÓXIMO TURNO ASIGNADO -->
+    <div class="next-appointment-card">
+      <div class="card-header">
+        <h3>Tu Próximo Turno Asignado</h3>
+      </div>
+
+      @if (loadingAppointment()) {
+        <p class="text-muted">Buscando tu agenda...</p>
+      } @else if (nextAppointment(); as app) {
+        <div class="appointment-details">
+          <div class="highlight-date">
+            <span class="day-time">{{ app.scheduled_at | date:'dd/MM/yyyy HH:mm' }} hs</span>
+            <span class="badge" [ngClass]="app.status === 'abonado' ? 'badge-abonado' : 'badge-reservado'">
+              {{ app.status === 'abonado' ? 'ABONADO' : 'RESERVADO (PENDIENTE PAGO)' }}
+            </span>
+          </div>
+
+          <div class="details-grid">
+            <div>
+              <span class="label">Profesional:</span>
+              <strong>Dr/a. {{ app.doctor?.first_name }} {{ app.doctor?.last_name }}</strong>
+            </div>
+            <div>
+              <span class="label">Especialidad:</span>
+              <strong>{{ app.specialty?.name || 'Consulta Médica' }}</strong>
+            </div>
+            @if (app.sala) {
+              <div>
+                <span class="label">Lugar de Atención:</span>
+                <strong>Sala {{ app.sala.numero }} (Piso {{ app.sala.piso }})</strong>
+              </div>
+            }
+            <div>
+              <span class="label">Cobertura:</span>
+              <strong>{{ app.healthInsurance?.name || 'Particular' }}</strong>
+            </div>
+          </div>
+
+          <div class="appointment-actions">
+            <a routerLink="/appointments" class="btn btn-primary">Ver todos mis turnos</a>
+          </div>
+        </div>
+      } @else {
+        <div class="no-appointment">
+          <p>No tenés ningún turno médico programado próximamente.</p>
+          <a routerLink="/appointments/new" class="btn btn-confirm">+ Reservar un Turno</a>
+        </div>
+      }
+    </div>
+
+    <!-- SECCIÓN DE NOTIFICACIONES -->
+    <div class="notifications-section">
+      <div class="section-header">
+        <h3>Avisos y Recordatorios Recientes</h3>
+      </div>
+
+      @if (loadingNotifications()) {
+        <p class="text-muted">Cargando avisos...</p>
+      } @else if (notifications().length > 0) {
+        <div class="notifications-grid">
+                    @for (n of notifications(); track n.id) {
+            <div class="notification-card" [class.unread]="!n.leido">
+              <!-- Botón X arriba a la derecha para borrar -->
+              <button type="button" class="btn-close-notif" (click)="deleteNotif(n)" title="Eliminar notificación">
+                &times;
+              </button>
+
+              <div class="notif-header">
+                <strong>{{ n.titulo }}</strong>
+              </div>
+
+              <p class="notif-body">{{ n.mensaje }}</p>
+
+              <div class="notif-footer">
+                @if (!n.leido) {
+                  <button type="button" class="btn-read" (click)="markRead(n)">Marcar como leída</button>
+                } @else {
+                  <span></span> <!-- Espacio para alinear a los extremos -->
+                }
+
+                <!-- Fecha abajo a la derecha -->
+                <small class="notif-date">{{ n.created_at | date:'dd/MM/yyyy HH:mm' }}</small>
+              </div>
+            </div>
+          }
+        </div>
+      } @else {
+        <div class="empty-notif">
+          <p>No tenés avisos pendientes en tu bandeja.</p>
+        </div>
+      }
+    </div>
+  }
+</div>

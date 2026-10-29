@@ -1,0 +1,83 @@
+.payments-container {
+  max-width: 1100px;
+  margin: 20px auto;
+  padding: 0 15px;
+}
+.header-section h2 { margin-bottom: 4px; color: #1B4B5A; }
+.header-section p { color: #666; margin-top: 0; }
+
+.filters-card {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 15px;
+  background: #f8fafc;
+  padding: 16px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  border: 1px solid #e2e8f0;
+  align-items: flex-end;
+}
+.filter-group { display: flex; flex-direction: column; gap: 4px; }
+.filter-group label { font-size: 13px; font-weight: 600; color: #475569; }
+.filter-group input, .filter-group select {
+  padding: 8px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  font-size: 14px;
+}
+.filter-actions { display: flex; gap: 8px; }
+.btn {
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  border: none;
+  font-weight: 500;
+}
+.btn-primary { background: #ED7D5C; color: white; }
+.btn-secondary { background: #94a3b8; color: white; }
+
+.table-card {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  overflow-x: auto;
+}
+.payments-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+.payments-table th, .payments-table td {
+  padding: 12px 16px;
+  border-bottom: 1px solid #f1f5f9;
+}
+.payments-table th { background: #f8fafc; font-size: 13px; color: #475569; }
+.sub-text { font-size: 12px; color: #64748b; }
+.amount-cell { font-weight: bold; color: #1B4B5A; }
+
+.badge {
+  padding: 4px 10px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: bold;
+}
+.badge-success { background: #dcfce7; color: #166534; }
+.badge-warning { background: #fef9c3; color: #854d0e; }
+.badge-danger { background: #fee2e2; color: #991b1b; }
+
+.pagination-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+}
+.page-controls button {
+  padding: 6px 12px;
+  margin: 0 4px;
+  border: 1px solid #cbd5e1;
+  border-radius: 4px;
+  background: white;
+  cursor: pointer;
+}
+.page-controls button:disabled { opacity: 0.5; cursor: not-allowed; }
+.empty-state { text-align: center; padding: 40px; color: #64748b; }

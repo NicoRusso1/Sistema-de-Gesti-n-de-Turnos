@@ -68,6 +68,12 @@
                     @if (canManage(app)) {
                       <button class="btn btn-outline-warning" (click)="openRescheduleModal(app)">Reprogramar</button>
                       <button class="btn btn-outline-danger" (click)="openCancelModal(app)">Cancelar</button>
+                    @if (app.certificado_url) {
+                      <button class="btn btn-primary" (click)="downloadCert(app)">📄 Descargar Certificado</button>
+                    }
+                    @if (!app.certificado_url && (isDoctor() || isAdmin()) && app.status !== 'cancelado') {
+                      <button class="btn btn-outline-primary" (click)="emitirCert(app)">✍️ Emitir Certificado</button>
+                      }
                     }
                   </div>
                 } @else {

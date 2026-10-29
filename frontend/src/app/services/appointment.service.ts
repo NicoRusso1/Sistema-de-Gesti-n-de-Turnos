@@ -3,6 +3,7 @@ import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { API_URL } from '../config/api';
 import {
+  Appointment,
   AppointmentCreatePayload,
   AppointmentFilters,
   AppointmentResponse,
@@ -47,5 +48,19 @@ export class AppointmentService {
 
   assignSala(id: number, salaId: number): Observable<AppointmentResponse> {
     return this.http.patch<AppointmentResponse>(`${this.endpoint}/${id}/sala`, { sala_id: salaId });
+  }
+
+  getNextAppointment(): Observable<Appointment | null> {
+    return this.http.get<Appointment | null>(`${API_URL}/me/next-appointment`);
+  }
+
+    issueCertificate(id: number, observaciones?: string): Observable<any> {
+    return this.http.post<any>(`${this.endpoint}/${id}/certificate`, { observaciones });
+  }
+
+  downloadCertificate(id: number): Observable<Blob> {
+    return this.http.get(`${this.endpoint}/${id}/certificate/download`, {
+      responseType: 'blob'
+    });
   }
 }
