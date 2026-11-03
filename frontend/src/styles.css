@@ -1,14 +1,34 @@
-/* Reset global de márgenes y bordes */
+:root {
+  --sigt-petroleo: #1b4b5a;
+  --sigt-petroleo-oscuro: #153a46;
+  --sigt-coral: #ed7d5c;
+  --sigt-coral-oscuro: #d96847;
+  --sigt-fondo: #f4f6f9;
+  --sigt-crema: #f6f3ec;
+  --sigt-texto: #1f2d33;
+  --sigt-texto-suave: #5b6b73;
+  --sigt-borde: #c9d3d8;
+  --sigt-exito: #28a745;
+  --sigt-error: #b3261e;
+  --sigt-error-fondo: #fbe9e7;
+}
+
 html, body {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
-  font-family: Arial, sans-serif;
-  background-color: #f4f6f9;
+  font-family: 'Outfit', Arial, sans-serif;
+  color: var(--sigt-texto);
+  background-color: var(--sigt-fondo);
   width: 100%;
   min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
 }
 
 *, *:before, *:after {
   box-sizing: inherit;
+}
+
+button, input, select, textarea {
+  font-family: inherit;
 }

@@ -3,10 +3,12 @@ import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { AuthLayout } from '../../shared/auth-layout/auth-layout';
+import { EyeIcon } from '../../shared/eye-icon/eye-icon';
 
 @Component({
   selector: 'app-register',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, AuthLayout, EyeIcon],
   templateUrl: './register.html',
 })
 export class Register {
@@ -16,6 +18,7 @@ export class Register {
 
   protected readonly errorMessage = signal('');
   protected readonly loading = signal(false);
+  protected readonly showPassword = signal(false);
 
   protected readonly form = this.fb.nonNullable.group({
     first_name: ['', Validators.required],

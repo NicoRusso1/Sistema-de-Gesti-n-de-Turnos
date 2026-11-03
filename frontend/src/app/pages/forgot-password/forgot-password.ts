@@ -3,11 +3,13 @@ import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { AuthLayout } from '../../shared/auth-layout/auth-layout';
 
 @Component({
   selector: 'app-forgot-password',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, AuthLayout],
   templateUrl: './forgot-password.html',
+  styleUrl: './forgot-password.css',
 })
 export class ForgotPassword {
   private fb = inject(FormBuilder);
