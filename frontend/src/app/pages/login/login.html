@@ -1,40 +1,15 @@
 <app-auth-layout
   headline="Tu turno, sin filas ni llamadas."
   support="Reservá, pagá y recibí tu certificado online."
+  heading="Ingresá a tu cuenta"
   [portrait]="true"
+  [agenda]="true"
   [benefits]="[
     { icon: 'calendar', title: 'Reservá en minutos', text: 'Elegí especialidad, médico y horario disponible.' },
     { icon: 'card', title: 'Pagá online', text: 'Con tarjeta de crédito o débito, de forma segura.' },
     { icon: 'document', title: 'Recibí tu certificado', text: 'Y los recordatorios de tus turnos, por email.' }
   ]"
 >
-  <div class="example" panel-extra aria-hidden="true">
-    <p class="example-label">Ejemplo · Próximo turno</p>
-    <div class="example-doctor">
-      <span class="example-photo">
-        <img src="doctora.jpg" alt="Dra. Agustina Ferreyra" width="64" height="64">
-        <span class="example-online"></span>
-      </span>
-      <div>
-        <strong>Dra. Agustina Ferreyra</strong>
-        <p>Cardiología · Consultorio 3</p>
-      </div>
-    </div>
-    <dl class="example-data">
-      <div>
-        <dt>Fecha</dt>
-        <dd>Jue 14 · 10:30 hs</dd>
-      </div>
-      <div>
-        <dt>Estado</dt>
-        <dd><span class="chip">Confirmado</span></dd>
-      </div>
-    </dl>
-  </div>
-
-  <h1>Ingresá a tu cuenta</h1>
-  <p class="login-lead">Entrá para gestionar tus turnos.</p>
-
   @if (registered) {
     <p class="notice notice-ok" role="status">Registro exitoso. Ya podés iniciar sesión.</p>
   }
@@ -60,7 +35,10 @@
     </div>
 
     <div class="field">
-      <label for="password">Contraseña</label>
+      <div class="label-row">
+        <label for="password">Contraseña</label>
+        <a routerLink="/forgot-password">Olvidé mi contraseña</a>
+      </div>
       <div class="input-wrap">
         <input
           id="password"
@@ -83,9 +61,6 @@
       @if (form.controls.password.touched && form.controls.password.invalid) {
         <span class="field-error">La contraseña es obligatoria</span>
       }
-      <div class="field-aside">
-        <a routerLink="/forgot-password">Olvidé mi contraseña</a>
-      </div>
     </div>
 
     <button class="submit" type="submit" [disabled]="loading()">

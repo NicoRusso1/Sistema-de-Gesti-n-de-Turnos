@@ -2,37 +2,15 @@
   headline="Creá tu cuenta y reservá tu primer turno."
   support="Registrate en 2 minutos y reservá online."
   [wide]="true"
+  heading="Creá tu cuenta"
   [portrait]="true"
+  [agenda]="true"
   [benefits]="[
     { icon: 'clock', title: 'Registro en 2 minutos', text: 'Solo necesitás tus datos personales.' },
     { icon: 'folder', title: 'Tu historial en un lugar', text: 'Turnos, pagos y certificados siempre a mano.' },
     { icon: 'shield', title: 'Datos protegidos', text: 'Tu información se guarda de forma segura.' }
   ]"
 >
-  <div class="example" panel-extra aria-hidden="true">
-    <p class="example-label">Ejemplo · Tu perfil</p>
-    <div class="example-doctor">
-      <span class="example-avatar">JP</span>
-      <div>
-        <strong>Juan Pérez</strong>
-        <p>Paciente</p>
-      </div>
-    </div>
-    <dl class="example-data">
-      <div>
-        <dt>Historial</dt>
-        <dd>Turnos y pagos</dd>
-      </div>
-      <div>
-        <dt>Estado</dt>
-        <dd><span class="chip">Cuenta activa</span></dd>
-      </div>
-    </dl>
-  </div>
-
-  <h1 class="accent">Creá tu cuenta</h1>
-  <p class="login-lead">Completá tus datos para empezar a reservar turnos.</p>
-
   @if (errorMessage()) {
     <p class="notice notice-error" role="alert">{{ errorMessage() }}</p>
   }
