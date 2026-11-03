@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Mail\CertificadoDigitalMail;
 use App\Models\Appointment;
+use App\Models\Certificate;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Mail;
@@ -12,29 +13,38 @@ use Illuminate\Support\Str;
 
 class CertificateService
 {
-    /**
-     * Generar PDF, guardar en storage, actualizar turno y enviar por email al paciente.
-     */
-    public function generateAndSend(Appointment $appointment, ?string $observaciones = null): string
+    public function generate(Appointment $appointment, ?string $observaciones = null, ?Carbon $fechaEmision = null): string
     {
         $appointment->loadMissing(['doctor', 'specialty', 'sala', 'patient', 'healthInsurance']);
-        $fechaEmision = Carbon::now();
+        $fechaEmision = $fechaEmision ?? Carbon::now();
 
-        // Generar token único para ver el certificado desde el navegador
-        $token = Str::random(64);
-
-        // 1. Renderizar PDF con DomPDF
         $pdf = Pdf::loadView('certificates.certificates', [
             'appointment'   => $appointment,
             'fechaEmision'  => $fechaEmision,
             'observaciones' => $observaciones,
         ])->setPaper('a4', 'portrait');
 
-        // 2. Guardar en storage/app/public/certificados/
         $fileName = "certificados/certificado_turno_{$appointment->id}_" . time() . ".pdf";
         Storage::disk('public')->put($fileName, $pdf->output());
 
-        // 3. Actualizar registro del turno
+        $certificate = Certificate::firstOrNew(['appointment_id' => $appointment->id]);
+        $certificate->certificate_url = $fileName;
+        $certificate->issue_date = $fechaEmision;
+        $certificate->save();
+
+        return $fileName;
+    }
+
+    /**
+     * Generar PDF, guardar en storage, actualizar turno y enviar por email al paciente.
+     */
+    public function generateAndSend(Appointment $appointment, ?string $observaciones = null): string
+    {
+        $fechaEmision = Carbon::now();
+        $token = Str::random(64);
+
+        $fileName = $this->generate($appointment, $observaciones, $fechaEmision);
+
         $appointment->update([
             'certificado_url'     => $fileName,
             'fecha_emision'       => $fechaEmision,
