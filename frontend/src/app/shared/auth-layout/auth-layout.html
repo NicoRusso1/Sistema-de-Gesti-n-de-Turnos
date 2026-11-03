@@ -12,9 +12,6 @@
           </div>
         </div>
       </div>
-      <div class="panel-portrait" aria-hidden="true">
-        <img src="doctora-recorte.webp" alt="" width="900" height="1453" loading="lazy">
-      </div>
     }
 
     <img class="panel-watermark" src="isotipo.png" alt="" aria-hidden="true">
@@ -166,10 +163,41 @@
         <stop offset="0.5" style="stop-color: var(--sigt-petroleo)" />
         <stop offset="1" style="stop-color: var(--sigt-petroleo)" />
       </linearGradient>
+      <clipPath id="auth-left-clip">
+        <rect x="0" y="0" height="80" [attr.width]="cut()" />
+      </clipPath>
+      <clipPath id="auth-right-clip">
+        <rect y="0" width="6000" height="80" [attr.x]="cut()" />
+      </clipPath>
+      <clipPath id="auth-window">
+        <rect class="run-window" x="0" y="0" height="80" />
+      </clipPath>
     </defs>
-    <path class="cont-base" pathLength="1000" stroke="url(#auth-base-grad)" [attr.d]="pulsePath()" />
-    <path class="cont-run" pathLength="1000" stroke="url(#auth-run-grad)" [attr.d]="pulsePath()" />
+    <g class="cont-base" stroke="url(#auth-base-grad)">
+      <g class="geom-left" clip-path="url(#auth-left-clip)">
+        <g class="geom-qrs">
+          <path d="M-4000 40 H-176 L-156 14 L-132 46 L-104 36 L-40 40 L0 6 L28 74 L58 38 L84 18 L108 44 L112 40 H4000" />
+        </g>
+      </g>
+      <path class="geom-right" clip-path="url(#auth-right-clip)" [attr.d]="pulsePath()" />
+    </g>
+    <g clip-path="url(#auth-window)">
+      <g class="cont-run" stroke="url(#auth-run-grad)">
+        <g class="geom-left" clip-path="url(#auth-left-clip)">
+          <g class="geom-qrs">
+            <path d="M-4000 40 H-176 L-156 14 L-132 46 L-104 36 L-40 40 L0 6 L28 74 L58 38 L84 18 L108 44 L112 40 H4000" />
+          </g>
+        </g>
+        <path class="geom-right" clip-path="url(#auth-right-clip)" [attr.d]="pulsePath()" />
+      </g>
+    </g>
   </svg>
+
+  @if (portrait()) {
+    <div class="panel-portrait" aria-hidden="true">
+      <img src="doctora-recorte.webp" alt="" width="900" height="1453" loading="lazy">
+    </div>
+  }
 
   @if (agenda()) {
     <div class="panel-plate" aria-hidden="true">

@@ -27,6 +27,7 @@ app-auth-layout {
   background-size: 24px 24px;
   color: #fff;
   overflow: hidden;
+  z-index: 1;
 }
 
 .auth .panel-watermark {
@@ -172,7 +173,7 @@ app-auth-layout {
     animation: auth-pulse-run 2.8s linear infinite;
   }
 
-  .auth .cont-run {
+  .auth .run-window {
     animation: auth-run 6s linear infinite;
   }
 
@@ -234,7 +235,7 @@ app-auth-layout {
   position: fixed;
   left: 0;
   bottom: var(--pb);
-  z-index: 0;
+  z-index: 2;
   width: 100%;
   height: 80px;
   overflow: hidden;
@@ -248,23 +249,27 @@ app-auth-layout {
   stroke-linejoin: round;
 }
 
-.auth .cont-run {
-  stroke-dasharray: 60 1400;
-  stroke-dashoffset: -200;
+.auth .geom-qrs {
+  transform: translateX(calc(var(--cut) - var(--pw) / 2));
+}
+
+.auth .run-window {
+  width: 6vw;
+  transform: translateX(20vw);
 }
 
 @keyframes auth-run {
   from {
-    stroke-dashoffset: 60;
+    transform: translateX(-6vw);
   }
   to {
-    stroke-dashoffset: -1000;
+    transform: translateX(100vw);
   }
 }
 
 .auth .login-center {
   position: relative;
-  z-index: 1;
+  z-index: 5;
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -368,7 +373,7 @@ app-auth-layout {
 
 .auth .login-foot {
   position: relative;
-  z-index: 1;
+  z-index: 5;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -439,6 +444,14 @@ app-auth-layout {
 }
 
 @media (max-width: 1100px) {
+  .auth .geom-left {
+    display: none;
+  }
+
+  .auth .geom-right {
+    clip-path: none;
+  }
+
   .auth .login-panel {
     padding-left: 40px;
     padding-right: 40px;
@@ -632,11 +645,11 @@ app-auth-layout {
 }
 
 @media (min-width: 1101px) {
-  .auth .has-portrait .panel-portrait {
-    position: absolute;
-    right: 0;
+  .auth .panel-portrait {
+    position: fixed;
+    left: calc(var(--cut) - var(--pw));
     bottom: 0;
-    z-index: 0;
+    z-index: 3;
     display: block;
     width: var(--pw);
     aspect-ratio: 900 / 1453;
@@ -669,7 +682,7 @@ app-auth-layout {
     position: absolute;
     right: calc(var(--gw) * 0.34);
     bottom: 0;
-    z-index: 0;
+    z-index: 1;
     display: block;
     box-sizing: border-box;
     width: var(--gw);
@@ -1154,7 +1167,7 @@ app-auth-layout {
     position: fixed;
     left: calc(var(--cut) - var(--gw) * 1.34 + 12px);
     bottom: calc(var(--pb) + 92px);
-    z-index: 1;
+    z-index: 4;
     display: block;
     padding: 12px 18px;
     border-left: 4px solid var(--sigt-coral);
