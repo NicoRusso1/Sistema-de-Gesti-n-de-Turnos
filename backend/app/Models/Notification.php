@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\NotificationDeliveryStatus;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -16,12 +17,17 @@ class Notification extends Model
         'titulo',
         'mensaje',
         'leido',
+        'estado_envio',
+        'error_envio',
+        'enviada_at',
     ];
 
     protected function casts(): array
     {
         return [
             'leido' => 'boolean',
+            'estado_envio' => NotificationDeliveryStatus::class,
+            'enviada_at' => 'datetime',
         ];
     }
 
