@@ -1,65 +1,57 @@
-<h1>Consulta de Disponibilidad de Salas</h1>
+<div class="admin">
+  <header class="page-header">
+    <div>
+      <h1>Disponibilidad de salas</h1>
+      <p>{{ disponibilidad().length }} {{ disponibilidad().length === 1 ? 'sala' : 'salas' }}</p>
+    </div>
+    <a class="back-link" routerLink="/salas"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg> Volver a salas</a>
+  </header>
 
-<p><a routerLink="/salas">← Volver a Gestión de Salas</a></p>
-
-<form [formGroup]="filterForm" (ngSubmit)="consultar()" style="display: flex; gap: 12px; align-items: flex-end; margin-bottom: 20px;">
-  <div>
-    <label for="fecha">Fecha:</label><br>
-    <input id="fecha" type="date" formControlName="fecha">
-  </div>
-
-  <div>
-    <label for="franja_horaria">Franja Horaria:</label><br>
-    <select id="franja_horaria" formControlName="franja_horaria">
-      <option value="">Todas</option>
+  <form [formGroup]="filterForm" (ngSubmit)="consultar()" class="toolbar">
+    <input class="input input-short" id="fecha" type="date" formControlName="fecha" aria-label="Fecha">
+    <select class="select" id="franja_horaria" formControlName="franja_horaria" aria-label="Franja horaria">
+      <option value="">Todas las franjas</option>
       <option value="08:00-12:00">Mañana (08:00 - 12:00)</option>
       <option value="12:00-16:00">Tarde 1 (12:00 - 16:00)</option>
       <option value="16:00-20:00">Tarde 2 (16:00 - 20:00)</option>
     </select>
-  </div>
-
-  <div>
-    <label for="especialidad">Especialidad:</label><br>
-    <select id="especialidad" formControlName="especialidad_id">
-      <option value="">Todas</option>
+    <select class="select" id="especialidad" formControlName="especialidad_id" aria-label="Especialidad">
+      <option value="">Todas las especialidades</option>
       @for (spec of specialties(); track spec.id) {
         <option [value]="spec.id">{{ spec.name }}</option>
       }
     </select>
+    <div class="toolbar-actions">
+      <button type="submit" class="btn btn-secondary" [disabled]="loading()">Consultar</button>
+    </div>
+  </form>
+
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Sala</th>
+          <th>Piso</th>
+          <th>Especialidad</th>
+          <th>Ocupación</th>
+          <th>Turno asociado</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (s of disponibilidad(); track s.id) {
+          <tr [class.row-busy]="s.ocupacion !== 'disponible'">
+            <td data-label="Sala" class="cell-main">Sala {{ s.numero }}</td>
+            <td data-label="Piso">Piso {{ s.piso }}</td>
+            <td data-label="Especialidad">{{ s.especialidad }}</td>
+            <td data-label="Ocupación"><span class="state" [class.state-busy]="s.ocupacion !== 'disponible'">{{ s.ocupacion === 'disponible' ? 'Libre' : 'Ocupada' }}</span></td>
+            <td data-label="Turno asociado">{{ s.turno_asociado ? s.turno_asociado.detalle : 'Sin turno asignado' }}</td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="5" class="cell-empty">No se encontraron salas para el criterio seleccionado. Las salas fuera de servicio se excluyen automáticamente.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
   </div>
-
-  <button type="submit" [disabled]="loading()">Consultar</button>
-</form>
-
-<table border="1" cellpadding="8" style="width: 100%; border-collapse: collapse;">
-  <thead>
-    <tr>
-      <th>Sala</th>
-      <th>Piso</th>
-      <th>Especialidad</th>
-      <th>Estado de Ocupación</th>
-      <th>Turno Asociado</th>
-    </tr>
-  </thead>
-  <tbody>
-    @for (s of disponibilidad(); track s.id) {
-      <tr>
-        <td><strong>Sala {{ s.numero }}</strong></td>
-        <td>Piso {{ s.piso }}</td>
-        <td>{{ s.especialidad }}</td>
-        <td>
-          <span [style.color]="s.ocupacion === 'disponible' ? 'green' : 'crimson'">
-            <strong>{{ s.ocupacion === 'disponible' ? 'Libre / Disponible' : 'Ocupada' }}</strong>
-          </span>
-        </td>
-        <td>
-          {{ s.turno_asociado ? s.turno_asociado.detalle : 'Sin turno asignado' }}
-        </td>
-      </tr>
-    } @empty {
-      <tr>
-        <td colspan="5">No se encontraron salas disponibles para el criterio seleccionado (las salas fuera de servicio son excluidas automáticamente).</td>
-      </tr>
-    }
-  </tbody>
-</table>
+</div>

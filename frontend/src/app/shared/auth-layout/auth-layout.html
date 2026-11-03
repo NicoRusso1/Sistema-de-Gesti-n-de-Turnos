@@ -1,8 +1,19 @@
-<main class="auth" [class.auth-intro]="intro()">
+<main class="auth" [class.auth-intro]="intro()" [style.--cut.px]="cut()">
   <aside class="login-panel" [class.has-portrait]="portrait()">
     @if (portrait()) {
+      <div class="glass-orb" aria-hidden="true"></div>
+      <div class="glass-plate" aria-hidden="true">
+        <span class="glass-line"></span>
+        <div class="glass-brand">
+          <img src="isotipo.png" alt="">
+          <div>
+            <span class="glass-name">SIGT</span>
+            <span class="glass-sub">Gestión de turnos</span>
+          </div>
+        </div>
+      </div>
       <div class="panel-portrait" aria-hidden="true">
-        <img src="doctora.jpg" alt="" width="480" height="640" loading="lazy">
+        <img src="doctora-recorte.webp" alt="" width="900" height="1453" loading="lazy">
       </div>
     }
 
@@ -20,6 +31,7 @@
       <h2>{{ headline() }}</h2>
       <p class="panel-support">{{ support() }}</p>
 
+      @if (benefits().length > 0) {
       <ul class="benefits">
         @for (benefit of benefits(); track benefit.title) {
           <li>
@@ -78,6 +90,28 @@
           </li>
         }
       </ul>
+      }
+
+      @if (agenda()) {
+        <div class="agenda" aria-hidden="true">
+          <p class="agenda-label">Horarios · Jue 14</p>
+          <div class="agenda-track">
+            @for (slot of slots; track slot.at; let i = $index) {
+              <span class="slot slot-{{ slot.kind }}" [style.left.%]="slot.at / 2.1" [style.--i]="i">
+                @if (slot.kind === 'mine') {
+                  <span class="slot-tag">Tu turno</span>
+                }
+              </span>
+            }
+            @for (tick of ticks; track tick) {
+              <span class="tick" [style.left.%]="tick / 2.1"></span>
+            }
+            @for (hour of hours; track hour.at) {
+              <span class="hour" [style.left.%]="hour.at / 2.1">{{ hour.label }}</span>
+            }
+          </div>
+        </div>
+      }
 
       <ng-content select="[panel-extra]" />
     </div>
@@ -93,7 +127,17 @@
 
     <div class="login-center">
       <div class="login-card" [class.login-card-wide]="wide()">
-        <ng-content />
+        <header class="pass-head">
+          <img class="pass-mark" src="isotipo.png" alt="" aria-hidden="true">
+          <div class="pass-title">
+            <span class="pass-label" aria-hidden="true">Acceso al sistema</span>
+            <h1>{{ heading() }}</h1>
+          </div>
+          <span class="pass-code" aria-hidden="true">N.º 000001</span>
+        </header>
+        <div class="pass-body">
+          <ng-content />
+        </div>
       </div>
 
       <ng-content select="[below]" />
@@ -126,4 +170,12 @@
     <path class="cont-base" pathLength="1000" stroke="url(#auth-base-grad)" [attr.d]="pulsePath()" />
     <path class="cont-run" pathLength="1000" stroke="url(#auth-run-grad)" [attr.d]="pulsePath()" />
   </svg>
+
+  @if (agenda()) {
+    <div class="panel-plate" aria-hidden="true">
+      <strong>Dra. Agustina Ferreyra</strong>
+      <span>Cardiología</span>
+      <small>M.P. 24318 · Consultorio 3</small>
+    </div>
+  }
 </main>

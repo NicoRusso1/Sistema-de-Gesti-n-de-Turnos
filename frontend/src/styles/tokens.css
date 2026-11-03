@@ -1,0 +1,47 @@
+:root {
+  --sigt-petroleo: #1b4b5a;
+  --sigt-petroleo-oscuro: #153a46;
+  --sigt-coral: #ed7d5c;
+  --sigt-coral-oscuro: #d96847;
+  --sigt-fondo: #f4f6f9;
+  --sigt-crema: #f6f3ec;
+  --sigt-texto: #1f2d33;
+  --sigt-texto-suave: #5b6b73;
+  --sigt-borde: #c9d3d8;
+  --sigt-exito: #28a745;
+  --sigt-error: #b3261e;
+  --sigt-error-fondo: #fbe9e7;
+
+  --sigt-blanco: #ffffff;
+  --sigt-blanco-08: rgba(255, 255, 255, .08);
+  --sigt-blanco-12: rgba(255, 255, 255, .12);
+  --sigt-blanco-25: rgba(255, 255, 255, .25);
+  --sigt-blanco-50: rgba(255, 255, 255, .5);
+  --sigt-blanco-60: rgba(255, 255, 255, .6);
+  --sigt-blanco-70: rgba(255, 255, 255, .7);
+  --sigt-blanco-78: rgba(255, 255, 255, .78);
+  --sigt-velo: rgba(0, 0, 0, .4);
+  --sigt-ok-fondo: #e3f4e8;
+  --sigt-ok-texto: #14532d;
+  --sigt-aviso-fondo: #fdf0d2;
+  --sigt-aviso-texto: #6b4300;
+  --sigt-error-texto: #7a1a14;
+  --sigt-error-oscuro: #8f1f19;
+  --sigt-info-fondo: #e1eef2;
+
+  --sigt-radio-sm: 6px;
+  --sigt-radio: 10px;
+  --sigt-radio-lg: 14px;
+  --sigt-sidebar-w: 264px;
+  --sigt-sidebar-w-colapsado: 72px;
+  --sigt-topbar-h: 64px;
+  --sigt-sombra-suave: 0 1px 2px rgba(0, 0, 0, .04);
+
+  --sp-1: 4px;
+  --sp-2: 8px;
+  --sp-3: 12px;
+  --sp-4: 16px;
+  --sp-5: 24px;
+  --sp-6: 32px;
+  --sp-7: 48px;
+}

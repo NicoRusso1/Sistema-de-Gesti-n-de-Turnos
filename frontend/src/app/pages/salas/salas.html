@@ -1,74 +1,70 @@
-<h1>Gestión de Salas</h1>
+<div class="admin">
+  <header class="page-header">
+    <div>
+      <h1>Salas</h1>
+      <p>{{ salas().length }} {{ salas().length === 1 ? 'sala' : 'salas' }}</p>
+    </div>
+    <div class="page-header-actions">
+      <a routerLink="/salas/disponibilidad" class="btn btn-secondary">Ver disponibilidad</a>
+      <a routerLink="/salas/new" class="btn btn-primary"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg> Nueva sala</a>
+    </div>
+  </header>
 
-<div style="margin-bottom: 1rem; display: flex; gap: 10px;">
-  <a routerLink="/salas/new" class="btn-primary">Nueva Sala</a>
-  <a routerLink="/salas/disponibilidad" class="btn-secondary">Consultar Disponibilidad</a>
-</div>
-
-<form [formGroup]="filterForm" (ngSubmit)="load()" style="margin-bottom: 1.5rem; display: flex; gap: 10px; align-items: flex-end;">
-  <div>
-    <label for="search">Número de Sala:</label><br>
-    <input id="search" type="text" formControlName="search" placeholder="Ej: 101, 2A">
-  </div>
-
-  <div>
-    <label for="piso">Piso:</label><br>
-    <input id="piso" type="number" formControlName="piso" placeholder="Piso">
-  </div>
-
-  <div>
-    <label for="estado">Estado:</label><br>
-    <select id="estado" formControlName="estado" (change)="load()">
-      <option value="">Todos</option>
+  <form [formGroup]="filterForm" (ngSubmit)="load()" class="toolbar">
+    <div class="search">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
+      <input class="input" id="search" type="search" formControlName="search" placeholder="Buscar por número de sala" aria-label="Buscar salas">
+    </div>
+    <input class="input input-short" id="piso" type="number" formControlName="piso" placeholder="Piso" aria-label="Piso">
+    <select class="select" id="estado" formControlName="estado" (change)="load()" aria-label="Estado">
+      <option value="">Todos los estados</option>
       <option value="disponible">Disponible</option>
       <option value="fuera_de_servicio">Fuera de servicio</option>
     </select>
+    <div class="toolbar-actions">
+      <button type="submit" class="btn btn-secondary">Filtrar</button>
+      <button type="button" class="btn btn-ghost" (click)="clearFilters()">Limpiar</button>
+    </div>
+  </form>
+
+  @if (errorMessage()) {
+    <p class="notice-error" role="alert">{{ errorMessage() }}</p>
+  }
+  @if (successMessage()) {
+    <p class="notice-ok" role="status">{{ successMessage() }}</p>
+  }
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Número</th>
+          <th>Piso</th>
+          <th>Especialidad</th>
+          <th>Estado</th>
+          <th class="col-actions">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (item of salas(); track item.id) {
+          <tr>
+            <td data-label="Número" class="cell-main">{{ item.numero }}</td>
+            <td data-label="Piso">{{ item.piso }}</td>
+            <td data-label="Especialidad">{{ item.specialty ? item.specialty.name : 'General (sin asignar)' }}</td>
+            <td data-label="Estado"><span class="badge" [class.badge-ok]="item.estado === 'disponible'" [class.badge-error]="item.estado !== 'disponible'">{{ item.estado === 'disponible' ? 'Disponible' : 'Fuera de servicio' }}</span></td>
+            <td class="col-actions">
+              <div class="table-actions">
+                <a class="icon-btn" [routerLink]="['/salas', item.id, 'edit']" aria-label="Editar sala" title="Editar sala"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></a>
+                <button type="button" class="icon-btn" [attr.aria-label]="item.estado === 'disponible' ? 'Inhabilitar sala' : 'Habilitar sala'" [title]="item.estado === 'disponible' ? 'Inhabilitar sala' : 'Habilitar sala'" (click)="toggleEstado(item)"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v9M7 6.5a7 7 0 1 0 10 0"/></svg></button>
+                <button type="button" class="icon-btn icon-btn-danger" aria-label="Eliminar sala" title="Eliminar sala" (click)="eliminar(item)"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/></svg></button>
+              </div>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="5" class="cell-empty">No se encontraron salas registradas.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
   </div>
-
-  <button type="submit">Filtrar</button>
-  <button type="button" (click)="clearFilters()">Limpiar</button>
-</form>
-
-@if (errorMessage()) {
-  <p role="alert" style="color: red;">{{ errorMessage() }}</p>
-}
-@if (successMessage()) {
-  <p role="alert" style="color: green;">{{ successMessage() }}</p>
-}
-
-<table border="1" cellpadding="8" style="width: 100%; border-collapse: collapse;">
-   <thead>
-    <tr>
-      <th>Número</th>
-      <th>Piso</th>
-      <th>Especialidad</th>
-      <th>Estado</th>
-      <th>Acciones</th>
-    </tr>
-  </thead>
-  <tbody>
-    @for (item of salas(); track item.id) {
-      <tr>
-        <td><strong>{{ item.numero }}</strong></td>
-        <td>{{ item.piso }}</td>
-        <td>{{ item.specialty ? item.specialty.name : 'General (Sin asignar)' }}</td>
-        <td>
-          <span [style.color]="item.estado === 'disponible' ? 'green' : 'crimson'">
-            {{ item.estado === 'disponible' ? 'Disponible' : 'Fuera de Servicio' }}
-          </span>
-        </td>
-        <td>
-          <a [routerLink]="['/salas', item.id, 'edit']">Editar</a> |
-          <button type="button" (click)="toggleEstado(item)">
-            {{ item.estado === 'disponible' ? 'Inhabilitar' : 'Habilitar' }}
-          </button> |
-          <button type="button" (click)="eliminar(item)" style="color: red;">Eliminar</button>
-        </td>
-      </tr>
-    } @empty {
-      <tr>
-        <td colspan="5">No se encontraron salas registradas.</td>
-      </tr>
-    }
-  </tbody>
-</table>
+</div>

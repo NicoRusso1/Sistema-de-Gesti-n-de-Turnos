@@ -1,56 +1,61 @@
-<h1>Permisos de usuario</h1>
-
-@if (user(); as u) {
-  <p>
-    <strong>{{ u.first_name }} {{ u.last_name }}</strong>
-    ({{ u.user_type?.name ?? 'sin tipo' }})
-  </p>
-}
-
-@if (errorMessage()) {
-  <p role="alert">{{ errorMessage() }}</p>
-}
-
-@if (successMessage()) {
-  <p role="status">{{ successMessage() }}</p>
-}
-
-<form [formGroup]="form" (ngSubmit)="onSubmit()">
-  <div>
-    <label>
-      <input type="checkbox" formControlName="view_own_appointments">
-      Ver sus propios turnos
-    </label>
-  </div>
-
-  <div>
-    <label>
-      <input type="checkbox" formControlName="view_all_appointments">
-      Ver todos los turnos
-    </label>
-  </div>
-
-  <div>
-    <label>
-      <input type="checkbox" formControlName="view_assigned_patients">
-      Ver pacientes asignados (solo médicos)
-    </label>
-  </div>
-
-  <div>
-    <label>
-      <input type="checkbox" formControlName="cancel_appointments">
-      Cancelar turnos
-    </label>
-  </div>
-
-  <div>
-    <label>
-      <input type="checkbox" formControlName="edit_schedules">
-      Editar horarios y agendas
-    </label>
-  </div>
-
-  <button type="submit" [disabled]="loading()">Guardar permisos</button>
-  <a routerLink="/users">Volver</a>
-</form>
+<div class="admin">
+  <header class="page-header">
+    <h1>Permisos de usuario</h1>
+    <a class="back-link" routerLink="/users"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg> Volver</a>
+  </header>
+  @if (user(); as u) {
+    <p class="subject"><strong>{{ u.first_name }} {{ u.last_name }}</strong> {{ u.user_type?.name ?? 'sin tipo' }}</p>
+  }
+  @if (errorMessage()) {
+    <p class="notice-error" role="alert">{{ errorMessage() }}</p>
+  }
+  @if (successMessage()) {
+    <p class="notice-ok" role="status">{{ successMessage() }}</p>
+  }
+  <form class="form-card" [formGroup]="form" (ngSubmit)="onSubmit()">
+    <fieldset class="check-group">
+      <legend>Turnos</legend>
+      <label class="check-row">
+        <input type="checkbox" formControlName="view_own_appointments">
+        <span>
+          <strong>Ver sus propios turnos</strong>
+        </span>
+      </label>
+      <label class="check-row">
+        <input type="checkbox" formControlName="view_all_appointments">
+        <span>
+          <strong>Ver todos los turnos</strong>
+        </span>
+      </label>
+      <label class="check-row">
+        <input type="checkbox" formControlName="cancel_appointments">
+        <span>
+          <strong>Cancelar turnos</strong>
+        </span>
+      </label>
+    </fieldset>
+    <fieldset class="check-group">
+      <legend>Pacientes</legend>
+      <label class="check-row">
+        <input type="checkbox" formControlName="view_assigned_patients">
+        <span>
+          <strong>Ver pacientes asignados</strong>
+          <small>Solo médicos</small>
+        </span>
+      </label>
+    </fieldset>
+    <fieldset class="check-group">
+      <legend>Agenda</legend>
+      <label class="check-row">
+        <input type="checkbox" formControlName="edit_schedules">
+        <span>
+          <strong>Editar horarios y agendas</strong>
+        </span>
+      </label>
+    </fieldset>
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit" [disabled]="loading()">Guardar permisos</button>
+      <a class="btn btn-ghost" routerLink="/users">Cancelar</a>
+    </div>
+  </form>
+</div>

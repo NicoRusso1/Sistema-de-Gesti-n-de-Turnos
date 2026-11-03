@@ -1,60 +1,66 @@
-<h1>Obras sociales</h1>
+<div class="admin">
+  <header class="page-header">
+    <div>
+      <h1>Obras sociales</h1>
+      <p>{{ healthInsurances().length }} {{ healthInsurances().length === 1 ? 'obra social' : 'obras sociales' }}</p>
+    </div>
+    <div class="page-header-actions">
+      <a routerLink="/health-insurances/new" class="btn btn-primary"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg> Nueva obra social</a>
+    </div>
+  </header>
 
-<a routerLink="/health-insurances/new">Nueva obra social</a>
-
-<form [formGroup]="filterForm" (ngSubmit)="load()">
-  <div>
-    <label for="search">Buscar</label>
-    <input id="search" type="text" formControlName="search" placeholder="Nombre">
-  </div>
-
-  <div>
-    <label for="status">Estado</label>
-    <select id="status" formControlName="status" (change)="load()">
+  <form [formGroup]="filterForm" (ngSubmit)="load()" class="toolbar">
+    <div class="search">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
+      <input class="input" id="search" type="search" formControlName="search" placeholder="Buscar por nombre" aria-label="Buscar obras sociales">
+    </div>
+    <select class="select" id="status" formControlName="status" (change)="load()" aria-label="Estado">
       <option value="">Todas</option>
       <option value="1">Activas</option>
       <option value="0">Inactivas</option>
     </select>
+    <div class="toolbar-actions">
+      <button type="submit" class="btn btn-secondary">Filtrar</button>
+      <button type="button" class="btn btn-ghost" (click)="clearFilters()">Limpiar</button>
+    </div>
+  </form>
+
+  @if (errorMessage()) {
+    <p class="notice-error" role="alert">{{ errorMessage() }}</p>
+  }
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Descuento</th>
+          <th>Estado</th>
+          <th class="col-actions">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (item of healthInsurances(); track item.id) {
+          <tr>
+            <td data-label="Nombre" class="cell-main">{{ item.name }}</td>
+            <td data-label="Descuento">{{ item.discount_percentage }}%</td>
+            <td data-label="Estado"><span class="badge" [class.badge-ok]="item.status === 1" [class.badge-error]="item.status !== 1">{{ item.status === 1 ? 'Activa' : 'Inactiva' }}</span></td>
+            <td class="col-actions">
+              <div class="table-actions">
+                <a class="icon-btn" [routerLink]="['/health-insurances', item.id, 'edit']" aria-label="Editar obra social" title="Editar obra social"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></a>
+                @if (item.status === 1) {
+                  <button type="button" class="icon-btn icon-btn-danger" aria-label="Dar de baja" title="Dar de baja" (click)="deactivate(item)"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v9M7 6.5a7 7 0 1 0 10 0"/></svg></button>
+                } @else {
+                  <button type="button" class="icon-btn" aria-label="Reactivar" title="Reactivar" (click)="activate(item)"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12a8 8 0 0 1 13.7-5.6L20 8M20 4v4h-4"/><path d="M20 12a8 8 0 0 1-13.7 5.6L4 16M4 20v-4h4"/></svg></button>
+                }
+              </div>
+            </td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="4" class="cell-empty">No se encontraron obras sociales.</td>
+          </tr>
+        }
+      </tbody>
+    </table>
   </div>
-
-  <button type="submit">Filtrar</button>
-  <button type="button" (click)="clearFilters()">Limpiar</button>
-</form>
-
-@if (errorMessage()) {
-  <p role="alert">{{ errorMessage() }}</p>
-}
-
-<table>
-  <thead>
-    <tr>
-      <th>ID</th>
-      <th>Nombre</th>
-      <th>Descuento</th>
-      <th>Estado</th>
-      <th>Acciones</th>
-    </tr>
-  </thead>
-  <tbody>
-    @for (item of healthInsurances(); track item.id) {
-      <tr>
-        <td>{{ item.id }}</td>
-        <td>{{ item.name }}</td>
-        <td>{{ item.discount_percentage }}%</td>
-        <td>{{ item.status === 1 ? 'Activa' : 'Inactiva' }}</td>
-        <td>
-          <a [routerLink]="['/health-insurances', item.id, 'edit']">Editar</a>
-          @if (item.status === 1) {
-            <button type="button" (click)="deactivate(item)">Dar de baja</button>
-          } @else {
-            <button type="button" (click)="activate(item)">Reactivar</button>
-          }
-        </td>
-      </tr>
-    } @empty {
-      <tr>
-        <td colspan="5">No se encontraron obras sociales.</td>
-      </tr>
-    }
-  </tbody>
-</table>
+</div>
