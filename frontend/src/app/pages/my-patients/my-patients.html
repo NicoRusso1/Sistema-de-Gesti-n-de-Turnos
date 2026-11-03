@@ -1,59 +1,81 @@
-<h1>Mis pacientes</h1>
-<form [formGroup]="filterForm" (ngSubmit)="load()">
+<div class="admin">
+  <header class="page-header">
     <div>
-        <label for="search">Buscar</label>
-        <input id="search" type="text" formControlName="search" placeholder="Nombre, apellido o email">
+      <h1>Mis pacientes</h1>
+      @if (!loading() && !errorMessage()) {
+        <p>{{ patients().length }} {{ patients().length === 1 ? 'paciente' : 'pacientes' }}</p>
+      }
     </div>
-    <button type="submit">Filtrar</button>
-    <button type="button" (click)="clearFilters()">Limpiar</button>
-</form>
-@if (errorMessage()) {
-<p role="alert">{{ errorMessage() }}</p>
-}
-@if (loading()) {
-<p>Cargando...</p>
-}
-<table>
-    <thead>
-        <tr>
+  </header>
+
+  <form [formGroup]="filterForm" (ngSubmit)="load()" class="toolbar">
+    <div class="search">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
+      <input id="search" class="input" type="search" formControlName="search" placeholder="Buscar por nombre, apellido o email" aria-label="Buscar pacientes">
+    </div>
+    <div class="toolbar-actions">
+      <button type="submit" class="btn btn-secondary">Filtrar</button>
+      <button type="button" class="btn btn-ghost" (click)="clearFilters()">Limpiar</button>
+    </div>
+  </form>
+
+  <div aria-live="polite">
+    @if (errorMessage()) {
+      <p class="notice-error" role="alert">{{ errorMessage() }}</p>
+    }
+  </div>
+
+  @if (loading()) {
+    <div class="skeleton-stack" aria-busy="true" aria-label="Cargando pacientes">
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
+    </div>
+  } @else if (patients().length > 0) {
+    <div class="table-wrap">
+      <table class="table">
+        <thead>
+          <tr>
             <th>Paciente</th>
             <th>DNI</th>
             <th>Email</th>
-            <th>Teléfono</th>
+            <th class="col-secundaria">Teléfono</th>
             <th>Obra social</th>
-            <th>N° afiliado</th>
+            <th class="col-secundaria">N° afiliado</th>
             <th>Turnos conmigo</th>
-        </tr>
-    </thead>
-    <tbody>
-        @for (p of patients(); track p.id) {
-        <tr>
-            <td>{{ p.last_name }}, {{ p.first_name }}</td>
-            <td>{{ p.personal_data?.national_id ?? '-' }}</td>
-            <td><a [href]="'mailto:' + p.email">{{ p.email }}</a></td>
-            <td>
+          </tr>
+        </thead>
+        <tbody>
+          @for (p of patients(); track p.id) {
+            <tr>
+              <td data-label="Paciente"><span class="person"><span class="avatar" aria-hidden="true">{{ p.first_name.charAt(0) }}{{ p.last_name.charAt(0) }}</span><span class="cell-main">{{ p.last_name }}, {{ p.first_name }}</span></span></td>
+              <td data-label="DNI">{{ p.personal_data?.national_id ?? '-' }}</td>
+              <td data-label="Email"><a class="link" [href]="'mailto:' + p.email">{{ p.email }}</a></td>
+              <td data-label="Teléfono" class="col-secundaria">
                 @if (p.phone) {
-                <a [href]="'tel:' + p.phone">{{ p.phone }}</a>
+                  <a class="link" [href]="'tel:' + p.phone">{{ p.phone }}</a>
                 } @else {
-                -
+                  -
                 }
-            </td>
-            <td>
+              </td>
+              <td data-label="Obra social">
                 @if (p.health_insurance; as hi) {
-                {{ hi.name }} ({{ hi.discount_percentage }}% desc.)
+                  {{ hi.name }} ({{ hi.discount_percentage }}% desc.)
                 } @else {
-                Particular
+                  Particular
                 }
-            </td>
-            <td>{{ p.health_insurance_number ?? '-' }}</td>
-            <td>{{ p.appointments_count }}</td>
-        </tr>
-        } @empty {
-        @if (!loading() && !errorMessage()) {
-        <tr>
-            <td colspan="7">No tenés pacientes con turnos asignados.</td>
-        </tr>
-        }
-        }
-    </tbody>
-</table>
+              </td>
+              <td data-label="N° afiliado" class="col-secundaria">{{ p.health_insurance_number ?? '-' }}</td>
+              <td data-label="Turnos conmigo">{{ p.appointments_count }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  } @else if (!errorMessage()) {
+    <div class="empty-state">
+      <p>No tenés pacientes con turnos asignados.</p>
+    </div>
+  }
+</div>

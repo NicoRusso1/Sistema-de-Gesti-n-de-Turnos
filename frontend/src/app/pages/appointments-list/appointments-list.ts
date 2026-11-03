@@ -1,6 +1,6 @@
 import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { Appointment, AppointmentScope, AssignableSala } from '../../models/appointment';
@@ -24,6 +24,18 @@ export class AppointmentsListComponent implements OnInit {
 
   currentUser = this.authService.user;
   appointments = signal<Appointment[]>([]);
+  upcoming = computed(() => {
+    const now = Date.now();
+    return this.appointments()
+      .filter((a) => new Date(a.scheduled_at).getTime() >= now)
+      .sort((a, b) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime());
+  });
+  past = computed(() => {
+    const now = Date.now();
+    return this.appointments()
+      .filter((a) => new Date(a.scheduled_at).getTime() < now)
+      .sort((a, b) => new Date(b.scheduled_at).getTime() - new Date(a.scheduled_at).getTime());
+  });
   // Alcance de la agenda resuelto por el backend (own / assigned / all)
   scope = signal<AppointmentScope | null>(null);
   loading = signal<boolean>(false);

@@ -1,47 +1,54 @@
-<div class="admin-notif-container">
-  <div class="header-actions">
+<div class="admin">
+  <header class="page-header">
     <div>
-      <h2>Centro de Notificaciones</h2>
-      <p>Control y emisión de recordatorios de turnos vía email y alertas internas.</p>
+      <h1>Notificaciones</h1>
+      <p>Recordatorios de turnos por email y alertas internas.</p>
     </div>
-    <button class="btn btn-action" [disabled]="sending()" (click)="onTriggerReminders()">
-      @if (sending()) { ⏳ Enviando recordatorios... } @else { 🚀 Enviar recordatorios para mañana }
+    <button type="button" class="btn btn-primary" [disabled]="sending()" (click)="onTriggerReminders()">
+      @if (sending()) { Enviando recordatorios... } @else { Enviar recordatorios de mañana }
     </button>
+  </header>
+
+  <div aria-live="polite">
+    @if (messageSuccess()) {
+      <p class="notice-ok notice-pre">{{ messageSuccess() }}</p>
+    }
+    @if (messageError()) {
+      <p class="notice-error" role="alert">{{ messageError() }}</p>
+    }
   </div>
 
-  @if (messageSuccess()) {
-    <div class="alert alert-success">{{ messageSuccess() }}</div>
-  }
-  @if (messageError()) {
-    <div class="alert alert-danger">{{ messageError() }}</div>
-  }
+  <form class="toolbar" (ngSubmit)="loadAll()">
+    <select class="select" name="estado" [(ngModel)]="filters.estado" aria-label="Estado">
+      <option value="">Todos los estados</option>
+      <option value="enviada">Enviada</option>
+      <option value="pendiente">Pendiente</option>
+      <option value="fallida">Fallida</option>
+    </select>
+    <select class="select" name="tipo" [(ngModel)]="filters.tipo" aria-label="Tipo">
+      <option value="">Todos los tipos</option>
+      @for (t of tipos; track t) {
+        <option [value]="t">{{ t | titlecase }}</option>
+      }
+    </select>
+    <input type="date" class="input input-short" name="desde" [(ngModel)]="filters.desde" aria-label="Desde">
+    <input type="date" class="input input-short" name="hasta" [(ngModel)]="filters.hasta" aria-label="Hasta">
+    <input type="text" class="input input-search" name="paciente" [(ngModel)]="filters.paciente" placeholder="Paciente (nombre o email)" aria-label="Paciente">
+    <div class="toolbar-actions">
+      <button type="submit" class="btn btn-secondary">Filtrar</button>
+      <button type="button" class="btn btn-ghost" (click)="clearFilters()">Limpiar</button>
+    </div>
+  </form>
 
-  <div class="card">
-    <h3>Historial de Notificaciones Emitidas</h3>
-
-    <form class="filters" (ngSubmit)="loadAll()">
-      <select name="estado" [(ngModel)]="filters.estado">
-        <option value="">Todos los estados</option>
-        <option value="enviada">Enviada</option>
-        <option value="pendiente">Pendiente</option>
-        <option value="fallida">Fallida</option>
-      </select>
-      <select name="tipo" [(ngModel)]="filters.tipo">
-        <option value="">Todos los tipos</option>
-        @for (t of tipos; track t) {
-          <option [value]="t">{{ t | uppercase }}</option>
-        }
-      </select>
-      <input type="date" name="desde" [(ngModel)]="filters.desde" title="Desde">
-      <input type="date" name="hasta" [(ngModel)]="filters.hasta" title="Hasta">
-      <input type="text" name="paciente" [(ngModel)]="filters.paciente" placeholder="Paciente (nombre o email)">
-      <button type="submit" class="btn btn-action">Filtrar</button>
-      <button type="button" class="btn-clear" (click)="clearFilters()">Limpiar</button>
-    </form>
-
-    @if (loading()) {
-      <p>Cargando registro...</p>
-    } @else if (notifications().length > 0) {
+  @if (loading()) {
+    <div class="skeleton-stack" aria-busy="true" aria-label="Cargando notificaciones">
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
+      <div class="skeleton"></div>
+    </div>
+  } @else if (notifications().length > 0) {
+    <div class="table-wrap">
       <table class="table">
         <thead>
           <tr>
@@ -50,32 +57,34 @@
             <th>Título</th>
             <th>Mensaje</th>
             <th>Estado</th>
-            <th>Fecha Emisión</th>
+            <th>Fecha de emisión</th>
           </tr>
         </thead>
         <tbody>
           @for (n of notifications(); track n.id) {
             <tr>
-              <td>
-                <strong>{{ n.patient?.first_name }} {{ n.patient?.last_name }}</strong>
-                <div class="sub-text">{{ n.patient?.email }}</div>
+              <td data-label="Destinatario">
+                <span class="cell-main">{{ n.patient?.first_name }} {{ n.patient?.last_name }}</span>
+                <div class="cell-sub">{{ n.patient?.email }}</div>
               </td>
-              <td><span class="badge">{{ n.tipo | uppercase }}</span></td>
-              <td>{{ n.titulo }}</td>
-              <td>{{ n.mensaje }}</td>
-              <td>
-                <span class="estado" [class]="'estado estado-' + n.estado_envio" [title]="n.error_envio || ''">{{ n.estado_envio | uppercase }}</span>
+              <td data-label="Tipo"><span class="badge badge-info">{{ n.tipo | titlecase }}</span></td>
+              <td data-label="Título">{{ n.titulo }}</td>
+              <td data-label="Mensaje" class="cell-message">{{ n.mensaje }}</td>
+              <td data-label="Estado">
+                <span class="badge" [class.badge-ok]="n.estado_envio === 'enviada'" [class.badge-warn]="n.estado_envio === 'pendiente'" [class.badge-error]="n.estado_envio === 'fallida'" [title]="n.error_envio || ''">{{ n.estado_envio | titlecase }}</span>
                 @if (n.error_envio) {
-                  <div class="sub-text error-text">{{ n.error_envio }}</div>
+                  <div class="cell-sub cell-error">{{ n.error_envio }}</div>
                 }
               </td>
-              <td>{{ n.created_at | date:'dd/MM/yyyy HH:mm' }}</td>
+              <td data-label="Fecha de emisión">{{ n.created_at | date:'dd/MM/yyyy HH:mm' }}</td>
             </tr>
           }
         </tbody>
       </table>
-    } @else {
-      <p class="empty-text">No hay notificaciones que coincidan con los filtros.</p>
-    }
-  </div>
+    </div>
+  } @else {
+    <div class="empty-state">
+      <p>No hay notificaciones que coincidan con los filtros.</p>
+    </div>
+  }
 </div>

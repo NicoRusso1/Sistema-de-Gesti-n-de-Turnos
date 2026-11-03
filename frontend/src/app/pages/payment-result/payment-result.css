@@ -1,112 +1,61 @@
-.result-container {
-  max-width: 600px;
-  margin: 0 auto;
-}
+.result { display: flex; justify-content: center; padding: var(--sp-5) 0; }
 
-.result-card {
-  background: #ffffff;
-  border-radius: 8px;
-  padding: 35px;
-  text-align: center;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
-}
-
-.result-card h2 {
-  color: #1b4b5a;
-}
-
-.result-icon {
-  width: 60px;
-  height: 60px;
-  line-height: 60px;
-  color: white;
-  font-size: 32px;
-  border-radius: 50%;
-  margin: 0 auto 15px auto;
-}
-
-.result-icon.ok {
-  background: #28a745;
-}
-
-.result-icon.fail {
-  background: #dc3545;
-}
-
-.result-icon.wait {
-  background: #6c757d;
-}
-
-.summary-details {
-  background: #f8f9fa;
+.pass {
+  position: relative;
+  width: 460px;
+  max-width: 100%;
+  border: 1px solid var(--sigt-borde);
   border-radius: 6px;
-  padding: 18px;
-  text-align: left;
-  margin: 20px 0;
-  line-height: 1.7;
+  background: var(--sigt-blanco);
+  overflow: hidden;
 }
+.pass-strip { height: 5px; }
+.pass-strip.is-ok { background: var(--sigt-exito); }
+.pass-strip.is-wait { background: var(--sigt-coral); }
+.pass-strip.is-fail { background: var(--sigt-error); }
 
-.price-row {
-  display: flex;
-  justify-content: space-between;
-}
+.pass-top { padding: var(--sp-6) var(--sp-6) var(--sp-5); text-align: center; }
+.pass-top h1 { margin: 0; font-size: 1.6rem; font-weight: 600; line-height: 1.25; color: var(--sigt-petroleo); }
+.pass-text { margin: var(--sp-2) 0 0; color: var(--sigt-texto-suave); }
 
-.price-row.total {
-  font-size: 1.1rem;
-  font-weight: bold;
-  color: #1b4b5a;
-}
-
-.alert-danger {
-  background: #f8d7da;
-  color: #721c24;
-  padding: 10px;
-  border-radius: 6px;
-  margin-bottom: 12px;
-  font-size: 0.9rem;
-}
-
-.btn {
-  padding: 12px 18px;
-  border-radius: 6px;
-  font-weight: 600;
-  font-size: 1rem;
-  font-family: inherit;
-  cursor: pointer;
-  border: none;
-  text-decoration: none;
-  display: inline-block;
-  text-align: center;
-}
-
-.btn-confirm {
-  background: #ed7d5c;
-  color: white;
-}
-
-.btn-confirm:hover:not(:disabled) {
-  background: #d96847;
-}
-
-.btn-confirm:disabled {
-  background: #ccc;
-  cursor: not-allowed;
-}
-
-.btn-primary {
-  background: #1b4b5a;
-  color: white;
-}
-
-.btn-secondary {
-  background: #6c757d;
-  color: white;
-}
-
-.actions {
-  display: flex;
-  gap: 12px;
+.pass-icon {
+  display: inline-flex;
+  align-items: center;
   justify-content: center;
-  flex-wrap: wrap;
-  margin-top: 20px;
+  width: 56px;
+  height: 56px;
+  margin-bottom: var(--sp-4);
+  border-radius: 50%;
+}
+.pass-icon.is-ok { background: var(--sigt-ok-fondo); color: var(--sigt-ok-texto); }
+.pass-icon.is-wait { background: var(--sigt-aviso-fondo); color: var(--sigt-aviso-texto); }
+.pass-icon.is-fail { background: var(--sigt-error-fondo); color: var(--sigt-error-texto); }
+
+.pass-bottom { position: relative; padding: var(--sp-5) var(--sp-6) var(--sp-6); border-top: 2px dashed var(--sigt-borde); }
+.pass-bottom::before, .pass-bottom::after {
+  content: '';
+  position: absolute;
+  top: -11px;
+  box-sizing: border-box;
+  width: 10px;
+  height: 20px;
+  background: var(--sigt-fondo);
+  border: 1px solid var(--sigt-borde);
+}
+.pass-bottom::before { left: -1px; border-left: 0; border-radius: 0 10px 10px 0; }
+.pass-bottom::after { right: -1px; border-right: 0; border-radius: 10px 0 0 10px; }
+
+.pass-data { margin: 0 0 var(--sp-5); }
+.pass-data > div { display: flex; align-items: baseline; justify-content: space-between; gap: var(--sp-4); padding: var(--sp-2) 0; border-bottom: 1px solid var(--sigt-borde); }
+.pass-data dt { font-size: 0.7rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--sigt-texto-suave); }
+.pass-data dd { margin: 0; font-weight: 500; text-align: right; }
+.pass-data .mono { font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace; }
+
+.pass-bottom .notice-error { margin: 0 0 var(--sp-4); }
+.pass-actions { display: flex; flex-direction: column; gap: var(--sp-2); }
+
+@media (max-width: 600px) {
+  .pass-top { padding: var(--sp-5) var(--sp-4) var(--sp-4); }
+  .pass-top h1 { font-size: 1.4rem; }
+  .pass-bottom { padding: var(--sp-4) var(--sp-4) var(--sp-5); }
 }

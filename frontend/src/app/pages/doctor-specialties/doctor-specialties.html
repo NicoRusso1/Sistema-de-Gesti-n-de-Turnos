@@ -1,35 +1,35 @@
-<h1>Especialidades del médico</h1>
-@if (user(); as u) {
-<p>
-    <strong>{{ u.first_name }} {{ u.last_name }}</strong>
-    ({{ u.user_type?.name ?? 'sin tipo' }})
-</p>
-}
-@if (errorMessage()) {
-<p role="alert">{{ errorMessage() }}</p>
-}
-@if (successMessage()) {
-<p role="status">{{ successMessage() }}</p>
-}
-@if (canEdit()) {
-<form (submit)="$event.preventDefault(); save()">
-    <fieldset>
-        <legend>Seleccioná una o más especialidades</legend>
+<div class="admin">
+  <header class="page-header">
+    <h1>Especialidades del médico</h1>
+    <a class="back-link" routerLink="/users"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg> Volver</a>
+  </header>
+  @if (user(); as u) {
+    <p class="subject"><strong>{{ u.first_name }} {{ u.last_name }}</strong> {{ u.user_type?.name ?? 'sin tipo' }}</p>
+  }
+  @if (errorMessage()) {
+    <p class="notice-error" role="alert">{{ errorMessage() }}</p>
+  }
+  @if (successMessage()) {
+    <p class="notice-ok" role="status">{{ successMessage() }}</p>
+  }
+  @if (canEdit()) {
+    <form class="form-card" (submit)="$event.preventDefault(); save()">
+      <fieldset class="tag-list">
+        <legend class="field-hint">Seleccioná una o más especialidades</legend>
         @for (item of specialties(); track item.id) {
-        <div>
-            <label>
-                <input type="checkbox" [checked]="isSelected(item.id)" (change)="toggle(item.id)">
-                {{ item.name }}
-            </label>
-        </div>
+          <label class="tag">
+            <input type="checkbox" [checked]="isSelected(item.id)" (change)="toggle(item.id)">
+            {{ item.name }}
+          </label>
         } @empty {
-        <p>No hay especialidades cargadas. Creá una desde el menú Especialidades.</p>
+          <p class="field-hint">No hay especialidades cargadas. Creá una desde el menú Especialidades.</p>
         }
-    </fieldset>
-    <p>Seleccionadas: {{ selectedIds().length }}</p>
-    <button type="submit" [disabled]="loading()">Guardar especialidades</button>
-    <a routerLink="/users">Volver</a>
-</form>
-} @else {
-<a routerLink="/users">Volver</a>
-}
+      </fieldset>
+      <p class="field-hint">Seleccionadas: {{ selectedIds().length }}</p>
+      <div class="form-actions">
+        <button class="btn btn-primary" type="submit" [disabled]="loading()">Guardar especialidades</button>
+        <a class="btn btn-ghost" routerLink="/users">Cancelar</a>
+      </div>
+    </form>
+  }
+</div>

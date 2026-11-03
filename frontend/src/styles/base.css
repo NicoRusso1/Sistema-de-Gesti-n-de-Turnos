@@ -1,0 +1,25 @@
+html, body {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: 'Outfit', Arial, sans-serif;
+  color: var(--sigt-texto);
+  background-color: var(--sigt-fondo);
+  width: 100%;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+*, *:before, *:after {
+  box-sizing: inherit;
+}
+
+button, input, select, textarea {
+  font-family: inherit;
+}
+
+@media (max-width: 900px) {
+  body:has(.app-layout:not(.sidebar-closed) .sidebar-backdrop) {
+    overflow: hidden;
+  }
+}

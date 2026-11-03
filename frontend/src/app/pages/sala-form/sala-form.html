@@ -1,48 +1,47 @@
-<h1>{{ isEdit ? 'Editar Sala' : 'Nueva Sala' }}</h1>
-
-@if (errorMessage()) {
-  <p role="alert" style="color: red;">{{ errorMessage() }}</p>
-}
-
-<form [formGroup]="form" (ngSubmit)="onSubmit()" style="max-width: 400px; display: flex; flex-direction: column; gap: 12px;">
-  <div>
-    <label for="numero">Número de Sala *</label><br>
-    <input id="numero" type="text" formControlName="numero" placeholder="Ej: 101, A-12">
-    @if (form.controls.numero.touched && form.controls.numero.invalid) {
-      <small style="color: red; display: block;">El número de sala es requerido.</small>
-    }
-  </div>
-
-  <div>
-    <label for="piso">Piso *</label><br>
-    <input id="piso" type="number" min="0" formControlName="piso">
-    @if (form.controls.piso.touched && form.controls.piso.invalid) {
-      <small style="color: red; display: block;">El piso debe ser mayor o igual a 0.</small>
-    }
-  </div>
-
-  <div>
-    <label for="especialidad_id">Especialidad (Opcional)</label><br>
-    <select id="especialidad_id" formControlName="especialidad_id">
-      <option value="">-- General / Ninguna --</option>
-      @for (spec of specialties(); track spec.id) {
-        <option [value]="spec.id">{{ spec.name }}</option>
-      }
-    </select>
-  </div>
-
-  <div>
-    <label for="estado">Estado *</label><br>
-    <select id="estado" formControlName="estado">
-      <option value="disponible">Disponible</option>
-      <option value="fuera_de_servicio">Fuera de servicio</option>
-    </select>
-  </div>
-
-  <div style="margin-top: 10px; display: flex; gap: 10px;">
-    <button type="submit" [disabled]="loading()">
-      {{ loading() ? 'Guardando...' : (isEdit ? 'Guardar Cambios' : 'Crear Sala') }}
-    </button>
-    <a routerLink="/salas">Cancelar</a>
-  </div>
-</form>
+<div class="admin">
+  <header class="page-header">
+    <h1>{{ isEdit ? 'Editar sala' : 'Nueva sala' }}</h1>
+    <a class="back-link" routerLink="/salas"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg> Volver</a>
+  </header>
+  @if (errorMessage()) {
+    <p class="notice-error" role="alert">{{ errorMessage() }}</p>
+  }
+  <form class="form-card" [formGroup]="form" (ngSubmit)="onSubmit()" novalidate>
+    <div class="form-grid">
+      <div class="field">
+        <label for="numero">Número de sala</label>
+        <input class="input" id="numero" type="text" formControlName="numero" placeholder="Ej: 101, A-12" [attr.aria-invalid]="form.controls.numero.touched && form.controls.numero.invalid">
+        @if (form.controls.numero.touched && form.controls.numero.invalid) {
+          <span class="field-error">El número de sala es requerido.</span>
+        }
+      </div>
+      <div class="field">
+        <label for="piso">Piso</label>
+        <input class="input" id="piso" type="number" formControlName="piso" min="0" [attr.aria-invalid]="form.controls.piso.touched && form.controls.piso.invalid">
+        @if (form.controls.piso.touched && form.controls.piso.invalid) {
+          <span class="field-error">El piso debe ser mayor o igual a 0.</span>
+        }
+      </div>
+      <div class="field">
+        <label for="especialidad_id">Especialidad (opcional)</label>
+        <select class="select" id="especialidad_id" formControlName="especialidad_id">
+          <option value="">General / ninguna</option>
+          @for (spec of specialties(); track spec.id) {
+            <option [value]="spec.id">{{ spec.name }}</option>
+          }
+        </select>
+      </div>
+      <div class="field">
+        <label for="estado">Estado</label>
+        <select class="select" id="estado" formControlName="estado">
+          <option value="disponible">Disponible</option>
+          <option value="fuera_de_servicio">Fuera de servicio</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit" [disabled]="loading()">{{ loading() ? 'Guardando...' : (isEdit ? 'Guardar cambios' : 'Crear sala') }}</button>
+      <a class="btn btn-ghost" routerLink="/salas">Cancelar</a>
+    </div>
+  </form>
+</div>

@@ -1,102 +1,91 @@
-<h1>Agenda del médico</h1>
-
-@if (doctor(); as d) {
-  <p><strong>{{ d.first_name }} {{ d.last_name }}</strong></p>
-}
-
-@if (errorMessage()) {
-  <p role="alert">{{ errorMessage() }}</p>
-}
-
-@if (successMessage()) {
-  <p role="status">{{ successMessage() }}</p>
-}
-
-<h2>{{ editingId() !== null ? 'Editar franja' : 'Agregar franja' }}</h2>
-
-<form [formGroup]="form" (ngSubmit)="onSubmit()">
-  <div>
-    <label for="day_of_week">Día</label>
-    <select id="day_of_week" formControlName="day_of_week">
-      @for (day of days; track day.value) {
-        <option [value]="day.value">{{ day.label }}</option>
-      }
-    </select>
-  </div>
-
-  <div>
-    <label for="start_time">Desde</label>
-    <input id="start_time" type="time" step="900" min="08:00" max="20:00" formControlName="start_time">
-  </div>
-
-  <div>
-    <label for="end_time">Hasta</label>
-    <input id="end_time" type="time" step="900" min="08:00" max="20:00" formControlName="end_time">
-  </div>
-
-  <button type="submit">{{ editingId() !== null ? 'Guardar cambios' : 'Agregar franja' }}</button>
-  @if (editingId() !== null) {
-    <button type="button" (click)="cancelEdit()">Cancelar edición</button>
+<div class="admin">
+  <header class="page-header">
+    <h1>Agenda del médico</h1>
+    <a class="back-link" routerLink="/users"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 6l-6 6 6 6"/></svg> Volver</a>
+  </header>
+  @if (doctor(); as d) {
+    <p class="subject"><strong>{{ d.first_name }} {{ d.last_name }}</strong></p>
   }
-</form>
-
-<p><small>Horario permitido de 08:00 a 20:00, en múltiplos de 15 minutos.</small></p>
-
-<h2>Agenda semanal</h2>
-
-<table>
-  <thead>
-    <tr>
-      <th>Día</th>
-      <th>Franjas</th>
-    </tr>
-  </thead>
-  <tbody>
-    @for (day of schedulesByDay(); track day.value) {
-      <tr>
-        <td>{{ day.label }}</td>
-        <td>
-          @for (item of day.items; track item.id) {
-            <div>
-              {{ time(item.start_time) }} - {{ time(item.end_time) }}
-              <button type="button" (click)="edit(item)">Editar</button>
-              <button type="button" (click)="remove(item)">Eliminar</button>
-            </div>
-          } @empty {
-            Sin atención
+  @if (errorMessage()) {
+    <p class="notice-error" role="alert">{{ errorMessage() }}</p>
+  }
+  @if (successMessage()) {
+    <p class="notice-ok" role="status">{{ successMessage() }}</p>
+  }
+  <form class="form-card" [formGroup]="form" (ngSubmit)="onSubmit()">
+    <h2 class="form-card-title">{{ editingId() !== null ? 'Editar franja' : 'Agregar franja' }}</h2>
+    <div class="form-grid">
+      <div class="field field-full">
+        <label for="day_of_week">Día</label>
+        <select class="select" id="day_of_week" formControlName="day_of_week">
+          @for (day of days; track day.value) {
+            <option [value]="day.value">{{ day.label }}</option>
           }
-        </td>
-      </tr>
-    }
-  </tbody>
-</table>
+        </select>
+      </div>
+      <div class="field">
+        <label for="start_time">Desde</label>
+        <input class="input" id="start_time" type="time" step="900" min="08:00" max="20:00" formControlName="start_time">
+      </div>
+      <div class="field">
+        <label for="end_time">Hasta</label>
+        <input class="input" id="end_time" type="time" step="900" min="08:00" max="20:00" formControlName="end_time">
+      </div>
+    </div>
+    <p class="field-hint">Horario permitido de 08:00 a 20:00, en múltiplos de 15 minutos.</p>
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit">{{ editingId() !== null ? 'Guardar cambios' : 'Agregar franja' }}</button>
+      @if (editingId() !== null) {
+        <button class="btn btn-ghost" type="button" (click)="cancelEdit()">Cancelar</button>
+      }
+    </div>
+  </form>
 
-<h2>Vista previa de turnos</h2>
-
-<form [formGroup]="slotsForm" (ngSubmit)="searchSlots()">
-  <div>
-    <label for="date">Fecha</label>
-    <input id="date" type="date" [min]="today" formControlName="date">
-  </div>
-
-  <button type="submit">Ver turnos</button>
-</form>
-
-@if (slotsError()) {
-  <p role="alert">{{ slotsError() }}</p>
-}
-
-@if (slots() !== null) {
-  @if (slots()!.length > 0) {
-    <p>{{ slots()!.length }} turnos de 15 minutos:</p>
-    <ul>
-      @for (slot of slots(); track slot.start_time) {
-        <li>{{ slot.start_time }} - {{ slot.end_time }}</li>
+  <section class="form-card">
+    <h2 class="form-card-title">Agenda semanal</h2>
+    <ul class="week">
+      @for (day of schedulesByDay(); track day.value) {
+        <li>
+          <span class="day">{{ day.label }}</span>
+          <span class="slots">
+            @for (item of day.items; track item.id) {
+              <span class="slot">
+                {{ time(item.start_time) }} - {{ time(item.end_time) }}
+                <button type="button" class="icon-btn" aria-label="Editar franja" title="Editar franja" (click)="edit(item)"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></button>
+                <button type="button" class="icon-btn icon-btn-danger" aria-label="Eliminar franja" title="Eliminar franja" (click)="remove(item)"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/></svg></button>
+              </span>
+            } @empty {
+              <span class="none">Sin atención</span>
+            }
+          </span>
+        </li>
       }
     </ul>
-  } @else {
-    <p>El médico no atiende ese día.</p>
-  }
-}
+  </section>
 
-<a routerLink="/users">Volver</a>
+  <form class="form-card" [formGroup]="slotsForm" (ngSubmit)="searchSlots()">
+    <h2 class="form-card-title">Vista previa de turnos</h2>
+    <div class="field">
+      <label for="date">Fecha</label>
+      <input class="input" id="date" type="date" [min]="today" formControlName="date">
+    </div>
+    <div class="form-actions">
+      <button class="btn btn-secondary" type="submit">Ver turnos</button>
+    </div>
+    @if (slotsError()) {
+      <p class="notice-error" role="alert">{{ slotsError() }}</p>
+    }
+    @if (slots() !== null) {
+      @if (slots()!.length > 0) {
+        <p class="field-hint">{{ slots()!.length }} turnos de 15 minutos:</p>
+        <ul class="time-list">
+          @for (slot of slots(); track slot.start_time) {
+            <li>{{ slot.start_time }} - {{ slot.end_time }}</li>
+          }
+        </ul>
+      } @else {
+        <p class="field-hint">El médico no atiende ese día.</p>
+      }
+    }
+  </form>
+</div>

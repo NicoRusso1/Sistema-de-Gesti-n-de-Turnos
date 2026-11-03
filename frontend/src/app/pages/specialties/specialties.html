@@ -1,43 +1,58 @@
-<h1>Especialidades</h1>
-<a routerLink="/specialties/new">Nueva especialidad</a>
-<form [formGroup]="filterForm" (ngSubmit)="load()">
+<div class="admin">
+  <header class="page-header">
     <div>
-        <label for="search">Buscar</label>
-        <input id="search" type="text" formControlName="search" placeholder="Nombre">
+      <h1>Especialidades</h1>
+      <p>{{ specialties().length }} {{ specialties().length === 1 ? 'especialidad' : 'especialidades' }}</p>
     </div>
-    <button type="submit">Filtrar</button>
-    <button type="button" (click)="clearFilters()">Limpiar</button>
-</form>
-@if (errorMessage()) {
-<p role="alert">{{ errorMessage() }}</p>
-}
-@if (successMessage()) {
-<p role="status">{{ successMessage() }}</p>
-}
-<table>
-    <thead>
+    <div class="page-header-actions">
+      <a routerLink="/specialties/new" class="btn btn-primary"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg> Nueva especialidad</a>
+    </div>
+  </header>
+
+  <form [formGroup]="filterForm" (ngSubmit)="load()" class="toolbar">
+    <div class="search">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
+      <input class="input" id="search" type="search" formControlName="search" placeholder="Buscar por nombre" aria-label="Buscar especialidades">
+    </div>
+    <div class="toolbar-actions">
+      <button type="submit" class="btn btn-secondary">Filtrar</button>
+      <button type="button" class="btn btn-ghost" (click)="clearFilters()">Limpiar</button>
+    </div>
+  </form>
+
+  @if (errorMessage()) {
+    <p class="notice-error" role="alert">{{ errorMessage() }}</p>
+  }
+  @if (successMessage()) {
+    <p class="notice-ok" role="status">{{ successMessage() }}</p>
+  }
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
         <tr>
-            <th>ID</th>
-            <th>Nombre</th>
-            <th>Descripción</th>
-            <th>Acciones</th>
+          <th>Nombre</th>
+          <th>Descripción</th>
+          <th class="col-actions">Acciones</th>
         </tr>
-    </thead>
-    <tbody>
+      </thead>
+      <tbody>
         @for (item of specialties(); track item.id) {
-        <tr>
-            <td>{{ item.id }}</td>
-            <td>{{ item.name }}</td>
-            <td>{{ item.description ?? '-' }}</td>
-            <td>
-                <a [routerLink]="['/specialties', item.id, 'edit']">Editar</a>
-                <button type="button" (click)="remove(item)">Eliminar</button>
+          <tr>
+            <td data-label="Nombre" class="cell-main">{{ item.name }}</td>
+            <td data-label="Descripción">{{ item.description ?? '-' }}</td>
+            <td class="col-actions">
+              <div class="table-actions">
+                <a class="icon-btn" [routerLink]="['/specialties', item.id, 'edit']" aria-label="Editar especialidad" title="Editar especialidad"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></svg></a>
+                <button type="button" class="icon-btn icon-btn-danger" aria-label="Eliminar especialidad" title="Eliminar especialidad" (click)="remove(item)"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6"/></svg></button>
+              </div>
             </td>
-        </tr>
+          </tr>
         } @empty {
-        <tr>
-            <td colspan="4">No se encontraron especialidades.</td>
-        </tr>
+          <tr>
+            <td colspan="3" class="cell-empty">No se encontraron especialidades.</td>
+          </tr>
         }
-    </tbody>
-</table>
+      </tbody>
+    </table>
+  </div>
+</div>

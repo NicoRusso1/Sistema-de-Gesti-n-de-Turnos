@@ -1,105 +1,257 @@
-<div class="home-container">
+<div class="home">
   @if (user(); as u) {
-    <!-- Tarjeta de Bienvenida -->
-    <div class="welcome-card">
-      <div class="welcome-info">
-        <h1>¡Hola, {{ u.first_name }} {{ u.last_name }}! </h1>
-        <p class="role-badge">Rol: <strong>{{ u.role.name }}</strong></p>
-      </div>
-      <button type="button" class="btn-logout" (click)="logout()">Cerrar sesión</button>
-    </div>
+    <header class="hero">
+      <div class="hero-pattern" aria-hidden="true"></div>
+      <img class="hero-mark" src="isotipo.png" alt="" aria-hidden="true">
 
-    <!-- TARJETA DESTACADA: PRÓXIMO TURNO ASIGNADO -->
-    <div class="next-appointment-card">
-      <div class="card-header">
-        <h3>Tu Próximo Turno Asignado</h3>
+      <div class="hero-top">
+        <div>
+          <h1>Hola, {{ u.first_name }}</h1>
+          <p class="hero-date">{{ todayLabel }}</p>
+        </div>
+        <span class="hero-role">{{ roleLabel() }}</span>
       </div>
 
-      @if (loadingAppointment()) {
-        <p class="text-muted">Buscando tu agenda...</p>
-      } @else if (nextAppointment(); as app) {
-        <div class="appointment-details">
-          <div class="highlight-date">
-            <span class="day-time">{{ app.scheduled_at | date:'dd/MM/yyyy HH:mm' }} hs</span>
-            <span class="badge" [ngClass]="app.status === 'abonado' ? 'badge-abonado' : 'badge-reservado'">
-              {{ app.status === 'abonado' ? 'ABONADO' : 'RESERVADO (PENDIENTE PAGO)' }}
-            </span>
+      <dl class="hero-data">
+        @if (isPatient()) {
+          <div>
+            <dt>Próximo turno</dt>
+            <dd>
+              @if (loadingAppointment()) { &ndash; }
+              @else if (nextAppointment()?.scheduled_at; as when) { {{ when | date:'EEE d · HH:mm' }} }
+              @else { Sin turnos }
+            </dd>
           </div>
+        }
+        @if (isDoctor()) {
+          <div>
+            <dt>Próximo turno</dt>
+            <dd>
+              @if (loadingAgenda()) { &ndash; }
+              @else if (doctorNext(); as next) { {{ next.scheduled_at | date:'EEE d · HH:mm' }} }
+              @else { Sin turnos }
+            </dd>
+          </div>
+          <div>
+            <dt>Turnos hoy</dt>
+            <dd>{{ loadingAgenda() ? '–' : todayCount() }}</dd>
+          </div>
+        }
+        <div>
+          <dt>Avisos sin leer</dt>
+          <dd>{{ loadingNotifications() ? '–' : unreadCount() }}</dd>
+        </div>
+        @if (isPatient()) {
+          <div>
+            <dt>Cobertura</dt>
+            <dd>
+              @if (loadingAppointment()) { &ndash; }
+              @else { {{ nextAppointment()?.healthInsurance?.name || 'Particular' }} }
+            </dd>
+          </div>
+        }
+      </dl>
 
-          <div class="details-grid">
-            <div>
-              <span class="label">Profesional:</span>
-              <strong>Dr/a. {{ app.doctor?.first_name }} {{ app.doctor?.last_name }}</strong>
+      <svg class="hero-pulse" viewBox="0 0 800 48" preserveAspectRatio="none" aria-hidden="true">
+        <path class="pulse-base" pathLength="1000" d="M0 24 H290 L310 24 L328 4 L352 44 L372 14 L388 24 H800" />
+        <path class="pulse-run" pathLength="1000" d="M0 24 H290 L310 24 L328 4 L352 44 L372 14 L388 24 H800" />
+      </svg>
+    </header>
+
+    <div class="layout">
+      <div class="main-col">
+        @if (isAdmin()) {
+          <section aria-labelledby="manage-title">
+            <h2 id="manage-title" class="sec-title">Resumen</h2>
+            <ul class="manage">
+              @for (l of manageLinks; track l.path) {
+                <li>
+                  <a [routerLink]="l.path">
+                    <span>{{ l.label }}</span>
+                    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                      <path d="M5 12h14M13 6l6 6-6 6"/>
+                    </svg>
+                  </a>
+                </li>
+              }
+            </ul>
+          </section>
+        }
+
+        @if (isDoctor()) {
+          <section aria-labelledby="agenda-title">
+            <div class="sec-head">
+              <h2 id="agenda-title" class="sec-title">Agenda de hoy</h2>
+              <a routerLink="/appointments" class="see-all">Ver agenda completa</a>
             </div>
-            <div>
-              <span class="label">Especialidad:</span>
-              <strong>{{ app.specialty?.name || 'Consulta Médica' }}</strong>
-            </div>
-            @if (app.sala) {
-              <div>
-                <span class="label">Lugar de Atención:</span>
-                <strong>Sala {{ app.sala.numero }} (Piso {{ app.sala.piso }})</strong>
+            @if (loadingAgenda()) {
+              <div class="skeleton-list" aria-busy="true" aria-label="Cargando agenda">
+                <div class="skeleton skeleton-row"></div>
+                <div class="skeleton skeleton-row"></div>
+              </div>
+            } @else if (agendaAppointments().length > 0) {
+              <ul class="agenda">
+                @for (a of agendaAppointments(); track a.id) {
+                  <li class="agenda-row">
+                    <span class="agenda-time">{{ a.scheduled_at | date:'HH:mm' }}</span>
+                    <div class="agenda-info">
+                      <strong>{{ a.patient?.first_name }} {{ a.patient?.last_name }}</strong>
+                      <span>{{ a.specialty?.name || 'Consulta Médica' }}</span>
+                    </div>
+                    <span class="badge" [ngClass]="a.status === 'abonado' || a.status === 'confirmed' ? 'badge-ok' : 'badge-warn'">
+                      {{ a.status === 'abonado' || a.status === 'confirmed' ? 'Abonado' : 'Reservado' }}
+                    </span>
+                  </li>
+                }
+              </ul>
+            } @else {
+              <div class="empty">
+                <svg class="empty-pulse" viewBox="0 0 400 40" preserveAspectRatio="none" aria-hidden="true">
+                  <path d="M0 20 H150 L160 20 L170 4 L184 36 L196 10 L204 20 H400" />
+                </svg>
+                <p>No tenés turnos para hoy.</p>
               </div>
             }
-            <div>
-              <span class="label">Cobertura:</span>
-              <strong>{{ app.healthInsurance?.name || 'Particular' }}</strong>
-            </div>
+          </section>
+        }
+
+        @if (isPatient()) {
+          <section aria-label="Próximo turno">
+            @if (loadingAppointment()) {
+              <div class="skeleton skeleton-ticket" aria-busy="true" aria-label="Cargando turno"></div>
+            } @else if (nextAppointment(); as app) {
+              @if (app.scheduled_at) {
+                <article class="ticket">
+                  <div class="ticket-date">
+                    <span class="ticket-month">{{ app.scheduled_at | date:'MMMM' }}</span>
+                    <div class="ticket-date-body">
+                      <span class="ticket-day">{{ app.scheduled_at | date:'dd' }}</span>
+                      <span class="ticket-time">{{ app.scheduled_at | date:'HH:mm' }} hs</span>
+                      <span class="ticket-weekday">{{ app.scheduled_at | date:'EEEE' }}</span>
+                    </div>
+                  </div>
+
+                  <div class="ticket-body">
+                    <div class="ticket-status">
+                      <span class="ticket-kicker">{{ app.status === 'abonado' ? 'Turno confirmado' : 'Turno reservado' }}</span>
+                      <span class="badge" [ngClass]="app.status === 'abonado' ? 'badge-ok' : 'badge-warn'">
+                        {{ app.status === 'abonado' ? 'Abonado' : 'Pendiente de pago' }}
+                      </span>
+                    </div>
+
+                    <dl class="ticket-details">
+                      <div>
+                        <dt>Profesional</dt>
+                        <dd>Dr/a. {{ app.doctor?.first_name }} {{ app.doctor?.last_name }}</dd>
+                      </div>
+                      <div>
+                        <dt>Especialidad</dt>
+                        <dd>{{ app.specialty?.name || 'Consulta Médica' }}</dd>
+                      </div>
+                      @if (app.sala) {
+                        <div>
+                          <dt>Lugar de atención</dt>
+                          <dd>Sala {{ app.sala.numero }} (Piso {{ app.sala.piso }})</dd>
+                        </div>
+                      }
+                      <div>
+                        <dt>Cobertura</dt>
+                        <dd>{{ app.healthInsurance?.name || 'Particular' }}</dd>
+                      </div>
+                    </dl>
+
+                    <div class="ticket-foot">
+                      <a routerLink="/appointments" class="btn btn-secondary">Ver mis turnos</a>
+                      <span class="ticket-code">{{ ticketNumber(app.id) }}</span>
+                    </div>
+                  </div>
+                </article>
+              } @else {
+                <ng-container *ngTemplateOutlet="noTicket" />
+              }
+            } @else {
+              <ng-container *ngTemplateOutlet="noTicket" />
+            }
+          </section>
+        }
+
+        <section aria-labelledby="notif-title">
+          <div class="sec-head">
+            <h2 id="notif-title" class="sec-title">Avisos y recordatorios</h2>
+            @if (canAccessNotifications()) {
+              <a routerLink="/notifications" class="see-all">Ver todas</a>
+            }
           </div>
 
-          <div class="appointment-actions">
-            <a routerLink="/appointments" class="btn btn-primary">Ver todos mis turnos</a>
+          <div aria-live="polite">
+            @if (loadingNotifications()) {
+              <div class="skeleton-list" aria-busy="true" aria-label="Cargando avisos">
+                <div class="skeleton skeleton-row"></div>
+                <div class="skeleton skeleton-row"></div>
+                <div class="skeleton skeleton-row"></div>
+              </div>
+            } @else if (notifications().length > 0) {
+              <ul class="timeline">
+                @for (n of notifications().slice(0, 5); track n.id) {
+                  <li class="tl-item">
+                    <span class="tl-dot" [class.unread]="!n.leido" aria-hidden="true"></span>
+                    <div class="tl-content">
+                      <div class="tl-head">
+                        <strong class="tl-title">{{ n.titulo }}</strong>
+                        <small class="tl-date">{{ ago(n.created_at) || (n.created_at | date:'dd/MM HH:mm') }}</small>
+                      </div>
+                      <p class="tl-body">{{ n.mensaje }}</p>
+                      <div class="tl-actions">
+                        @if (!n.leido) {
+                          <button type="button" class="btn btn-ghost btn-sm" (click)="markRead(n)">Marcar como leída</button>
+                        }
+                        <button type="button" class="tl-delete" (click)="deleteNotif(n)" aria-label="Eliminar aviso">
+                          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                            <path d="M6 6l12 12M18 6L6 18"/>
+                          </svg>
+                        </button>
+                      </div>
+                    </div>
+                  </li>
+                }
+              </ul>
+            } @else {
+              <p class="all-clear">
+                <svg viewBox="0 0 28 28" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <circle cx="14" cy="14" r="13"/><path d="M8.5 14.5l3.8 3.8 7.2-7.6"/>
+                </svg>
+                Todo al día. No hay avisos pendientes.
+              </p>
+            }
           </div>
-        </div>
-      } @else {
-        <div class="no-appointment">
-          <p>No tenés ningún turno médico programado próximamente.</p>
-          <a routerLink="/appointments/new" class="btn btn-confirm">+ Reservar un Turno</a>
-        </div>
-      }
-    </div>
-
-    <!-- SECCIÓN DE NOTIFICACIONES -->
-    <div class="notifications-section">
-      <div class="section-header">
-        <h3>Avisos y Recordatorios Recientes</h3>
+        </section>
       </div>
 
-      @if (loadingNotifications()) {
-        <p class="text-muted">Cargando avisos...</p>
-      } @else if (notifications().length > 0) {
-        <div class="notifications-grid">
-                    @for (n of notifications(); track n.id) {
-            <div class="notification-card" [class.unread]="!n.leido">
-              <!-- Botón X arriba a la derecha para borrar -->
-              <button type="button" class="btn-close-notif" (click)="deleteNotif(n)" title="Eliminar notificación">
-                &times;
-              </button>
-
-              <div class="notif-header">
-                <strong>{{ n.titulo }}</strong>
-              </div>
-
-              <p class="notif-body">{{ n.mensaje }}</p>
-
-              <div class="notif-footer">
-                @if (!n.leido) {
-                  <button type="button" class="btn-read" (click)="markRead(n)">Marcar como leída</button>
-                } @else {
-                  <span></span> <!-- Espacio para alinear a los extremos -->
-                }
-
-                <!-- Fecha abajo a la derecha -->
-                <small class="notif-date">{{ n.created_at | date:'dd/MM/yyyy HH:mm' }}</small>
-              </div>
-            </div>
+      <aside class="side-col" aria-labelledby="quick-title">
+        <h2 id="quick-title" class="sec-title">Accesos rápidos</h2>
+        <ul class="quick">
+          @for (l of quickLinks(); track l.path) {
+            <li>
+              <a [routerLink]="l.path">
+                <span>{{ l.label }}</span>
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <path d="M5 12h14M13 6l6 6-6 6"/>
+                </svg>
+              </a>
+            </li>
           }
-        </div>
-      } @else {
-        <div class="empty-notif">
-          <p>No tenés avisos pendientes en tu bandeja.</p>
-        </div>
-      }
+        </ul>
+      </aside>
     </div>
+
+    <ng-template #noTicket>
+      <div class="empty">
+        <svg class="empty-pulse" viewBox="0 0 400 40" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M0 20 H150 L160 20 L170 4 L184 36 L196 10 L204 20 H400" />
+        </svg>
+        <p>No tenés turnos próximos.</p>
+        <a routerLink="/appointments/new" class="btn btn-primary">Reservar un turno</a>
+      </div>
+    </ng-template>
   }
 </div>

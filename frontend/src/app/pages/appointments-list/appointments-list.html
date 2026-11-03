@@ -1,100 +1,142 @@
-<div class="turnos-container">
-  <div class="header-section">
-    <h2>{{ title() }}</h2>
+<div class="admin">
+  <header class="page-header">
+    <div>
+      <h1>{{ title() }}</h1>
+      @if (scope() && !loading()) {
+        <p>{{ appointments().length }} {{ appointments().length === 1 ? 'turno' : 'turnos' }}</p>
+      }
+    </div>
     @if (canBook()) {
-      <a routerLink="/appointments/new" class="btn btn-primary">+ Reservar Nuevo Turno</a>
+      <a routerLink="/appointments/new" class="btn btn-primary"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg> Reservar turno</a>
+    }
+  </header>
+
+  <div aria-live="polite">
+    @if (successMessage()) {
+      <p class="notice-ok">{{ successMessage() }}</p>
+    }
+    @if (errorMessage()) {
+      <p class="notice-error" role="alert">{{ errorMessage() }}</p>
     }
   </div>
 
-  @if (successMessage()) {
-    <div class="alert alert-success">{{ successMessage() }}</div>
-  }
-  @if (errorMessage()) {
-    <div class="alert alert-danger">{{ errorMessage() }}</div>
-  }
-
   @if (loading()) {
-    <div class="loading-state">Cargando turnos...</div>
-  } @else if (scope()) {
-    <div class="table-responsive">
-      <table class="turnos-table">
-        <thead>
-          <tr>
-            <th>Fecha y Hora</th>
-            @if (showPatientColumn()) {
-              <th>Paciente</th>
-            }
-            @if (showDoctorColumn()) {
-              <th>Médico</th>
-            }
-            <th>Especialidad</th>
-            <th>Sala</th>
-            <th>Estado</th>
-            <th>Acciones</th>
-          </tr>
-        </thead>
-        <tbody>
-          @for (app of appointments(); track app.id) {
-            <tr>
-              <td>{{ app.scheduled_at | date:'dd/MM/yyyy HH:mm' }}</td>
-              @if (showPatientColumn()) {
-                <td>{{ app.patient?.first_name }} {{ app.patient?.last_name }}</td>
-              }
-              @if (showDoctorColumn()) {
-                <td>Dr/a. {{ app.doctor?.first_name }} {{ app.doctor?.last_name }}</td>
-              }
-              <td>{{ app.specialty?.name || 'General' }}</td>
-              <td>
-                @if (app.sala) {
-                  Sala {{ app.sala.numero }} · Piso {{ app.sala.piso }}
-                } @else {
-                  <span class="text-muted">Sin asignar</span>
-                }
-              </td>
-              <td>
-                <span class="badge" [class.badge-cancelled]="app.status === 'cancelado'" [class.badge-active]="app.status !== 'cancelado'">
-                  {{ app.status | uppercase }}
-                </span>
-                @if (app.cancellation_reason) {
-                  <small class="reason-text">({{ app.cancellation_reason }})</small>
-                }
-              </td>
-              <td>
-                @if (canManage(app) || canAssignSala(app)) {
-                  <div class="action-buttons">
-                    @if (canAssignSala(app)) {
-                      <button class="btn btn-outline-primary" (click)="openSalaModal(app)">{{ app.sala ? 'Cambiar sala' : 'Asignar sala' }}</button>
-                    }
-                    @if (canManage(app)) {
-                      <button class="btn btn-outline-warning" (click)="openRescheduleModal(app)">Reprogramar</button>
-                      <button class="btn btn-outline-danger" (click)="openCancelModal(app)">Cancelar</button>
-                    @if (app.certificado_url) {
-                      <button class="btn btn-primary" (click)="downloadCert(app)">📄 Descargar Certificado</button>
-                    }
-                    @if (!app.certificado_url && (isDoctor() || isAdmin()) && app.status !== 'cancelado') {
-                      <button class="btn btn-outline-primary" (click)="emitirCert(app)">✍️ Emitir Certificado</button>
-                      }
-                    }
-                  </div>
-                } @else {
-                  <span class="text-muted">Sin acciones</span>
-                }
-              </td>
-            </tr>
-          } @empty {
-            <tr>
-              <td colspan="7" class="empty-state">No se registraron turnos.</td>
-            </tr>
-          }
-        </tbody>
-      </table>
+    <div class="skeleton-stack" aria-busy="true" aria-label="Cargando turnos">
+      <div class="skeleton skeleton-tall"></div>
+      <div class="skeleton skeleton-tall"></div>
+      <div class="skeleton skeleton-tall"></div>
     </div>
+  } @else if (scope()) {
+    @if (appointments().length > 0) {
+      @if (upcoming().length > 0) {
+        <section class="appt-group" aria-labelledby="g-prox">
+          <h2 id="g-prox" class="section-label">Próximos</h2>
+          <ul class="appt-list">
+            @for (app of upcoming(); track app.id) {
+              <ng-container *ngTemplateOutlet="row; context: { $implicit: app }" />
+            }
+          </ul>
+        </section>
+      }
+      @if (past().length > 0) {
+        <section class="appt-group" aria-labelledby="g-ant">
+          <h2 id="g-ant" class="section-label">Anteriores</h2>
+          <ul class="appt-list">
+            @for (app of past(); track app.id) {
+              <ng-container *ngTemplateOutlet="row; context: { $implicit: app }" />
+            }
+          </ul>
+        </section>
+      }
+      <ng-template #row let-app>
+        <li class="appt">
+          <div class="appt-date">
+            <span class="appt-day">{{ app.scheduled_at | date:'d' }}</span>
+            <span class="appt-month">{{ app.scheduled_at | date:'MMM' }}</span>
+            <span class="appt-time">{{ app.scheduled_at | date:'HH:mm' }}</span>
+          </div>
+          <div class="appt-main">
+            <div class="appt-head">
+              <strong class="appt-who">
+                @if (showPatientColumn() && !showDoctorColumn()) {
+                  {{ app.patient?.first_name }} {{ app.patient?.last_name }}
+                } @else {
+                  Dr/a. {{ app.doctor?.first_name }} {{ app.doctor?.last_name }}
+                }
+              </strong>
+              @switch (app.status) {
+                @case ('abonado') { <span class="badge badge-ok">Abonado</span> }
+                @case ('reservado') { <span class="badge badge-warn">Pendiente de pago</span> }
+                @case ('cancelado') { <span class="badge badge-error">Cancelado</span> }
+                @case ('cancelled') { <span class="badge badge-error">Cancelado</span> }
+                @default { <span class="badge badge-info">{{ app.status }}</span> }
+              }
+            </div>
+            <dl class="kv">
+              @if (showPatientColumn() && showDoctorColumn()) {
+                <div>
+                  <dt>Paciente</dt>
+                  <dd>{{ app.patient?.first_name }} {{ app.patient?.last_name }}</dd>
+                </div>
+              }
+              <div>
+                <dt>Especialidad</dt>
+                <dd>{{ app.specialty?.name || 'General' }}</dd>
+              </div>
+              <div>
+                <dt>Sala</dt>
+                <dd>
+                  @if (app.sala) {
+                    Sala {{ app.sala.numero }} · Piso {{ app.sala.piso }}
+                  } @else {
+                    Sin asignar
+                  }
+                </dd>
+              </div>
+              <div>
+                <dt>Cobertura</dt>
+                <dd>{{ app.healthInsurance?.name || 'Particular' }}</dd>
+              </div>
+              @if (app.cancellation_reason) {
+                <div class="kv-full">
+                  <dt>Motivo de cancelación</dt>
+                  <dd>{{ app.cancellation_reason }}</dd>
+                </div>
+              }
+            </dl>
+            @if (canManage(app) || canAssignSala(app)) {
+              <div class="appt-actions">
+                @if (canAssignSala(app)) {
+                  <button type="button" class="btn btn-secondary btn-sm" (click)="openSalaModal(app)">{{ app.sala ? 'Cambiar sala' : 'Asignar sala' }}</button>
+                }
+                @if (canManage(app)) {
+                  <button type="button" class="btn btn-secondary btn-sm" (click)="openRescheduleModal(app)">Reprogramar</button>
+                  <button type="button" class="btn btn-danger btn-sm" (click)="openCancelModal(app)">Cancelar</button>
+                  @if (app.certificado_url) {
+                    <button type="button" class="btn btn-primary btn-sm" (click)="downloadCert(app)">Descargar certificado</button>
+                  }
+                  @if (!app.certificado_url && (isDoctor() || isAdmin()) && app.status !== 'cancelado') {
+                    <button type="button" class="btn btn-secondary btn-sm" (click)="emitirCert(app)">Emitir certificado</button>
+                  }
+                }
+              </div>
+            }
+          </div>
+        </li>
+      </ng-template>
+    } @else {
+      <div class="empty-state">
+        <p>No se registraron turnos.</p>
+        @if (canBook()) {
+          <a routerLink="/appointments/new" class="btn btn-primary">Reservar turno</a>
+        }
+      </div>
+    }
   }
 
-  <!-- MODAL DE ASIGNACIÓN DE SALA (GT-43) -->
-  @if (assigningSalaAppointment(); as target) {
+    @if (assigningSalaAppointment(); as target) {
     <div class="modal-backdrop">
-      <div class="modal-card">
+      <div class="modal-card" role="dialog" aria-modal="true">
         <h3>{{ target.sala ? 'Cambiar Sala' : 'Asignar Sala' }}</h3>
         <p>Turno del <strong>{{ target.scheduled_at | date:'dd/MM/yyyy HH:mm' }}</strong> con <strong>Dr/a. {{ target.doctor?.first_name }} {{ target.doctor?.last_name }}</strong></p>
         @if (target.sala) {
@@ -103,11 +145,11 @@
 
         <form [formGroup]="salaForm" (ngSubmit)="submitSala()">
           @if (loadingSalas()) {
-            <p>Buscando salas libres...</p>
+            <p class="cell-sub" aria-live="polite">Buscando salas libres...</p>
           } @else if (assignableSalas().length > 0) {
-            <div class="form-group">
+            <div class="field">
               <label for="salaSelect">Salas libres en ese horario:</label>
-              <select id="salaSelect" formControlName="sala_id" class="form-control">
+              <select id="salaSelect" formControlName="sala_id" class="select">
                 <option value="">Selecciona una sala</option>
                 @for (sala of assignableSalas(); track sala.id) {
                   <option [value]="sala.id">
@@ -117,11 +159,11 @@
               </select>
             </div>
           } @else {
-            <p class="text-danger">No hay salas disponibles en ese horario.</p>
+            <p class="notice-error">No hay salas disponibles en ese horario.</p>
           }
 
           <div class="modal-actions">
-            <button type="button" class="btn btn-secondary" [disabled]="actionInProgress()" (click)="closeSalaModal()">Cerrar</button>
+            <button type="button" class="btn btn-ghost" [disabled]="actionInProgress()" (click)="closeSalaModal()">Cerrar</button>
             <button type="submit" class="btn btn-primary" [disabled]="salaForm.invalid || actionInProgress()">
               {{ actionInProgress() ? 'Guardando...' : 'Guardar Sala' }}
             </button>
@@ -131,22 +173,21 @@
     </div>
   }
 
-  <!-- MODAL DE CANCELACIÓN -->
   @if (cancellingAppointment(); as target) {
     <div class="modal-backdrop">
-      <div class="modal-card">
+      <div class="modal-card" role="dialog" aria-modal="true">
         <h3>Confirmar Cancelación de Turno</h3>
         <p>¿Seguro que deseas cancelar el turno con <strong>Dr/a. {{ target.doctor?.first_name }} {{ target.doctor?.last_name }}</strong> el <strong>{{ target.scheduled_at | date:'dd/MM/yyyy HH:mm' }}</strong>?</p>
-        <p class="text-warning">Esta acción liberará la agenda del médico y la sala asignada.</p>
+        <p class="notice-ok">Esta acción liberará la agenda del médico y la sala asignada.</p>
 
         <form [formGroup]="cancelForm" (ngSubmit)="submitCancellation()">
-          <div class="form-group">
+          <div class="field">
             <label for="reason">Motivo (opcional):</label>
-            <input id="reason" type="text" formControlName="reason" class="form-control" placeholder="Ej: Motivos personales, imprevisto laboral..." />
+            <input id="reason" type="text" formControlName="reason" class="input" placeholder="Ej: Motivos personales, imprevisto laboral..." />
           </div>
 
           <div class="modal-actions">
-            <button type="button" class="btn btn-secondary" [disabled]="actionInProgress()" (click)="closeCancelModal()">Volver</button>
+            <button type="button" class="btn btn-ghost" [disabled]="actionInProgress()" (click)="closeCancelModal()">Volver</button>
             <button type="submit" class="btn btn-danger" [disabled]="actionInProgress()">
               {{ actionInProgress() ? 'Cancelando...' : 'Confirmar Cancelación' }}
             </button>
@@ -156,27 +197,26 @@
     </div>
   }
 
-  <!-- MODAL DE REPROGRAMACIÓN -->
   @if (reschedulingAppointment(); as target) {
     <div class="modal-backdrop">
-      <div class="modal-card">
+      <div class="modal-card" role="dialog" aria-modal="true">
         <h3>Reprogramar Turno</h3>
         <p>Turno actual: <strong>{{ target.scheduled_at | date:'dd/MM/yyyy HH:mm' }}</strong> con <strong>Dr/a. {{ target.doctor?.first_name }} {{ target.doctor?.last_name }}</strong></p>
 
         <form [formGroup]="rescheduleForm" (ngSubmit)="submitRescheduling()">
-          <div class="form-group">
+          <div class="field">
             <label for="newDate">Nueva Fecha:</label>
-            <input id="newDate" type="date" formControlName="date" class="form-control" (change)="onRescheduleDateChange()" />
+            <input id="newDate" type="date" formControlName="date" class="input" (change)="onRescheduleDateChange()" />
           </div>
 
           @if (loadingSlots()) {
-            <p>Buscando horarios disponibles...</p>
+            <p class="cell-sub" aria-live="polite">Buscando horarios disponibles...</p>
           }
 
           @if (availableSlots().length > 0) {
-            <div class="form-group">
+            <div class="field">
               <label for="newSlot">Horarios Disponibles:</label>
-              <select id="newSlot" formControlName="slot" class="form-control">
+              <select id="newSlot" formControlName="slot" class="select">
                 <option value="">Selecciona una franja horaria</option>
                 @for (slot of availableSlots(); track slot.start_time) {
                   <option [value]="slot.start_time">{{ slot.start_time }} - {{ slot.end_time }}</option>
@@ -184,12 +224,12 @@
               </select>
             </div>
           } @else if (rescheduleForm.value.date && !loadingSlots()) {
-            <p class="text-danger">No hay horarios libres para la fecha seleccionada.</p>
+            <p class="notice-error">No hay horarios libres para la fecha seleccionada.</p>
           }
 
           <div class="modal-actions">
-            <button type="button" class="btn btn-secondary" [disabled]="actionInProgress()" (click)="closeRescheduleModal()">Cerrar</button>
-            <button type="submit" class="btn btn-warning" [disabled]="rescheduleForm.invalid || actionInProgress()">
+            <button type="button" class="btn btn-ghost" [disabled]="actionInProgress()" (click)="closeRescheduleModal()">Cerrar</button>
+            <button type="submit" class="btn btn-primary" [disabled]="rescheduleForm.invalid || actionInProgress()">
               {{ actionInProgress() ? 'Guardando...' : 'Guardar Nueva Fecha' }}
             </button>
           </div>

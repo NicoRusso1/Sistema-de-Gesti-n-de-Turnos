@@ -1,19 +1,21 @@
 import { Component, inject } from '@angular/core';
-import { RouterLink, RouterOutlet } from '@angular/router';
+import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from './services/auth.service';
+import { roleLabel } from './shared/role-label';
 
 @Component({
-  imports: [RouterOutlet, RouterLink],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive],
   selector: 'app-root',
   styleUrl: './app.css',
   templateUrl: './app.html',
 })
 export class App {
   authService = inject(AuthService);
+  private router = inject(Router);
   user = this.authService.user;
 
   // Variable para controlar el estado del menú
-  isSidebarOpen = true;
+  isSidebarOpen = typeof window === 'undefined' || window.innerWidth > 900;
 
   // Función helper para los accesos
   isAdmin(): boolean {
@@ -53,5 +55,30 @@ export class App {
 
   canAccessNotifications(): boolean {
     return this.isAdmin() || this.isDoctor();
+  }
+
+  closeOnMobile(): void {
+    if (window.innerWidth <= 900) {
+      this.isSidebarOpen = false;
+    }
+  }
+
+  roleLabel(): string {
+    return roleLabel(this.user());
+  }
+
+  initials(): string {
+    const u = this.user();
+    return `${u?.first_name?.[0] ?? ''}${u?.last_name?.[0] ?? ''}`.toUpperCase();
+  }
+
+  logout(): void {
+    this.authService.logout().subscribe({
+      next: () => this.router.navigate(['/login']),
+      error: () => {
+        this.authService.clearSession();
+        this.router.navigate(['/login']);
+      },
+    });
   }
 }

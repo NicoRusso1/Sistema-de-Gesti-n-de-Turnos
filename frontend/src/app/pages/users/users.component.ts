@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { UserService } from '../../services/user.service';
 import { PaginatedUsers, User } from '../../models/user';
@@ -11,158 +11,12 @@ import { debounceTime } from 'rxjs';
   selector: 'app-users',
   standalone: true,
   imports: [ReactiveFormsModule, RouterLink],
-  template: `
-    <div class="users-container">
-      <h2>Listado y Filtros de Usuarios</h2>
-      <a routerLink="/users/new" class="btn-primary">Nuevo usuario</a>
-      
-      <!-- Al presionar Enter en el input se ejecuta ngSubmit -->
-      <form [formGroup]="filterForm" (ngSubmit)="applyFilters()" class="filters-card">
-        
-        <div class="form-group">
-          <label>Búsqueda libre:</label>
-          <input type="text" formControlName="search" placeholder="Nombre, email o DNI...">
-        </div>
-        
-        <!-- El (change) aplica el filtro inmediatamente al seleccionar una opción -->
-        <div class="form-group">
-          <label>Rol:</label>
-            <select formControlName="role">
-            <option value="">Todos los Roles</option>
-            <option value="SuperAdmin">Super Administrador</option>
-            <option value="Administrator">Administrador</option>
-            <option value="OperationalUser">Usuario Operativo</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label>Tipo de Usuario:</label>
-            <select formControlName="user_type">
-            <option value="">Todos los Tipos</option>
-            <option value="patient">Paciente</option>
-            <option value="doctor">Doctor</option>
-            <option value="secretary">Secretario/a</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label>Estado:</label>
-          <select formControlName="status">
-            <option value="">Todos</option>
-            <option value="1">Activo</option>
-            <option value="0">Inactivo</option>
-          </select>
-        </div>
-
-        <div class="filter-actions">
-          <button type="submit" class="btn-primary">Filtrar</button>
-          <button type="button" class="btn-secondary" (click)="clearFilters()">Limpiar</button>
-        </div>
-      </form>
-
-      <div class="table-responsive">
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Nombre</th>
-              <th>DNI</th>
-              <th>Email</th>
-              <th>Rol / Tipo</th>
-              <th>Estado</th>
-              <th>Acciones</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (user of users; track user.id) {
-              <tr>
-                <td>{{ user.first_name }} {{ user.last_name }}</td>
-                <td>{{ user.personal_data?.national_id || 'N/A' }}</td>
-                <td>{{ user.email }}</td>
-                <td>
-                  <span class="badge role-badge">{{ user.role.name }}</span>
-                  @if (user.user_type) {
-                    <span class="badge type-badge">{{ user.user_type.name }}</span>
-                  }
-                </td>
-                <td>
-                  @if (user.status === 1) { Activo }
-                  @else if (user.status === 0) { Inactivo }
-                  @else { N/A }
-                </td>
-                <td>
-                  @if (user.role.name === 'OperationalUser') {
-                    <a [routerLink]="['/users', user.id, 'edit']">Editar</a>
-                    <a [routerLink]="['/users', user.id, 'permissions']">Permisos</a>
-                     @if (user.user_type?.name === 'doctor') {
-                      <a [routerLink]="['/users', user.id, 'schedule']">Agenda</a>
-                      <a [routerLink]="['/users', user.id, 'specialties']">Especialidades</a>
-                    }
-                    @if (user.status === 1) {
-                      <button type="button" (click)="deactivate(user)">Dar de baja</button>
-                      @if (canManageAdmins) {
-                        <button type="button" (click)="grantAdmin(user)">Hacer administrador</button>
-                      }
-                    } @else {
-                      <button type="button" (click)="activate(user)">Reactivar</button>
-                    }
-                  }
-                  @if (user.is_owner) {
-                    <span class="badge owner-badge">Propietario</span>
-                  }
-
-                  @if (canRevokeAdmin(user)) {
-                    <button type="button" (click)="revokeAdmin(user)">Quitar administrador</button>
-                  }
-                </td>
-
-              </tr>
-            } @empty {
-              <tr>
-                <td colspan="6" class="text-center">No se encontraron usuarios que coincidan con los filtros.</td>
-              </tr>
-            }
-          </tbody>
-        </table>
-      </div>
-
-      @if (pagination && pagination.last_page > 1) {
-        <div class="pagination">
-          <button [disabled]="pagination.current_page === 1" (click)="goToPage(pagination.current_page - 1)">Anterior</button>
-          <span>Página {{ pagination.current_page }} de {{ pagination.last_page }}</span>
-          <button [disabled]="pagination.current_page === pagination.last_page" (click)="goToPage(pagination.current_page + 1)">Siguiente</button>
-        </div>
-      }
-    </div>
-  `,
-  styles: [`
-    .users-container { padding: 20px; }
-    .filters-card { display: flex; flex-wrap: wrap; gap: 15px; background: #f9f9f9; padding: 20px; border-radius: 8px; margin-bottom: 20px; align-items: flex-end;}
-    .form-group { display: flex; flex-direction: column; flex: 1; min-width: 200px;}
-    .form-group label { margin-bottom: 5px; font-weight: bold; font-size: 14px; }
-    .form-group input, .form-group select { padding: 10px; border: 1px solid #ccc; border-radius: 4px; outline: none; }
-    .form-group input:focus, .form-group select:focus { border-color: #007bff; }
-    .filter-actions { display: flex; gap: 10px; }
-    .btn-primary { background: #007bff; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; transition: background 0.2s;}
-    .btn-primary:hover { background: #0056b3; }
-    .btn-secondary { background: #6c757d; color: white; padding: 10px 15px; border: none; border-radius: 4px; cursor: pointer; transition: background 0.2s;}
-    .btn-secondary:hover { background: #5a6268; }
-    .table-responsive { overflow-x: auto; }
-    .data-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-    .data-table th, .data-table td { padding: 12px; border: 1px solid #ddd; text-align: left; }
-    .data-table th { background-color: #f4f4f4; }
-    .badge { padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; display: inline-block; margin-right: 5px;}
-    .role-badge { background: #007bff; color: white; }
-    .type-badge { background: #28a745; color: white; }
-    .text-center { text-align: center; }
-    .pagination { display: flex; justify-content: center; align-items: center; gap: 15px; }
-    .pagination button { padding: 8px 12px; cursor: pointer; border: 1px solid #ccc; border-radius: 4px; background: #fff;}
-    .pagination button:hover:not(:disabled) { background: #f0f0f0; }
-    .pagination button:disabled { cursor: not-allowed; opacity: 0.5; }
-  `]
+  templateUrl: './users.html'
 })
 export class UsersComponent implements OnInit {
   private userService = inject(UserService);
   private fb = inject(FormBuilder);
+  private cdr = inject(ChangeDetectorRef);
 
   private auth = inject(AuthService);
 
@@ -206,6 +60,7 @@ export class UsersComponent implements OnInit {
       next: (res) => {
         this.pagination = res;
         this.users = res.data;
+        this.cdr.markForCheck();
       },
       error: (err) => console.error('Error loading users', err)
     });
