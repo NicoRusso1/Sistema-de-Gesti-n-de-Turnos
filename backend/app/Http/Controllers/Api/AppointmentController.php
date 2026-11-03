@@ -609,24 +609,62 @@ class AppointmentController extends Controller
      */
     public function downloadCertificate(Request $request, $id)
     {
-        $appointment = Appointment::find($id);
-        if (!$appointment || !$appointment->certificado_url) {
+        $appointment = Appointment::with('certificate')->find($id);
+        $path = $appointment?->certificate?->certificate_url ?? $appointment?->certificado_url;
+        if (!$appointment || !$path) {
             return response()->json(['message' => 'El turno no cuenta con un certificado emitido'], 404);
         }
 
-        $user = $request->user();
-        $isOwner = (int) $appointment->patient_id === (int) $user->id;
-        $isDoctor = (int) $appointment->doctor_id === (int) $user->id;
-        $isAdmin = $user->hasAdminAccess();
-
-        if (!$isOwner && !$isDoctor && !$isAdmin) {
+        if (!$this->canDownloadVoucher($request->user(), $appointment)) {
             return response()->json(['message' => 'No tenés permiso para descargar este certificado'], 403);
         }
 
-        if (!Storage::disk('public')->exists($appointment->certificado_url)) {
+        if (!Storage::disk('public')->exists($path)) {
             return response()->json(['message' => 'El archivo físico no fue encontrado'], 404);
         }
 
-        return Storage::disk('public')->download($appointment->certificado_url, "Certificado_Turno_{$appointment->id}.pdf");
+        return Storage::disk('public')->download($path, "Certificado_Turno_{$appointment->id}.pdf");
+    }
+
+    #[OA\Get(
+        path: '/api/appointments/{id}/invoice/download',
+        summary: 'Descargar factura de pago en PDF',
+        description: 'Descarga el PDF de la factura del turno. Accesible por el paciente titular, el médico asignado o un administrador.',
+        tags: ['Certificados'],
+        security: [['sanctum' => []]],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'), description: 'ID del turno')
+        ],
+        responses: [
+            new OA\Response(response: 200, description: 'Archivo PDF de la factura.'),
+            new OA\Response(response: 403, description: 'No tenés permiso para descargar esta factura.'),
+            new OA\Response(response: 404, description: 'El turno no cuenta con una factura emitida o el archivo no fue encontrado.'),
+            new OA\Response(response: 401, description: 'No autenticado.'),
+        ]
+    )]
+    public function downloadInvoice(Request $request, $id)
+    {
+        $appointment = Appointment::with('certificate')->find($id);
+        $path = $appointment?->certificate?->invoice_url;
+        if (!$appointment || !$path) {
+            return response()->json(['message' => 'El turno no cuenta con una factura emitida'], 404);
+        }
+
+        if (!$this->canDownloadVoucher($request->user(), $appointment)) {
+            return response()->json(['message' => 'No tenés permiso para descargar esta factura'], 403);
+        }
+
+        if (!Storage::disk('public')->exists($path)) {
+            return response()->json(['message' => 'El archivo físico no fue encontrado'], 404);
+        }
+
+        return Storage::disk('public')->download($path, "Factura_Turno_{$appointment->id}.pdf");
+    }
+
+    private function canDownloadVoucher($user, Appointment $appointment): bool
+    {
+        return (int) $appointment->patient_id === (int) $user->id
+            || (int) $appointment->doctor_id === (int) $user->id
+            || $user->hasAdminAccess();
     }
 }

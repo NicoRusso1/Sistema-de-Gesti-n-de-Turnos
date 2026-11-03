@@ -5,6 +5,8 @@ namespace App\Observers;
 use App\Enums\PaymentStatusName;
 use App\Models\Payment;
 use App\Models\PaymentStatus;
+use App\Services\CertificateService;
+use App\Services\InvoiceService;
 
 class PaymentObserver
 {
@@ -24,6 +26,13 @@ class PaymentObserver
 
         if ($appointment->status === 'reservado') {
             $appointment->update(['status' => 'abonado']);
+        }
+
+        try {
+            app(CertificateService::class)->generate($appointment);
+            app(InvoiceService::class)->generate($appointment, $payment);
+        } catch (\Throwable $e) {
+            logger()->error("Error generando comprobantes del turno #{$appointment->id}: " . $e->getMessage());
         }
     }
 }
