@@ -88,3 +88,7 @@
   padding: 20px;
   flex: 1;
 }
+
+.content-wrapper.content-bare {
+  padding: 0;
+}

@@ -1,0 +1,129 @@
+.trust {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin: 10px 0 0;
+  font-size: 0.8rem;
+  color: var(--sigt-texto-suave);
+}
+
+.divider, .btn-secondary, .trust-card, .mini-stats {
+  display: none;
+}
+
+@media (max-height: 760px) {
+  .trust {
+    display: none;
+  }
+}
+
+@media (max-width: 600px) {
+  .alt, .trust {
+    display: none;
+  }
+
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin: 0 20px;
+    font-size: 0.9rem;
+    color: var(--sigt-texto-suave);
+  }
+
+  .divider::before, .divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--sigt-borde);
+  }
+
+  .btn-secondary {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 52px;
+    margin: 0 20px;
+    border: 1px solid var(--sigt-petroleo);
+    border-radius: 8px;
+    font-weight: 500;
+    color: var(--sigt-petroleo);
+    text-decoration: none;
+  }
+
+  .btn-secondary:hover {
+    background: var(--sigt-fondo);
+  }
+
+  .trust-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0 20px;
+    padding: 14px;
+    border: 1px solid var(--sigt-borde);
+    border-radius: 10px;
+    background: var(--sigt-fondo);
+  }
+
+  .trust-icon {
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--sigt-petroleo);
+  }
+
+  .trust-card strong {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  .trust-card p {
+    margin: 0;
+    font-size: 0.8rem;
+    color: var(--sigt-texto-suave);
+  }
+
+  .mini-stats {
+    display: flex;
+    margin: 0 20px;
+  }
+
+  .mini-stats div {
+    flex: 1;
+    padding: 0 8px;
+    text-align: center;
+    border-left: 1px solid var(--sigt-borde);
+  }
+
+  .mini-stats div:first-child {
+    border-left: 0;
+  }
+
+  .mini-stats dt {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--sigt-petroleo);
+  }
+
+  .mini-stats dd {
+    margin: 2px 0 0;
+    font-size: 0.7rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--sigt-texto-suave);
+  }
+}
+
+@media (max-width: 380px) {
+  .divider, .btn-secondary, .trust-card, .mini-stats {
+    margin-left: 16px;
+    margin-right: 16px;
+  }
+}

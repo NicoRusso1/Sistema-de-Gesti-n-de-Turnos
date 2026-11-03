@@ -1,0 +1,129 @@
+<main class="auth" [class.auth-intro]="intro()">
+  <aside class="login-panel" [class.has-portrait]="portrait()">
+    @if (portrait()) {
+      <div class="panel-portrait" aria-hidden="true">
+        <img src="doctora.jpg" alt="" width="480" height="640" loading="lazy">
+      </div>
+    }
+
+    <img class="panel-watermark" src="isotipo.png" alt="" aria-hidden="true">
+
+    <div class="panel-brand">
+      <img src="isotipo.png" alt="" aria-hidden="true">
+      <div>
+        <span class="brand-name">SIGT</span>
+        <span class="brand-sub">Gestión de turnos</span>
+      </div>
+    </div>
+
+    <div class="panel-copy">
+      <h2>{{ headline() }}</h2>
+      <p class="panel-support">{{ support() }}</p>
+
+      <ul class="benefits">
+        @for (benefit of benefits(); track benefit.title) {
+          <li>
+            <span class="benefit-icon">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                @switch (benefit.icon) {
+                  @case ('calendar') {
+                    <rect x="3.5" y="5" width="17" height="15.5" rx="2.5" />
+                    <path d="M3.5 10h17M8 3v4M16 3v4" />
+                  }
+                  @case ('card') {
+                    <rect x="2.5" y="5" width="19" height="14" rx="2.5" />
+                    <path d="M2.5 10h19M6.5 15h4" />
+                  }
+                  @case ('document') {
+                    <path d="M14 3H7.5A2.5 2.5 0 0 0 5 5.5v13A2.5 2.5 0 0 0 7.5 21h9a2.5 2.5 0 0 0 2.5-2.5V8z" />
+                    <path d="M14 3v5h5M9 13h6M9 17h6" />
+                  }
+                  @case ('clock') {
+                    <circle cx="12" cy="12" r="9" />
+                    <path d="M12 7v5l3 2" />
+                  }
+                  @case ('folder') {
+                    <path d="M3.5 7.5a2 2 0 0 1 2-2H10l2 2h6.5a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z" />
+                  }
+                  @case ('shield') {
+                    <path d="M12 3l7 3v5c0 4.5-3 8-7 10-4-2-7-5.5-7-10V6z" />
+                  }
+                  @case ('mail') {
+                    <rect x="3" y="5" width="18" height="14" rx="2.5" />
+                    <path d="M3.5 7l8.5 6 8.5-6" />
+                  }
+                  @case ('link') {
+                    <path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1" />
+                    <path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" />
+                  }
+                  @case ('key') {
+                    <circle cx="8" cy="15" r="4" />
+                    <path d="M11 12l9-9M16 7l3 3" />
+                  }
+                  @case ('refresh') {
+                    <path d="M4 12a8 8 0 0 1 13.7-5.6L20 8M20 4v4h-4" />
+                    <path d="M20 12a8 8 0 0 1-13.7 5.6L4 16M4 20v-4h4" />
+                  }
+                  @case ('check') {
+                    <circle cx="12" cy="12" r="9" />
+                    <path d="M8 12.5l2.7 2.7L16 9.5" />
+                  }
+                }
+              </svg>
+            </span>
+            <div>
+              <strong>{{ benefit.title }}</strong>
+              <p>{{ benefit.text }}</p>
+            </div>
+          </li>
+        }
+      </ul>
+
+      <ng-content select="[panel-extra]" />
+    </div>
+
+    <svg class="panel-pulse" viewBox="0 0 800 80" preserveAspectRatio="none" aria-hidden="true">
+      <path class="pulse-base" pathLength="1000" d="M0 40 H290 L310 40 L328 8 L352 72 L372 22 L388 40 H800" />
+      <path class="pulse-run" pathLength="1000" d="M0 40 H290 L310 40 L328 8 L352 72 L372 22 L388 40 H800" />
+    </svg>
+  </aside>
+
+  <section class="login-side">
+    <div class="side-pattern" aria-hidden="true"></div>
+
+    <div class="login-center">
+      <div class="login-card" [class.login-card-wide]="wide()">
+        <ng-content />
+      </div>
+
+      <ng-content select="[below]" />
+    </div>
+
+    <footer class="login-foot">
+      <nav aria-label="Enlaces del pie">
+        <a href="#">Términos</a>
+        <a href="#">Privacidad</a>
+      </nav>
+      <p class="login-copy">© 2026 SIGT</p>
+    </footer>
+  </section>
+
+  <svg class="auth-pulse" aria-hidden="true">
+    <defs>
+      <linearGradient id="auth-base-grad" gradientUnits="userSpaceOnUse" [attr.x1]="cut() - 1" y1="0" [attr.x2]="cut() + 1" y2="0">
+        <stop offset="0" stop-color="#fff" stop-opacity="0.2" />
+        <stop offset="0.5" stop-color="#fff" stop-opacity="0.2" />
+        <stop offset="0.5" style="stop-color: var(--sigt-petroleo)" stop-opacity="0.25" />
+        <stop offset="1" style="stop-color: var(--sigt-petroleo)" stop-opacity="0.25" />
+      </linearGradient>
+      <linearGradient id="auth-run-grad" gradientUnits="userSpaceOnUse" [attr.x1]="cut() - 1" y1="0" [attr.x2]="cut() + 1" y2="0">
+        <stop offset="0" style="stop-color: var(--sigt-coral)" />
+        <stop offset="0.5" style="stop-color: var(--sigt-coral)" />
+        <stop offset="0.5" style="stop-color: var(--sigt-petroleo)" />
+        <stop offset="1" style="stop-color: var(--sigt-petroleo)" />
+      </linearGradient>
+    </defs>
+    <path class="cont-base" pathLength="1000" stroke="url(#auth-base-grad)" [attr.d]="pulsePath()" />
+    <path class="cont-run" pathLength="1000" stroke="url(#auth-run-grad)" [attr.d]="pulsePath()" />
+  </svg>
+</main>

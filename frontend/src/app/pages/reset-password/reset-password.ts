@@ -3,10 +3,12 @@ import { Component, inject, OnInit, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { AuthLayout } from '../../shared/auth-layout/auth-layout';
+import { EyeIcon } from '../../shared/eye-icon/eye-icon';
 
 @Component({
   selector: 'app-reset-password',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, AuthLayout, EyeIcon],
   templateUrl: './reset-password.html',
 })
 export class ResetPassword implements OnInit {
@@ -19,6 +21,7 @@ export class ResetPassword implements OnInit {
   protected readonly errorMessage = signal('');
   protected readonly successMessage = signal('');
   protected readonly loading = signal(false);
+  protected readonly showPassword = signal(false);
 
   protected readonly form = this.fb.nonNullable.group({
     password: ['', [Validators.required, Validators.minLength(8)]],

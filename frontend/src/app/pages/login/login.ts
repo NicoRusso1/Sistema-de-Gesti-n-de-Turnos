@@ -3,11 +3,14 @@ import { Component, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
+import { AuthLayout } from '../../shared/auth-layout/auth-layout';
+import { EyeIcon } from '../../shared/eye-icon/eye-icon';
 
 @Component({
   selector: 'app-login',
-  imports: [ReactiveFormsModule, RouterLink],
+  imports: [ReactiveFormsModule, RouterLink, AuthLayout, EyeIcon],
   templateUrl: './login.html',
+  styleUrl: './login.css',
 })
 export class Login {
   private fb = inject(FormBuilder);
@@ -18,6 +21,7 @@ export class Login {
     inject(ActivatedRoute).snapshot.queryParamMap.get('registered') === 'true';
   protected readonly errorMessage = signal('');
   protected readonly loading = signal(false);
+  protected readonly showPassword = signal(false);
 
   protected readonly form = this.fb.nonNullable.group({
     email: ['', [Validators.required, Validators.email]],

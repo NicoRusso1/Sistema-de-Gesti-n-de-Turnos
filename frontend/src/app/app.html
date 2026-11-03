@@ -54,7 +54,7 @@
     }
 
     <!-- Aquí se inyectan dinámicamente las vistas (home, login, users, etc.) -->
-    <div class="content-wrapper">
+    <div class="content-wrapper" [class.content-bare]="!user()">
       <router-outlet />
     </div>
 
