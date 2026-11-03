@@ -2,13 +2,12 @@
 
 namespace App\Commands;
 
-use App\Mail\RecordatorioTurnoMail;
+use App\Enums\NotificationDeliveryStatus;
 use App\Models\Appointment;
 use App\Models\Notification;
 use App\Services\AppointmentNotificationService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Mail;
 
 class SendAppointmentReminders extends Command
 {
@@ -43,24 +42,20 @@ class SendAppointmentReminders extends Command
             // Evitar enviar recordatorios duplicados si el comando corre más de una vez
             $yaNotificado = Notification::where('appointment_id', $appointment->id)
                 ->where('tipo', 'recordatorio')
+                ->where('estado_envio', '!=', NotificationDeliveryStatus::Failed->value)
                 ->exists();
 
             if ($yaNotificado) {
                 continue;
             }
 
-            try {
-                // 1. Enviar correo electrónico
-                Mail::to($email)->send(new RecordatorioTurnoMail($appointment));
+            $notification = $notificationService->notifyReminder($appointment);
 
-                // 2. Registrar notificación interna en el sistema
-                $notificationService->notifyReminder($appointment);
-
+            if ($notification->estado_envio === NotificationDeliveryStatus::Sent) {
                 $this->line("Recordatorio enviado al paciente {$email} para el turno #{$appointment->id}.");
                 $enviados++;
-            } catch (\Throwable $e) {
-                $this->error("Error enviando recordatorio al turno #{$appointment->id}: " . $e->getMessage());
-                logger()->error("Fallo envío recordatorio turno #{$appointment->id}: " . $e->getMessage());
+            } else {
+                $this->error("Error enviando recordatorio al turno #{$appointment->id}: {$notification->error_envio}");
             }
         }
 

@@ -9,6 +9,7 @@ use App\Models\Appointment;
 use App\Models\Payment;
 use App\Models\PaymentMethod;
 use App\Models\PaymentStatus;
+use App\Services\AppointmentNotificationService;
 use App\Services\MercadoPagoService;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\JsonResponse;
@@ -316,15 +317,7 @@ class PaymentController extends Controller
             $appointment = $payment->appointment;
             $appointment->update(['status' => 'abonado']);
 
-            // Enviar correo de confirmación de forma segura
-            try {
-                if ($destinatario = $appointment->patient?->email) {
-                    \Illuminate\Support\Facades\Mail::to($destinatario)
-                        ->send(new \App\Mail\TurnoConfirmadoMail($appointment, $payment));
-                }
-            } catch (\Throwable $mailError) {
-                logger()->error('Error al enviar correo de confirmación de turno: ' . $mailError->getMessage());
-            }
+            app(AppointmentNotificationService::class)->notifyPaymentConfirmed($appointment, $payment);
         }
 
         return response()->json([
@@ -356,10 +349,7 @@ class PaymentController extends Controller
                             ]);
                             $payment->appointment->update(['status' => 'abonado']);
 
-                            if ($email = $payment->appointment->patient?->email) {
-                                \Illuminate\Support\Facades\Mail::to($email)
-                                    ->send(new \App\Mail\TurnoConfirmadoMail($payment->appointment, $payment));
-                            }
+                            app(AppointmentNotificationService::class)->notifyPaymentConfirmed($payment->appointment, $payment);
                         }
                     }
                 }

@@ -2,12 +2,10 @@
 
 namespace App\Services;
 
-use App\Mail\CertificadoDigitalMail;
 use App\Models\Appointment;
 use App\Models\Certificate;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -56,13 +54,7 @@ class CertificateService
         $viewUrl = url("/api/certificado/{$appointment->id}/{$token}");
 
         // 5. Enviar email al paciente con el PDF adjunto y link de visualización
-        if ($email = $appointment->patient?->email) {
-            try {
-                Mail::to($email)->send(new CertificadoDigitalMail($appointment, $fileName, $viewUrl));
-            } catch (\Throwable $e) {
-                logger()->error("Error enviando certificado por email turno #{$appointment->id}: " . $e->getMessage());
-            }
-        }
+        app(AppointmentNotificationService::class)->notifyCertificate($appointment, $fileName, $viewUrl);
 
         return $fileName;
     }

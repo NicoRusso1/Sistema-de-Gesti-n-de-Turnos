@@ -19,6 +19,26 @@
   <div class="card">
     <h3>Historial de Notificaciones Emitidas</h3>
 
+    <form class="filters" (ngSubmit)="loadAll()">
+      <select name="estado" [(ngModel)]="filters.estado">
+        <option value="">Todos los estados</option>
+        <option value="enviada">Enviada</option>
+        <option value="pendiente">Pendiente</option>
+        <option value="fallida">Fallida</option>
+      </select>
+      <select name="tipo" [(ngModel)]="filters.tipo">
+        <option value="">Todos los tipos</option>
+        @for (t of tipos; track t) {
+          <option [value]="t">{{ t | uppercase }}</option>
+        }
+      </select>
+      <input type="date" name="desde" [(ngModel)]="filters.desde" title="Desde">
+      <input type="date" name="hasta" [(ngModel)]="filters.hasta" title="Hasta">
+      <input type="text" name="paciente" [(ngModel)]="filters.paciente" placeholder="Paciente (nombre o email)">
+      <button type="submit" class="btn btn-action">Filtrar</button>
+      <button type="button" class="btn-clear" (click)="clearFilters()">Limpiar</button>
+    </form>
+
     @if (loading()) {
       <p>Cargando registro...</p>
     } @else if (notifications().length > 0) {
@@ -29,6 +49,7 @@
             <th>Tipo</th>
             <th>Título</th>
             <th>Mensaje</th>
+            <th>Estado</th>
             <th>Fecha Emisión</th>
           </tr>
         </thead>
@@ -42,13 +63,19 @@
               <td><span class="badge">{{ n.tipo | uppercase }}</span></td>
               <td>{{ n.titulo }}</td>
               <td>{{ n.mensaje }}</td>
+              <td>
+                <span class="estado" [class]="'estado estado-' + n.estado_envio" [title]="n.error_envio || ''">{{ n.estado_envio | uppercase }}</span>
+                @if (n.error_envio) {
+                  <div class="sub-text error-text">{{ n.error_envio }}</div>
+                }
+              </td>
               <td>{{ n.created_at | date:'dd/MM/yyyy HH:mm' }}</td>
             </tr>
           }
         </tbody>
       </table>
     } @else {
-      <p class="empty-text">No hay notificaciones emitidas recientemente.</p>
+      <p class="empty-text">No hay notificaciones que coincidan con los filtros.</p>
     }
   </div>
 </div>

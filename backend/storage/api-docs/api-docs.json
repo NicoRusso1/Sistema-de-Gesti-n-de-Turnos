@@ -733,6 +733,46 @@
                 ]
             }
         },
+        "/api/appointments/{id}/invoice/download": {
+            "get": {
+                "tags": [
+                    "Certificados"
+                ],
+                "summary": "Descargar factura de pago en PDF",
+                "description": "Descarga el PDF de la factura del turno. Accesible por el paciente titular, el médico asignado o un administrador.",
+                "operationId": "e5fbf5c115b420b02e43788a434f004e",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID del turno",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Archivo PDF de la factura."
+                    },
+                    "403": {
+                        "description": "No tenés permiso para descargar esta factura."
+                    },
+                    "404": {
+                        "description": "El turno no cuenta con una factura emitida o el archivo no fue encontrado."
+                    },
+                    "401": {
+                        "description": "No autenticado."
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/login": {
             "post": {
                 "tags": [
@@ -1675,38 +1715,33 @@
                 "operationId": "b8d6462ea245835fd9b978c7f3b3e732",
                 "responses": {
                     "200": {
-                        "description": "Lista de notificaciones.",
+                        "description": "Lista de las últimas 10 notificaciones del usuario, con el estado del envío.",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "type": "array",
                                     "items": {
-                                        "properties": {
-                                            "id": {
-                                                "type": "integer",
-                                                "example": 1
-                                            },
-                                            "mensaje": {
-                                                "type": "string",
-                                                "example": "Recordatorio: tenés un turno mañana."
-                                            },
-                                            "leido": {
-                                                "type": "boolean",
-                                                "example": false
-                                            },
-                                            "created_at": {
-                                                "type": "string",
-                                                "format": "date-time"
-                                            }
-                                        },
-                                        "type": "object"
+                                        "$ref": "#/components/schemas/Notificacion"
                                     }
                                 }
                             }
                         }
                     },
                     "401": {
-                        "description": "No autenticado."
+                        "description": "No autenticado.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -1736,13 +1771,52 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Notificación marcada como leída."
+                        "description": "Notificación marcada como leída.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Notificación marcada como leída"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "404": {
-                        "description": "Notificación no encontrada."
+                        "description": "Notificación no encontrada.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Notificación no encontrada"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "401": {
-                        "description": "No autenticado."
+                        "description": "No autenticado.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -1758,17 +1832,122 @@
                     "Notificaciones"
                 ],
                 "summary": "Historial global de notificaciones (Médicos y Administradores)",
-                "description": "Los administradores ven todas las notificaciones. Los médicos solo ven las de sus turnos asignados.",
+                "description": "Los administradores ven todas las notificaciones. Los médicos solo ven las de sus turnos asignados. Incluye el estado del envío (pendiente, enviada, fallida) y admite filtros opcionales.",
                 "operationId": "6d56a555955089a73fdf3f7229e8ead8",
+                "parameters": [
+                    {
+                        "name": "estado",
+                        "in": "query",
+                        "description": "Estado del envío.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "pendiente",
+                                "enviada",
+                                "fallida"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "tipo",
+                        "in": "query",
+                        "description": "Tipo de notificación (cancelacion, reprogramacion, recordatorio, confirmacion, certificado).",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "desde",
+                        "in": "query",
+                        "description": "Fecha de emisión desde (inclusive).",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "hasta",
+                        "in": "query",
+                        "description": "Fecha de emisión hasta (inclusive).",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "paciente",
+                        "in": "query",
+                        "description": "Nombre, apellido o email del paciente.",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
                 "responses": {
                     "200": {
-                        "description": "Lista paginada de notificaciones."
+                        "description": "Lista paginada (15 por página) de notificaciones con el estado del envío.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/NotificacionesPaginadas"
+                                }
+                            }
+                        }
                     },
                     "403": {
-                        "description": "No autorizado."
+                        "description": "El usuario no es médico ni administrador.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "No autorizado"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Filtros inválidos.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "$ref": "#/components/schemas/ErrorValidacion"
+                                }
+                            }
+                        }
                     },
                     "401": {
-                        "description": "No autenticado."
+                        "description": "No autenticado.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -1808,10 +1987,36 @@
                         }
                     },
                     "403": {
-                        "description": "No autorizado."
+                        "description": "El usuario no es médico ni administrador.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "No autorizado"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "401": {
-                        "description": "No autenticado."
+                        "description": "No autenticado.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -1841,13 +2046,52 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Notificación eliminada."
+                        "description": "Notificación eliminada.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Notificación eliminada"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "404": {
-                        "description": "Notificación no encontrada."
+                        "description": "Notificación no encontrada.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Notificación no encontrada"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "401": {
-                        "description": "No autenticado."
+                        "description": "No autenticado.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     }
                 },
                 "security": [
@@ -2909,6 +3153,242 @@
         }
     },
     "components": {
+        "schemas": {
+            "Notificacion": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 12
+                    },
+                    "patient_id": {
+                        "type": "integer",
+                        "example": 3
+                    },
+                    "appointment_id": {
+                        "type": "integer",
+                        "example": 45,
+                        "nullable": true
+                    },
+                    "tipo": {
+                        "description": "cancelacion, reprogramacion, recordatorio, confirmacion o certificado.",
+                        "type": "string",
+                        "example": "recordatorio"
+                    },
+                    "titulo": {
+                        "type": "string",
+                        "example": "Tu próximo turno es el 04/11/2026 a las 10:00 hs"
+                    },
+                    "mensaje": {
+                        "type": "string",
+                        "example": "Recordá que tu próximo turno está agendado para el día 04/11/2026 a las 10:00 hs."
+                    },
+                    "leido": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "estado_envio": {
+                        "type": "string",
+                        "example": "fallida",
+                        "enum": [
+                            "pendiente",
+                            "enviada",
+                            "fallida"
+                        ]
+                    },
+                    "error_envio": {
+                        "type": "string",
+                        "example": "Connection could not be established with host smtp.example.com",
+                        "nullable": true
+                    },
+                    "enviada_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": null,
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-11-03T15:30:00.000000Z"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2026-11-03T15:30:01.000000Z"
+                    },
+                    "patient": {
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "example": 3
+                            },
+                            "first_name": {
+                                "type": "string",
+                                "example": "Lucía"
+                            },
+                            "last_name": {
+                                "type": "string",
+                                "example": "Gómez"
+                            },
+                            "email": {
+                                "type": "string",
+                                "example": "lucia@example.com"
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "appointment": {
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "example": 45
+                            },
+                            "scheduled_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "example": "2026-11-04T10:00:00.000000Z"
+                            },
+                            "status": {
+                                "type": "string",
+                                "example": "abonado"
+                            },
+                            "doctor": {
+                                "properties": {
+                                    "id": {
+                                        "type": "integer",
+                                        "example": 7
+                                    },
+                                    "first_name": {
+                                        "type": "string",
+                                        "example": "Martín"
+                                    },
+                                    "last_name": {
+                                        "type": "string",
+                                        "example": "Pérez"
+                                    }
+                                },
+                                "type": "object",
+                                "nullable": true
+                            },
+                            "specialty": {
+                                "properties": {
+                                    "id": {
+                                        "type": "integer",
+                                        "example": 2
+                                    },
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Cardiología"
+                                    }
+                                },
+                                "type": "object",
+                                "nullable": true
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "NotificacionesPaginadas": {
+                "properties": {
+                    "current_page": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "data": {
+                        "type": "array",
+                        "items": {
+                            "$ref": "#/components/schemas/Notificacion"
+                        }
+                    },
+                    "first_page_url": {
+                        "type": "string",
+                        "example": "http://127.0.0.1:8000/api/notifications?page=1"
+                    },
+                    "from": {
+                        "type": "integer",
+                        "example": 1,
+                        "nullable": true
+                    },
+                    "last_page": {
+                        "type": "integer",
+                        "example": 3
+                    },
+                    "last_page_url": {
+                        "type": "string",
+                        "example": "http://127.0.0.1:8000/api/notifications?page=3"
+                    },
+                    "links": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "url": {
+                                    "type": "string",
+                                    "nullable": true
+                                },
+                                "label": {
+                                    "type": "string",
+                                    "example": "1"
+                                },
+                                "active": {
+                                    "type": "boolean",
+                                    "example": true
+                                }
+                            },
+                            "type": "object"
+                        }
+                    },
+                    "next_page_url": {
+                        "type": "string",
+                        "example": "http://127.0.0.1:8000/api/notifications?page=2",
+                        "nullable": true
+                    },
+                    "path": {
+                        "type": "string",
+                        "example": "http://127.0.0.1:8000/api/notifications"
+                    },
+                    "per_page": {
+                        "type": "integer",
+                        "example": 15
+                    },
+                    "prev_page_url": {
+                        "type": "string",
+                        "example": null,
+                        "nullable": true
+                    },
+                    "to": {
+                        "type": "integer",
+                        "example": 15,
+                        "nullable": true
+                    },
+                    "total": {
+                        "type": "integer",
+                        "example": 38
+                    }
+                },
+                "type": "object"
+            },
+            "ErrorValidacion": {
+                "properties": {
+                    "message": {
+                        "type": "string",
+                        "example": "El estado debe ser pendiente, enviada o fallida."
+                    },
+                    "errors": {
+                        "type": "object",
+                        "example": {
+                            "estado": [
+                                "El estado debe ser pendiente, enviada o fallida."
+                            ]
+                        }
+                    }
+                },
+                "type": "object"
+            }
+        },
         "securitySchemes": {
             "sanctum": {
                 "type": "http",

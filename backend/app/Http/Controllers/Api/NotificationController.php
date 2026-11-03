@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\ListNotificationsRequest;
 use App\Models\Notification;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -20,20 +21,14 @@ class NotificationController extends Controller
         responses: [
             new OA\Response(
                 response: 200,
-                description: 'Lista de notificaciones.',
-                content: new OA\JsonContent(
-                    type: 'array',
-                    items: new OA\Items(
-                        properties: [
-                            new OA\Property(property: 'id', type: 'integer', example: 1),
-                            new OA\Property(property: 'mensaje', type: 'string', example: 'Recordatorio: tenés un turno mañana.'),
-                            new OA\Property(property: 'leido', type: 'boolean', example: false),
-                            new OA\Property(property: 'created_at', type: 'string', format: 'date-time'),
-                        ]
-                    )
-                )
+                description: 'Lista de las últimas 10 notificaciones del usuario, con el estado del envío.',
+                content: new OA\JsonContent(type: 'array', items: new OA\Items(ref: '#/components/schemas/Notificacion'))
             ),
-            new OA\Response(response: 401, description: 'No autenticado.'),
+            new OA\Response(
+                response: 401,
+                description: 'No autenticado.',
+                content: new OA\JsonContent(properties: [new OA\Property(property: 'message', type: 'string', example: 'Unauthenticated.')])
+            ),
         ]
     )]
     /**
@@ -59,9 +54,21 @@ class NotificationController extends Controller
             new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))
         ],
         responses: [
-            new OA\Response(response: 200, description: 'Notificación marcada como leída.'),
-            new OA\Response(response: 404, description: 'Notificación no encontrada.'),
-            new OA\Response(response: 401, description: 'No autenticado.'),
+            new OA\Response(
+                response: 200,
+                description: 'Notificación marcada como leída.',
+                content: new OA\JsonContent(properties: [new OA\Property(property: 'message', type: 'string', example: 'Notificación marcada como leída')])
+            ),
+            new OA\Response(
+                response: 404,
+                description: 'Notificación no encontrada.',
+                content: new OA\JsonContent(properties: [new OA\Property(property: 'message', type: 'string', example: 'Notificación no encontrada')])
+            ),
+            new OA\Response(
+                response: 401,
+                description: 'No autenticado.',
+                content: new OA\JsonContent(properties: [new OA\Property(property: 'message', type: 'string', example: 'Unauthenticated.')])
+            ),
         ]
     )]
     /**
@@ -84,19 +91,44 @@ class NotificationController extends Controller
     #[OA\Get(
         path: '/api/notifications',
         summary: 'Historial global de notificaciones (Médicos y Administradores)',
-        description: 'Los administradores ven todas las notificaciones. Los médicos solo ven las de sus turnos asignados.',
+        description: 'Los administradores ven todas las notificaciones. Los médicos solo ven las de sus turnos asignados. Incluye el estado del envío (pendiente, enviada, fallida) y admite filtros opcionales.',
         tags: ['Notificaciones'],
         security: [['sanctum' => []]],
+        parameters: [
+            new OA\Parameter(name: 'estado', in: 'query', required: false, description: 'Estado del envío.', schema: new OA\Schema(type: 'string', enum: ['pendiente', 'enviada', 'fallida'])),
+            new OA\Parameter(name: 'tipo', in: 'query', required: false, description: 'Tipo de notificación (cancelacion, reprogramacion, recordatorio, confirmacion, certificado).', schema: new OA\Schema(type: 'string')),
+            new OA\Parameter(name: 'desde', in: 'query', required: false, description: 'Fecha de emisión desde (inclusive).', schema: new OA\Schema(type: 'string', format: 'date')),
+            new OA\Parameter(name: 'hasta', in: 'query', required: false, description: 'Fecha de emisión hasta (inclusive).', schema: new OA\Schema(type: 'string', format: 'date')),
+            new OA\Parameter(name: 'paciente', in: 'query', required: false, description: 'Nombre, apellido o email del paciente.', schema: new OA\Schema(type: 'string')),
+            new OA\Parameter(name: 'page', in: 'query', required: false, schema: new OA\Schema(type: 'integer')),
+        ],
         responses: [
-            new OA\Response(response: 200, description: 'Lista paginada de notificaciones.'),
-            new OA\Response(response: 403, description: 'No autorizado.'),
-            new OA\Response(response: 401, description: 'No autenticado.'),
+            new OA\Response(
+                response: 200,
+                description: 'Lista paginada (15 por página) de notificaciones con el estado del envío.',
+                content: new OA\JsonContent(ref: '#/components/schemas/NotificacionesPaginadas')
+            ),
+            new OA\Response(
+                response: 403,
+                description: 'El usuario no es médico ni administrador.',
+                content: new OA\JsonContent(properties: [new OA\Property(property: 'message', type: 'string', example: 'No autorizado')])
+            ),
+            new OA\Response(
+                response: 422,
+                description: 'Filtros inválidos.',
+                content: new OA\JsonContent(ref: '#/components/schemas/ErrorValidacion')
+            ),
+            new OA\Response(
+                response: 401,
+                description: 'No autenticado.',
+                content: new OA\JsonContent(properties: [new OA\Property(property: 'message', type: 'string', example: 'Unauthenticated.')])
+            ),
         ]
     )]
     /**
      * Historial global de notificaciones (Exclusivo Médicos / Admins).
      */
-    public function index(Request $request): JsonResponse
+    public function index(ListNotificationsRequest $request): JsonResponse
     {
         $user = $request->user();
         $isDoctor = $user->isDoctor();
@@ -115,6 +147,19 @@ class NotificationController extends Controller
                 $q->where('doctor_id', $user->id);
             });
         }
+
+        $query->when($request->filled('estado'), fn ($q) => $q->where('estado_envio', $request->input('estado')))
+            ->when($request->filled('tipo'), fn ($q) => $q->where('tipo', $request->input('tipo')))
+            ->when($request->filled('desde'), fn ($q) => $q->whereDate('created_at', '>=', $request->input('desde')))
+            ->when($request->filled('hasta'), fn ($q) => $q->whereDate('created_at', '<=', $request->input('hasta')))
+            ->when($request->filled('paciente'), function ($q) use ($request) {
+                $texto = '%' . $request->input('paciente') . '%';
+                $q->whereHas('patient', function ($p) use ($texto) {
+                    $p->where('first_name', 'like', $texto)
+                        ->orWhere('last_name', 'like', $texto)
+                        ->orWhere('email', 'like', $texto);
+                });
+            });
 
         return response()->json($query->paginate(15), 200);
     }
@@ -136,8 +181,16 @@ class NotificationController extends Controller
                     ]
                 )
             ),
-            new OA\Response(response: 403, description: 'No autorizado.'),
-            new OA\Response(response: 401, description: 'No autenticado.'),
+            new OA\Response(
+                response: 403,
+                description: 'El usuario no es médico ni administrador.',
+                content: new OA\JsonContent(properties: [new OA\Property(property: 'message', type: 'string', example: 'No autorizado')])
+            ),
+            new OA\Response(
+                response: 401,
+                description: 'No autenticado.',
+                content: new OA\JsonContent(properties: [new OA\Property(property: 'message', type: 'string', example: 'Unauthenticated.')])
+            ),
         ]
     )]
     /**
@@ -172,9 +225,21 @@ class NotificationController extends Controller
             new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'))
         ],
         responses: [
-            new OA\Response(response: 200, description: 'Notificación eliminada.'),
-            new OA\Response(response: 404, description: 'Notificación no encontrada.'),
-            new OA\Response(response: 401, description: 'No autenticado.'),
+            new OA\Response(
+                response: 200,
+                description: 'Notificación eliminada.',
+                content: new OA\JsonContent(properties: [new OA\Property(property: 'message', type: 'string', example: 'Notificación eliminada')])
+            ),
+            new OA\Response(
+                response: 404,
+                description: 'Notificación no encontrada.',
+                content: new OA\JsonContent(properties: [new OA\Property(property: 'message', type: 'string', example: 'Notificación no encontrada')])
+            ),
+            new OA\Response(
+                response: 401,
+                description: 'No autenticado.',
+                content: new OA\JsonContent(properties: [new OA\Property(property: 'message', type: 'string', example: 'Unauthenticated.')])
+            ),
         ]
     )]
     /**
