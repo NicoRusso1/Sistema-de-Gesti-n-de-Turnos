@@ -43,6 +43,13 @@
                 <td><strong>Fecha de Emisión:</strong> {{ $fechaEmision->format('d/m/Y H:i') }} hs</td>
             </tr>
             <tr>
+                <td><strong>Horario:</strong> {{ $appointment->scheduled_at->format('H:i') }} a {{ $appointment->scheduled_at->copy()->addMinutes(\App\Models\Appointment::DURATION_MINUTES)->format('H:i') }} hs</td>
+                <td><strong>Especialidad:</strong> {{ $appointment->specialty?->name ?? 'Medicina General' }}</td>
+            </tr>
+            <tr>
+                <td colspan="2"><strong>Médico:</strong> Dr/a. {{ $appointment->doctor?->first_name }} {{ $appointment->doctor?->last_name }}</td>
+            </tr>
+            <tr>
                 <td><strong>Obra Social:</strong> {{ $appointment->healthInsurance?->name ?? 'Particular' }}</td>
                 <td><strong>N° de Afiliado:</strong> {{ $appointment->affiliate_number ?? 'N/A' }}</td>
             </tr>

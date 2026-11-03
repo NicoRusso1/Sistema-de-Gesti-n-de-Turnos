@@ -68,9 +68,10 @@ Route::middleware('auth:sanctum')->group(function () {
         
         // CERTIFICADO DIGITAL
         Route::post('/appointments/{id}/certificate', [AppointmentController::class, 'issueCertificate']);
-        Route::get('/appointments/{id}/certificate/download', [AppointmentController::class, 'downloadCertificate']);
     });
 
+    Route::get('/appointments/{id}/certificate/download', [AppointmentController::class, 'downloadCertificate']);
+    Route::get('/appointments/{id}/invoice/download', [AppointmentController::class, 'downloadInvoice']);
     Route::get('/pagos', [PaymentController::class, 'index']);
     Route::get('/me/notifications', [NotificationController::class, 'myNotifications']);
     Route::patch('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);
