@@ -17,3 +17,9 @@ html, body {
 button, input, select, textarea {
   font-family: inherit;
 }
+
+@media (max-width: 900px) {
+  body:has(.app-layout:not(.sidebar-closed) .sidebar-backdrop) {
+    overflow: hidden;
+  }
+}

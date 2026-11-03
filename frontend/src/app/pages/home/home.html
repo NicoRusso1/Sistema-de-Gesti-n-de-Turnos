@@ -178,7 +178,9 @@
         <section aria-labelledby="notif-title">
           <div class="sec-head">
             <h2 id="notif-title" class="sec-title">Avisos y recordatorios</h2>
-            <a routerLink="/notifications" class="see-all">Ver todas</a>
+            @if (canAccessNotifications()) {
+              <a routerLink="/notifications" class="see-all">Ver todas</a>
+            }
           </div>
 
           <div aria-live="polite">

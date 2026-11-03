@@ -1,197 +1,234 @@
-<div class="booking-container">
-  <div class="booking-header">
-    <h2>📅 Reserva de Turnos Médicos</h2>
-    <p>Selecciona especialidad, médico, fecha y confirma tu turno con tu obra social.</p>
-  </div>
+<div class="admin booking">
+  <header class="page-header">
+    <div>
+      <h1>Reservar turno</h1>
+      <p>Elegí especialidad, profesional, fecha y horario, y confirmá tu cobertura.</p>
+    </div>
+  </header>
 
-  <!-- Mensaje de éxito al completar la reserva -->
   @if (successAppointment(); as app) {
-    <div class="success-card">
-      <div class="success-icon">✓</div>
-      <h3>¡Turno Reservado con Éxito!</h3>
-      <p>Tu turno ha sido agendado en estado <strong>{{ app.status | uppercase }}</strong>.</p>
-      
-      <div class="summary-details">
-        <div><strong>Fecha y Hora:</strong> {{ app.scheduled_at | date:'dd/MM/yyyy HH:mm':'UTC' }} hs</div>
-        <div><strong>Médico:</strong> Dr/a. {{ app.doctor?.first_name }} {{ app.doctor?.last_name }}</div>
-        <div><strong>Especialidad:</strong> {{ app.specialty?.name || 'General' }}</div>
-        <div><strong>Obra Social:</strong> {{ app.healthInsurance?.name || 'Particular' }}</div>
-        @if (app.affiliate_number) {
-          <div><strong>Afiliado N°:</strong> {{ app.affiliate_number }}</div>
-        }
-        <hr />
-        <div class="price-row"><span>Monto Base:</span> <span>${{ app.monto_base | number:'1.2-2' }}</span></div>
-        <div class="price-row discount"><span>Descuento:</span> <span>-${{ app.monto_descuento | number:'1.2-2' }}</span></div>
-        <div class="price-row total"><span>Total Abonado/A pagar:</span> <span>${{ app.monto_final | number:'1.2-2' }}</span></div>
+    <div class="booking-done">
+      <div class="stub">
+        <div class="stub-head">
+          <p class="stub-title">Turno reservado</p>
+          <p class="done-lead">Tu turno quedó en estado <strong>{{ app.status | uppercase }}</strong>.</p>
+        </div>
+        <div class="stub-body">
+          <dl class="kv">
+            <div>
+              <dt>Fecha y hora</dt>
+              <dd>{{ app.scheduled_at | date:'dd/MM/yyyy HH:mm':'UTC' }} hs</dd>
+            </div>
+            <div>
+              <dt>Profesional</dt>
+              <dd>Dr/a. {{ app.doctor?.first_name }} {{ app.doctor?.last_name }}</dd>
+            </div>
+            <div>
+              <dt>Especialidad</dt>
+              <dd>{{ app.specialty?.name || 'General' }}</dd>
+            </div>
+            <div>
+              <dt>Cobertura</dt>
+              <dd>{{ app.healthInsurance?.name || 'Particular' }}</dd>
+            </div>
+            @if (app.affiliate_number) {
+              <div class="kv-full">
+                <dt>N° de afiliado</dt>
+                <dd>{{ app.affiliate_number }}</dd>
+              </div>
+            }
+          </dl>
+          <dl class="price-lines">
+            <div><dt>Monto base</dt><dd>${{ app.monto_base | number:'1.2-2' }}</dd></div>
+            <div><dt>Descuento</dt><dd>-${{ app.monto_descuento | number:'1.2-2' }}</dd></div>
+          </dl>
+          <div class="stub-total"><span>Total</span><strong>${{ app.monto_final | number:'1.2-2' }}</strong></div>
+        </div>
       </div>
 
-      @if (errorMessage()) {
-        <div class="alert-danger">{{ errorMessage() }}</div>
-      }
+      <div aria-live="polite">
+        @if (errorMessage()) {
+          <p class="notice-error" role="alert">{{ errorMessage() }}</p>
+        }
+      </div>
 
       @if (app.status === 'reservado') {
-        <p>Para confirmar tu turno tenés que abonarlo.</p>
-        <div class="actions">
-          <button type="button" class="btn btn-confirm" [disabled]="paying()" (click)="payNow(app)">
-            @if (paying()) { Iniciando pago... } @else { Pagar ahora }
-          </button>
-        </div>
+        <p class="done-note">Para confirmar tu turno tenés que abonarlo.</p>
       }
 
-      <div class="actions">
-        <button type="button" class="btn btn-primary" (click)="resetBooking()">Reservar otro turno</button>
-        <a routerLink="/home" class="btn btn-secondary">Volver al inicio</a>
+      <div class="form-actions">
+        @if (app.status === 'reservado') {
+          <button type="button" class="btn btn-primary" [disabled]="paying()" (click)="payNow(app)">
+            @if (paying()) { Iniciando pago... } @else { Pagar ahora }
+          </button>
+        }
+        <button type="button" class="btn btn-secondary" (click)="resetBooking()">Reservar otro turno</button>
+        <a routerLink="/home" class="btn btn-ghost">Volver al inicio</a>
       </div>
     </div>
   } @else {
-    <!-- Formulario de selección y reserva -->
-    <form [formGroup]="form" (ngSubmit)="confirmBooking()" class="booking-grid">
-      
-      <!-- COLUMNA 1: Selección de Especialidad, Médico y Fecha -->
-      <div class="card form-step">
-        <h3>1. Datos de la Consulta</h3>
+    @let specialtyId = form.get('specialty_id')?.value;
+    @let doctorId = form.get('doctor_id')?.value;
+    @let dateValue = form.get('date')?.value;
+    @let insuranceId = form.get('health_insurance_id')?.value;
+    @let slot = selectedSlot();
+    @let step = !specialtyId ? 1 : !doctorId ? 2 : (!dateValue || !slot) ? 3 : 4;
 
-        <!-- Especialidad -->
-        <div class="form-group">
-          <label for="specialty">Especialidad médica *</label>
-          <select id="specialty" formControlName="specialty_id" class="form-control">
-            <option [ngValue]="null">-- Seleccionar especialidad --</option>
-            @for (s of specialties(); track s.id) {
-              <option [ngValue]="s.id">{{ s.name }}</option>
+    <ol class="steps" aria-label="Pasos de la reserva">
+      @for (label of ['Especialidad', 'Profesional', 'Fecha y horario', 'Confirmación']; track label; let i = $index) {
+        <li [class.is-active]="step === i + 1" [class.is-done]="step > i + 1" [attr.aria-current]="step === i + 1 ? 'step' : null">
+          <span class="step-dot">
+            @if (step > i + 1) {
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+            } @else {
+              {{ i + 1 }}
             }
-          </select>
-        </div>
+          </span>
+          <span class="step-label">{{ label }}</span>
+        </li>
+      }
+    </ol>
 
-        <!-- Médico -->
-        <div class="form-group">
-          <label for="doctor">Médico profesional *</label>
-          <select id="doctor" formControlName="doctor_id" class="form-control">
-            <option [ngValue]="null">
-              @if (loadingDoctors()) { Cargando médicos... } @else { -- Seleccionar médico -- }
-            </option>
-            @for (d of doctors(); track d.id) {
-              <option [ngValue]="d.id">Dr/a. {{ d.first_name }} {{ d.last_name }}</option>
-            }
-          </select>
-          @if (!form.get('specialty_id')?.value) {
-            <small class="helper-text">Primero selecciona una especialidad.</small>
-          }
-        </div>
+    <form [formGroup]="form" (ngSubmit)="confirmBooking()" class="booking-grid" novalidate>
+      <div class="booking-main">
+        <section class="block" aria-labelledby="b1">
+          <h2 id="b1" class="block-title"><span class="block-num">1</span> Especialidad</h2>
+          <div class="field">
+            <label for="specialty">Especialidad médica</label>
+            <select id="specialty" formControlName="specialty_id" class="select">
+              <option [ngValue]="null">Seleccionar especialidad</option>
+              @for (s of specialties(); track s.id) {
+                <option [ngValue]="s.id">{{ s.name }}</option>
+              }
+            </select>
+          </div>
+        </section>
 
-        <!-- GT-37: Fecha con validación min y max -->
-        <div class="form-group">
-          <label for="date">Fecha de atención *</label>
-          <input 
-            type="date" 
-            id="date" 
-            formControlName="date" 
-            class="form-control"
-            [min]="minDate" 
-            [max]="maxDate" 
-          />
-          @if (form.get('date')?.errors?.['pastDate']) {
-            <span class="error-text">No se permiten fechas pasadas.</span>
-          }
-          @if (form.get('date')?.errors?.['futureDateExceeded']) {
-            <span class="error-text">No se permiten fechas superiores a 2 años.</span>
-          }
-        </div>
-      </div>
-
-      <!-- COLUMNA 2: Grilla de Franjas Horarias (GT-34 / GT-35 / GT-36) -->
-      <div class="card form-step">
-        <h3>2. Horarios Disponibles (15 min)</h3>
-
-        @if (loadingSlots()) {
-          <div class="loading-state">Buscando franjas disponibles...</div>
-        } @else if (!form.get('doctor_id')?.value || !form.get('date')?.value) {
-          <div class="placeholder-state">Selecciona un médico y una fecha para ver los horarios.</div>
-        } @else if (slots().length === 0) {
-          <div class="empty-state">No hay turnos disponibles para este profesional en la fecha seleccionada.</div>
-        } @else {
-          <div class="slots-grid">
-            @for (slot of slots(); track slot.start_time) {
-              <button 
-                type="button" 
-                class="slot-btn" 
-                [class.selected]="selectedSlot()?.start_time === slot.start_time"
-                (click)="selectSlot(slot)"
-              >
-                {{ slot.start_time }}
-              </button>
+        <section class="block" aria-labelledby="b2">
+          <h2 id="b2" class="block-title"><span class="block-num">2</span> Profesional</h2>
+          <div class="field">
+            <label for="doctor">Médico profesional</label>
+            <select id="doctor" formControlName="doctor_id" class="select">
+              <option [ngValue]="null">
+                @if (loadingDoctors()) { Cargando profesionales... } @else { Seleccionar profesional }
+              </option>
+              @for (d of doctors(); track d.id) {
+                <option [ngValue]="d.id">Dr/a. {{ d.first_name }} {{ d.last_name }}</option>
+              }
+            </select>
+            @if (!specialtyId) {
+              <span class="field-hint">Primero seleccioná una especialidad.</span>
             }
           </div>
-          @if (selectedSlot()) {
-            <div class="selected-slot-banner">
-              Horario seleccionado: <strong>{{ selectedSlot()?.start_time }} a {{ selectedSlot()?.end_time }} hs</strong>
+        </section>
+
+        <section class="block" aria-labelledby="b3">
+          <h2 id="b3" class="block-title"><span class="block-num">3</span> Fecha y horario</h2>
+          <div class="field date-field">
+            <label for="date">Fecha de atención</label>
+            <input type="date" id="date" formControlName="date" class="input" [min]="minDate" [max]="maxDate" [attr.aria-invalid]="form.get('date')?.invalid && form.get('date')?.touched">
+            @if (form.get('date')?.errors?.['pastDate']) {
+              <span class="field-error">No se permiten fechas pasadas.</span>
+            }
+            @if (form.get('date')?.errors?.['futureDateExceeded']) {
+              <span class="field-error">No se permiten fechas superiores a 2 años.</span>
+            }
+          </div>
+
+          <div class="slots" aria-live="polite">
+            @if (loadingSlots()) {
+              <div class="chip-grid" aria-busy="true" aria-label="Buscando horarios">
+                @for (n of [1,2,3,4,5,6,7,8]; track n) { <span class="skeleton chip-skel"></span> }
+              </div>
+            } @else if (!doctorId || !dateValue) {
+              <p class="slots-note">Seleccioná un profesional y una fecha para ver los horarios.</p>
+            } @else if (slots().length === 0) {
+              <p class="slots-note">No hay turnos disponibles para este profesional en la fecha seleccionada.</p>
+            } @else {
+              <div class="chip-grid" role="group" aria-label="Horarios disponibles">
+                @for (s of slots(); track s.start_time) {
+                  <button type="button" class="chip" [class.is-selected]="slot?.start_time === s.start_time" [attr.aria-pressed]="slot?.start_time === s.start_time" (click)="selectSlot(s)">{{ s.start_time }}</button>
+                }
+              </div>
+            }
+          </div>
+        </section>
+
+        <section class="block" aria-labelledby="b4">
+          <h2 id="b4" class="block-title"><span class="block-num">4</span> Cobertura y confirmación</h2>
+          <div class="form-grid">
+            <div class="field">
+              <label for="insurance">Obra social / cobertura</label>
+              <select id="insurance" formControlName="health_insurance_id" class="select">
+                <option [ngValue]="null">Particular (sin obra social)</option>
+                @for (hi of healthInsurances(); track hi.id) {
+                  <option [ngValue]="hi.id">{{ hi.name }} ({{ hi.discount_percentage }}% desc.)</option>
+                }
+              </select>
             </div>
-          }
-        }
-      </div>
-
-      <!-- COLUMNA 3: Integración de Obra Social y Detalle de Costos (GT-38 / GT-40) -->
-      <div class="card form-step">
-        <h3>3. Cobertura y Detalle de Costos</h3>
-
-        <!-- Obra Social -->
-        <div class="form-group">
-          <label for="insurance">Obra Social / Cobertura</label>
-          <select id="insurance" formControlName="health_insurance_id" class="form-control">
-            <option [ngValue]="null">Sin Obra Social / Particular</option>
-            @for (hi of healthInsurances(); track hi.id) {
-              <option [ngValue]="hi.id">{{ hi.name }} ({{ hi.discount_percentage }}% desc.)</option>
-            }
-          </select>
-        </div>
-
-        <!-- Número de Afiliado (se habilita si hay obra social) -->
-        @if (form.get('health_insurance_id')?.value) {
-          <div class="form-group">
-            <label for="affiliate">Número de carnet de afiliado *</label>
-            <input 
-              type="text" 
-              id="affiliate" 
-              formControlName="affiliate_number" 
-              placeholder="Ej: OSDE-12345678" 
-              class="form-control" 
-            />
-            @if (form.get('affiliate_number')?.invalid && form.get('affiliate_number')?.touched) {
-              <span class="error-text">El número de afiliado es obligatorio para esta obra social.</span>
+            @if (insuranceId) {
+              <div class="field">
+                <label for="affiliate">Número de afiliado</label>
+                <input type="text" id="affiliate" formControlName="affiliate_number" placeholder="Ej: OSDE-12345678" class="input" [attr.aria-invalid]="form.get('affiliate_number')?.invalid && form.get('affiliate_number')?.touched">
+                @if (form.get('affiliate_number')?.invalid && form.get('affiliate_number')?.touched) {
+                  <span class="field-error">El número de afiliado es obligatorio para esta obra social.</span>
+                }
+              </div>
             }
           </div>
-        }
-
-        <!-- Detalle interactivo de Costos -->
-        <div class="pricing-card">
-          <h4>Resumen de Costos</h4>
-          <div class="pricing-line">
-            <span>Monto Base Particular:</span>
-            <span>${{ pricing().montoBase | number:'1.2-2' }}</span>
-          </div>
-          <div class="pricing-line discount-line">
-            <span>Descuento ({{ pricing().discountPercent }}%):</span>
-            <span>-${{ pricing().montoDescuento | number:'1.2-2' }}</span>
-          </div>
-          <hr />
-          <div class="pricing-line total-line">
-            <span>Monto Final:</span>
-            <span>${{ pricing().montoFinal | number:'1.2-2' }}</span>
-          </div>
-        </div>
-
-        @if (errorMessage()) {
-          <div class="alert-danger">{{ errorMessage() }}</div>
-        }
-
-        <button 
-          type="submit" 
-          class="btn btn-confirm" 
-          [disabled]="form.invalid || !selectedSlot() || submitting()"
-        >
-          @if (submitting()) { Confirmando... } @else { Confirmar Reserva de Turno }
-        </button>
+        </section>
       </div>
 
+      <aside class="summary" aria-label="Resumen del turno">
+        <div class="stub">
+          <div class="stub-head">
+            <p class="stub-title">Resumen del turno</p>
+          </div>
+          <div class="stub-body">
+            @let doc = doctors().find(d => d.id === doctorId);
+            @let spec = specialties().find(s => s.id === specialtyId);
+            <dl class="kv">
+              <div class="kv-full">
+                <dt>Profesional</dt>
+                <dd>@if (doc) { Dr/a. {{ doc.first_name }} {{ doc.last_name }} } @else { <span class="pending">Sin elegir</span> }</dd>
+              </div>
+              <div class="kv-full">
+                <dt>Especialidad</dt>
+                <dd>@if (spec) { {{ spec.name }} } @else { <span class="pending">Sin elegir</span> }</dd>
+              </div>
+              <div>
+                <dt>Fecha</dt>
+                <dd>@if (dateValue && !form.get('date')?.invalid) { {{ dateValue | date:'dd/MM/yyyy' }} } @else { <span class="pending">Sin elegir</span> }</dd>
+              </div>
+              <div>
+                <dt>Hora</dt>
+                <dd>@if (slot) { {{ slot.start_time }} hs } @else { <span class="pending">Sin elegir</span> }</dd>
+              </div>
+              <div class="kv-full">
+                <dt>Cobertura</dt>
+                <dd>{{ selectedInsurance()?.name || 'Particular' }}</dd>
+              </div>
+            </dl>
+            <dl class="price-lines">
+              <div><dt>Monto base</dt><dd>${{ pricing().montoBase | number:'1.2-2' }}</dd></div>
+              <div><dt>Descuento ({{ pricing().discountPercent }}%)</dt><dd>-${{ pricing().montoDescuento | number:'1.2-2' }}</dd></div>
+            </dl>
+            <div class="stub-total"><span>Total</span><strong>${{ pricing().montoFinal | number:'1.2-2' }}</strong></div>
+
+            <div aria-live="polite">
+              @if (errorMessage()) {
+                <p class="notice-error summary-notice" role="alert">{{ errorMessage() }}</p>
+              }
+            </div>
+
+            <div class="stub-foot">
+              <button type="submit" class="btn btn-primary" [disabled]="form.invalid || !slot || submitting()">
+                @if (submitting()) { Confirmando... } @else { Confirmar turno }
+              </button>
+            </div>
+          </div>
+        </div>
+      </aside>
     </form>
   }
 </div>

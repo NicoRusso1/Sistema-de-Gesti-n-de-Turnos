@@ -1,7 +1,7 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, OnInit, computed, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
+import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { PaymentService } from '../../services/payment.service';
 import { AuthService } from '../../services/auth.service';
 import { Payment } from '../../models/payment';
@@ -32,6 +32,9 @@ export class PaymentsListComponent implements OnInit {
     fecha_desde: [''],
     fecha_hasta: ['']
   });
+
+  totalPaid = computed(() => this.sumByStatus('approved'));
+  totalPending = computed(() => this.sumByStatus('pending'));
 
   ngOnInit(): void {
     this.loadPayments();
@@ -79,12 +82,10 @@ export class PaymentsListComponent implements OnInit {
     }
   }
 
-  getStatusBadgeClass(statusName: string): string {
-    switch (statusName) {
-      case 'approved': return 'badge-success';
-      case 'rejected': return 'badge-danger';
-      default: return 'badge-warning';
-    }
+  private sumByStatus(status: string): number {
+    return this.payments()
+      .filter((p) => p.status.name === status)
+      .reduce((acc, p) => acc + Number(p.amount), 0);
   }
 
   getStatusLabel(statusName: string): string {

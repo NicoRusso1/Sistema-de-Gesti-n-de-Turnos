@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { roleLabel } from '../../shared/role-label';
 import { HealthInsurance } from '../../models/health-insurance';
 import { PatientHealthInsurance } from '../../models/patient-health-insurance';
 import { AuthService } from '../../services/auth.service';
@@ -22,6 +23,7 @@ export class ProfileComponent implements OnInit {
   private affiliationService = inject(PatientHealthInsuranceService);
 
   protected readonly user = this.authService.user;
+  protected readonly roleLabel = () => roleLabel(this.user());
   protected readonly catalog = signal<HealthInsurance[]>([]);
   protected readonly affiliation = signal<PatientHealthInsurance | null>(null);
   protected readonly loading = signal(true);

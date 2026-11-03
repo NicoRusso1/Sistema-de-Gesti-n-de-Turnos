@@ -45,6 +45,7 @@ export class Home implements OnInit {
   });
   protected readonly isPatient = computed(() => this.user()?.user_type?.name === 'patient');
   protected readonly isDoctor = computed(() => this.user()?.user_type?.name === 'doctor');
+  protected readonly canAccessNotifications = computed(() => this.isAdmin() || this.isDoctor());
   protected readonly hasOwnAppointments = computed(() => this.isPatient() || this.isDoctor());
   protected readonly quickLinks = computed(() => {
     const admin = this.isAdmin();
