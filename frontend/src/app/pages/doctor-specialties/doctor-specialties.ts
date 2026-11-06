@@ -6,12 +6,16 @@ import { User } from '../../models/user';
 import { DoctorSpecialtyService } from '../../services/doctor-specialty.service';
 import { SpecialtyService } from '../../services/specialty.service';
 import { UserService } from '../../services/user.service';
+import { tipoLabel } from '../../shared/role-label';
+
 @Component({
     selector: 'app-doctor-specialties',
     imports: [RouterLink],
     templateUrl: './doctor-specialties.html',
 })
 export class DoctorSpecialties implements OnInit {
+  tipo = tipoLabel;
+
     private userService = inject(UserService);
     private specialtyService = inject(SpecialtyService);
     private doctorSpecialtyService = inject(DoctorSpecialtyService);

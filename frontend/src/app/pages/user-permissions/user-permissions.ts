@@ -5,12 +5,16 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { User } from '../../models/user';
 import { UserService } from '../../services/user.service';
 
+import { tipoLabel } from '../../shared/role-label';
+
 @Component({
   selector: 'app-user-permissions',
   imports: [ReactiveFormsModule, RouterLink],
   templateUrl: './user-permissions.html',
 })
 export class UserPermissions implements OnInit {
+  tipo = tipoLabel;
+
   private fb = inject(FormBuilder);
   private userService = inject(UserService);
   private route = inject(ActivatedRoute);

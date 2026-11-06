@@ -47,7 +47,7 @@
       <table class="table">
         <thead>
           <tr>
-            <th>Turno</th>
+            <th class="col-secundaria">Turno</th>
             <th>Consulta</th>
             <th class="col-secundaria">Paciente</th>
             <th class="th-num">Monto</th>
@@ -60,7 +60,7 @@
         <tbody>
           @for (p of payments(); track p.id) {
             <tr>
-              <td data-label="Turno">{{ p.appointment_id ? '#' + p.appointment_id : '-' }}</td>
+              <td data-label="Turno" class="col-secundaria">{{ p.appointment_id ? '#' + p.appointment_id : '-' }}</td>
               <td data-label="Consulta">
                 <span class="cell-main">{{ p.appointment?.specialty?.name ?? 'Consulta' }}</span>
                 <div class="cell-sub">Dr/a. {{ p.appointment?.doctor?.last_name }}</div>

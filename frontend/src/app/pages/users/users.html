@@ -40,8 +40,8 @@
       <thead>
         <tr>
           <th>Nombre</th>
-          <th>DNI</th>
-          <th>Email</th>
+          <th class="col-secundaria">DNI</th>
+          <th class="col-secundaria">Email</th>
           <th>Rol / Tipo</th>
           <th>Estado</th>
           <th class="col-actions">Acciones</th>
@@ -51,18 +51,10 @@
         @for (user of users; track user.id) {
           <tr>
             <td data-label="Nombre" class="cell-main">{{ user.first_name }} {{ user.last_name }}</td>
-            <td data-label="DNI">{{ user.personal_data?.national_id || 'N/A' }}</td>
-            <td data-label="Email">{{ user.email }}</td>
+            <td data-label="DNI" class="col-secundaria">{{ user.personal_data?.national_id || 'N/A' }}</td>
+            <td data-label="Email" class="col-secundaria">{{ user.email }}</td>
             <td data-label="Rol / Tipo">
-              <span>
-                <span class="badge badge-info">{{ user.role.name }}</span>
-                @if (user.user_type) {
-                  <span class="badge badge-info">{{ user.user_type.name }}</span>
-                }
-                @if (user.is_owner) {
-                  <span class="badge badge-warn">Propietario</span>
-                }
-              </span>
+              <span class="badge badge-info">{{ etiqueta(user) }}</span>
             </td>
             <td data-label="Estado">
               @if (user.status === 1) {

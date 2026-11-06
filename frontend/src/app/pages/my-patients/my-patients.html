@@ -38,8 +38,8 @@
         <thead>
           <tr>
             <th>Paciente</th>
-            <th>DNI</th>
-            <th>Email</th>
+            <th class="col-secundaria">DNI</th>
+            <th class="col-secundaria">Email</th>
             <th class="col-secundaria">Teléfono</th>
             <th>Obra social</th>
             <th class="col-secundaria">N° afiliado</th>
@@ -50,8 +50,8 @@
           @for (p of patients(); track p.id) {
             <tr>
               <td data-label="Paciente"><span class="person"><span class="avatar" aria-hidden="true">{{ p.first_name.charAt(0) }}{{ p.last_name.charAt(0) }}</span><span class="cell-main">{{ p.last_name }}, {{ p.first_name }}</span></span></td>
-              <td data-label="DNI">{{ p.personal_data?.national_id ?? '-' }}</td>
-              <td data-label="Email"><a class="link" [href]="'mailto:' + p.email">{{ p.email }}</a></td>
+              <td data-label="DNI" class="col-secundaria">{{ p.personal_data?.national_id ?? '-' }}</td>
+              <td data-label="Email" class="col-secundaria"><a class="link" [href]="'mailto:' + p.email">{{ p.email }}</a></td>
               <td data-label="Teléfono" class="col-secundaria">
                 @if (p.phone) {
                   <a class="link" [href]="'tel:' + p.phone">{{ p.phone }}</a>
