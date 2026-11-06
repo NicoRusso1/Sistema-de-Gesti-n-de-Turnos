@@ -1,0 +1,141 @@
+:host {
+  display: block;
+}
+
+.err {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 70vh;
+  padding: var(--sp-6) var(--sp-4);
+  text-align: center;
+}
+
+.err.bare {
+  min-height: 100vh;
+  background: var(--sigt-fondo);
+}
+
+.err-mark {
+  width: 56px;
+  height: 56px;
+  margin-bottom: var(--sp-4);
+}
+
+.err-code {
+  position: relative;
+  display: inline-block;
+  margin: 0;
+  font-size: 6rem;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: .02em;
+  color: var(--sigt-petroleo);
+}
+
+.err-pulse {
+  position: absolute;
+  top: 50%;
+  left: -22%;
+  width: 144%;
+  height: 80px;
+  margin-top: -40px;
+  overflow: visible;
+  pointer-events: none;
+  fill: none;
+  stroke: var(--sigt-coral);
+  stroke-width: 3;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.err-pulse path {
+  vector-effect: non-scaling-stroke;
+}
+
+.err-pulse-base {
+  opacity: .35;
+}
+
+.err-pulse-run {
+  stroke-dasharray: 140 860;
+  stroke-dashoffset: 1000;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .err-pulse-run {
+    animation: err-pulse-run 2.8s linear infinite;
+  }
+}
+
+@keyframes err-pulse-run {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.err-title {
+  margin: var(--sp-5) 0 var(--sp-2);
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: var(--sigt-texto);
+}
+
+.err-text {
+  max-width: 420px;
+  margin: 0;
+  color: var(--sigt-texto-suave);
+  line-height: 1.5;
+}
+
+.err-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--sp-3);
+  margin-top: var(--sp-5);
+}
+
+@media (max-width: 900px) {
+  .err {
+    min-height: 60vh;
+  }
+}
+
+@media (max-width: 600px) {
+  .err-code {
+    font-size: 4rem;
+  }
+
+  .err-pulse {
+    height: 56px;
+    margin-top: -28px;
+  }
+
+  .err-title {
+    font-size: 1.35rem;
+  }
+
+  .err-actions {
+    flex-direction: column;
+    width: 100%;
+    max-width: 320px;
+  }
+
+  .err-actions .btn-primary,
+  .err-actions .btn-ghost {
+    width: 100%;
+  }
+}
+
+@media (max-width: 380px) {
+  .err {
+    padding-inline: var(--sp-3);
+  }
+
+  .err-mark {
+    width: 48px;
+    height: 48px;
+  }
+}
