@@ -532,7 +532,7 @@ class AppointmentController extends Controller
     #[OA\Post(
         path: '/api/appointments/{id}/certificate',
         summary: 'Emitir certificado médico digital (Médicos y Administradores)',
-        description: 'Genera un PDF de certificado de atención, lo guarda en storage, actualiza el turno y envía el certificado por email al paciente.',
+        description: 'Genera un PDF de certificado de atención, lo guarda en storage, actualiza el turno y envía el certificado por email al paciente. Solo puede emitirlo el médico asignado al turno o un administrador.',
         tags: ['Certificados'],
         security: [['sanctum' => []]],
         parameters: [
@@ -558,7 +558,7 @@ class AppointmentController extends Controller
                     ]
                 )
             ),
-            new OA\Response(response: 403, description: 'Solo los médicos o administradores pueden emitir certificados.'),
+            new OA\Response(response: 403, description: 'Solo el médico asignado o un administrador pueden emitir el certificado.'),
             new OA\Response(response: 404, description: 'Turno no encontrado.'),
             new OA\Response(response: 401, description: 'No autenticado.'),
         ]
@@ -576,6 +576,10 @@ class AppointmentController extends Controller
         $appointment = Appointment::find($id);
         if (!$appointment) {
             return response()->json(['message' => 'Turno no encontrado'], 404);
+        }
+
+        if (!$user->hasAdminAccess() && (int) $appointment->doctor_id !== (int) $user->id) {
+            return response()->json(['message' => 'Solo el médico asignado al turno puede emitir el certificado'], 403);
         }
 
         $observaciones = $request->input('observaciones');
