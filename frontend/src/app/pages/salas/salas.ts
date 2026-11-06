@@ -3,6 +3,7 @@ import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { Sala } from '../../models/sala';
 import { SalaService } from '../../services/sala.service';
+import { DialogService } from '../../shared/dialog/dialog.service';
 
 @Component({
   selector: 'app-salas',
@@ -13,6 +14,7 @@ import { SalaService } from '../../services/sala.service';
 export class SalasComponent implements OnInit {
   private fb = inject(FormBuilder);
   private salaService = inject(SalaService);
+  private dialog = inject(DialogService);
 
   protected readonly salas = signal<Sala[]>([]);
   protected readonly errorMessage = signal('');
@@ -56,8 +58,8 @@ export class SalasComponent implements OnInit {
     });
   }
 
-  eliminar(sala: Sala): void {
-    if (!confirm(`¿Desea eliminar la sala ${sala.numero}?`)) return;
+  async eliminar(sala: Sala): Promise<void> {
+    if (!(await this.dialog.confirm({ title: `¿Desea eliminar la sala ${sala.numero}?`, confirmText: 'Eliminar', variant: 'danger' }))) return;
 
     this.salaService.deleteSala(sala.id).subscribe({
       next: () => {

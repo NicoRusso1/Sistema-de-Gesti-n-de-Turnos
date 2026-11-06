@@ -4,6 +4,7 @@ import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { Specialty } from '../../models/specialty';
 import { SpecialtyService } from '../../services/specialty.service';
+import { DialogService } from '../../shared/dialog/dialog.service';
 @Component({
     selector: 'app-specialties',
     imports: [ReactiveFormsModule, RouterLink],
@@ -12,6 +13,7 @@ import { SpecialtyService } from '../../services/specialty.service';
 export class Specialties implements OnInit {
     private fb = inject(FormBuilder);
     private specialtyService = inject(SpecialtyService);
+    private dialog = inject(DialogService);
     protected readonly specialties = signal<Specialty[]>([]);
     protected readonly errorMessage = signal('');
     protected readonly successMessage = signal('');
@@ -32,8 +34,8 @@ export class Specialties implements OnInit {
         this.filterForm.reset({ search: '' });
         this.load();
     }
-    protected remove(item: Specialty): void {
-        if (!confirm(`¿Eliminar la especialidad ${item.name}?`)) {
+    protected async remove(item: Specialty): Promise<void> {
+        if (!(await this.dialog.confirm({ title: `¿Eliminar la especialidad ${item.name}?`, confirmText: 'Eliminar', variant: 'danger' }))) {
             return;
         }
         this.successMessage.set('');

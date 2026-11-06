@@ -6,6 +6,7 @@ import { roleLabel } from '../../shared/role-label';
 import { HealthInsurance } from '../../models/health-insurance';
 import { PatientHealthInsurance } from '../../models/patient-health-insurance';
 import { AuthService } from '../../services/auth.service';
+import { DialogService } from '../../shared/dialog/dialog.service';
 import { HealthInsuranceService } from '../../services/health-insurance.service';
 import { PatientHealthInsuranceService } from '../../services/patient-health-insurance.service';
 
@@ -19,6 +20,7 @@ import { PatientHealthInsuranceService } from '../../services/patient-health-ins
 export class ProfileComponent implements OnInit {
   private fb = inject(FormBuilder);
   private authService = inject(AuthService);
+  private dialog = inject(DialogService);
   private healthInsuranceService = inject(HealthInsuranceService);
   private affiliationService = inject(PatientHealthInsuranceService);
 
@@ -107,8 +109,8 @@ export class ProfileComponent implements OnInit {
     });
   }
 
-  protected remove(): void {
-    if (!confirm('¿Querés eliminar tu obra social?')) {
+  protected async remove(): Promise<void> {
+    if (!(await this.dialog.confirm({ title: '¿Querés eliminar tu obra social?', confirmText: 'Eliminar', variant: 'danger' }))) {
       return;
     }
 

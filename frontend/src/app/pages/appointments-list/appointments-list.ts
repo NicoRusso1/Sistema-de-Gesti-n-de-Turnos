@@ -7,6 +7,7 @@ import { Appointment, AppointmentScope, AssignableSala } from '../../models/appo
 import { DoctorSlot } from '../../models/doctor-schedule';
 import { AppointmentService } from '../../services/appointment.service';
 import { AuthService } from '../../services/auth.service';
+import { DialogService } from '../../shared/dialog/dialog.service';
 import { DoctorScheduleService } from '../../services/doctor-schedule.service';
 
 @Component({
@@ -20,6 +21,7 @@ export class AppointmentsListComponent implements OnInit {
   private appointmentService = inject(AppointmentService);
   private scheduleService = inject(DoctorScheduleService);
   private authService = inject(AuthService);
+  private dialog = inject(DialogService);
   private fb = inject(FormBuilder);
 
   currentUser = this.authService.user;
@@ -275,20 +277,20 @@ export class AppointmentsListComponent implements OnInit {
         a.click();
         window.URL.revokeObjectURL(url);
       },
-      error: () => alert('Error al descargar el certificado.')
+      error: () => this.dialog.toast('Error al descargar el certificado.', 'error')
     });
   }
 
-  emitirCert(app: Appointment): void {
-    const obs = prompt('Ingrese observaciones o diagnóstico para el certificado:');
+  async emitirCert(app: Appointment): Promise<void> {
+    const obs = await this.dialog.prompt({ title: 'Ingrese observaciones o diagnóstico para el certificado:', confirmText: 'Emitir', multiline: true });
     if (obs === null) return;
 
     this.appointmentService.issueCertificate(app.id, obs).subscribe({
       next: (res) => {
-        alert('Certificado emitido y enviado por correo.');
+        this.dialog.toast('Certificado emitido y enviado por correo.', 'success');
         this.fetchAppointments();
       },
-      error: (err) => alert(err.error?.message || 'Error al emitir el certificado.')
+      error: (err) => this.dialog.toast(err.error?.message || 'Error al emitir el certificado.', 'error')
     });
   }
 }

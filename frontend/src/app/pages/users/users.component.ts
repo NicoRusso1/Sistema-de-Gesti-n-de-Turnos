@@ -1,6 +1,7 @@
 import { ChangeDetectorRef, Component, OnInit, inject } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { UserService } from '../../services/user.service';
+import { DialogService } from '../../shared/dialog/dialog.service';
 import { PaginatedUsers, User } from '../../models/user';
 import { RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
@@ -15,6 +16,7 @@ import { debounceTime } from 'rxjs';
 })
 export class UsersComponent implements OnInit {
   private userService = inject(UserService);
+  private dialog = inject(DialogService);
   private fb = inject(FormBuilder);
   private cdr = inject(ChangeDetectorRef);
 
@@ -83,42 +85,42 @@ export class UsersComponent implements OnInit {
     }
   }
 
-  deactivate(user: User): void {
-    if (!confirm(`¿Dar de baja a ${user.first_name} ${user.last_name}?`)) {
+  async deactivate(user: User): Promise<void> {
+    if (!(await this.dialog.confirm({ title: `¿Dar de baja a ${user.first_name} ${user.last_name}?`, confirmText: 'Dar de baja', variant: 'danger' }))) {
       return;
     }
 
     this.userService.deactivateUser(user.id).subscribe({
       next: () => this.loadUsers(this.pagination?.current_page ?? 1),
-      error: () => alert('No se pudo dar de baja al usuario'),
+      error: () => this.dialog.toast('No se pudo dar de baja al usuario', 'error'),
     });
   }
 
   activate(user: User): void {
     this.userService.activateUser(user.id).subscribe({
       next: () => this.loadUsers(this.pagination?.current_page ?? 1),
-      error: () => alert('No se pudo reactivar al usuario'),
+      error: () => this.dialog.toast('No se pudo reactivar al usuario', 'error'),
     });
   }
-  grantAdmin(user: User): void {
-    if (!confirm(`¿Conceder rol de Administrador a ${user.first_name} ${user.last_name}?`)) {
+  async grantAdmin(user: User): Promise<void> {
+    if (!(await this.dialog.confirm({ title: `¿Conceder rol de Administrador a ${user.first_name} ${user.last_name}?`, confirmText: 'Conceder' }))) {
       return;
     }
 
     this.userService.grantAdmin(user.id).subscribe({
       next: () => this.loadUsers(this.pagination?.current_page ?? 1),
-      error: (err) => alert(err.error?.message ?? 'No se pudo conceder el rol'),
+      error: (err) => this.dialog.toast(err.error?.message ?? 'No se pudo conceder el rol', 'error'),
     });
   }
 
-  revokeAdmin(user: User): void {
-    if (!confirm(`¿Revocar rol de Administrador a ${user.first_name} ${user.last_name}?`)) {
+  async revokeAdmin(user: User): Promise<void> {
+    if (!(await this.dialog.confirm({ title: `¿Revocar rol de Administrador a ${user.first_name} ${user.last_name}?`, confirmText: 'Revocar', variant: 'danger' }))) {
       return;
     }
 
     this.userService.revokeAdmin(user.id).subscribe({
       next: () => this.loadUsers(this.pagination?.current_page ?? 1),
-      error: (err) => alert(err.error?.message ?? 'No se pudo revocar el rol'),
+      error: (err) => this.dialog.toast(err.error?.message ?? 'No se pudo revocar el rol', 'error'),
     });
   }
 

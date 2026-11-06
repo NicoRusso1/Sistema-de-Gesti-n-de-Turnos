@@ -6,6 +6,7 @@ import { DoctorSchedule, DoctorSlot } from '../../models/doctor-schedule';
 import { User } from '../../models/user';
 import { DoctorScheduleService } from '../../services/doctor-schedule.service';
 import { UserService } from '../../services/user.service';
+import { DialogService } from '../../shared/dialog/dialog.service';
 
 @Component({
   selector: 'app-doctor-schedule',
@@ -16,6 +17,7 @@ export class DoctorScheduleEditor implements OnInit {
   private fb = inject(FormBuilder);
   private route = inject(ActivatedRoute);
   private userService = inject(UserService);
+  private dialog = inject(DialogService);
   private scheduleService = inject(DoctorScheduleService);
 
   private readonly doctorId = Number(this.route.snapshot.paramMap.get('id'));
@@ -126,8 +128,8 @@ export class DoctorScheduleEditor implements OnInit {
     this.form.reset({ day_of_week: 1, start_time: '09:00', end_time: '13:00' });
   }
 
-  protected remove(schedule: DoctorSchedule): void {
-    if (!confirm(`¿Eliminar la franja ${this.time(schedule.start_time)} - ${this.time(schedule.end_time)}?`)) {
+  protected async remove(schedule: DoctorSchedule): Promise<void> {
+    if (!(await this.dialog.confirm({ title: `¿Eliminar la franja ${this.time(schedule.start_time)} - ${this.time(schedule.end_time)}?`, confirmText: 'Eliminar', variant: 'danger' }))) {
       return;
     }
 
