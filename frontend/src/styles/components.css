@@ -452,12 +452,12 @@
 
 .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 
-.summary { display: flex; flex-wrap: wrap; margin: 0 0 var(--sp-5); padding: var(--sp-3) 0; border-top: 1px solid var(--sigt-borde); border-bottom: 1px solid var(--sigt-borde); }
-.summary > div { flex: 1 1 0; min-width: 160px; padding: 0 var(--sp-5); }
-.summary > div:first-child { padding-left: 0; }
-.summary > div + div { border-left: 1px solid var(--sigt-borde); }
-.summary dt { margin-bottom: 2px; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--sigt-texto-suave); }
-.summary dd { margin: 0; font-size: 1.3rem; font-weight: 600; color: var(--sigt-petroleo); }
+.stats-strip { display: flex; flex-wrap: wrap; margin: 0 0 var(--sp-5); padding: var(--sp-3) 0; border-top: 1px solid var(--sigt-borde); border-bottom: 1px solid var(--sigt-borde); }
+.stats-strip > div { flex: 1 1 0; min-width: 160px; padding: 0 var(--sp-5); }
+.stats-strip > div:first-child { padding-left: 0; }
+.stats-strip > div + div { border-left: 1px solid var(--sigt-borde); }
+.stats-strip dt { margin-bottom: 2px; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--sigt-texto-suave); }
+.stats-strip dd { margin: 0; font-size: 1.3rem; font-weight: 600; color: var(--sigt-petroleo); }
 
 .admin .table .cell-num { text-align: right; font-variant-numeric: tabular-nums; }
 .admin .table th.th-num { text-align: right; }
@@ -466,9 +466,9 @@
 .person { display: flex; align-items: center; gap: var(--sp-3); }
 
 @media (max-width: 600px) {
-  .summary { flex-direction: column; }
-  .summary > div { flex: none; padding: var(--sp-2) 0; }
-  .summary > div + div { border-left: 0; border-top: 1px solid var(--sigt-borde); }
+  .stats-strip { flex-direction: column; }
+  .stats-strip > div { flex: none; padding: var(--sp-2) 0; }
+  .stats-strip > div + div { border-left: 0; border-top: 1px solid var(--sigt-borde); }
   .admin .table td.cell-num { text-align: right; }
 }
 
