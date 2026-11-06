@@ -7,7 +7,7 @@
   </header>
 
   @if (!loading() && payments().length > 0) {
-    <dl class="summary">
+    <dl class="stats-strip">
       <div><dt>Abonado en esta página</dt><dd>${{ totalPaid() | number:'1.2-2' }}</dd></div>
       <div><dt>Pendiente en esta página</dt><dd>${{ totalPending() | number:'1.2-2' }}</dd></div>
       <div><dt>Cantidad de pagos</dt><dd>{{ totalRecords() }}</dd></div>
