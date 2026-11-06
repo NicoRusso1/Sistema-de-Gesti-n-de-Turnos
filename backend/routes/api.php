@@ -65,10 +65,9 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/users/{id}/restore', [UserController::class, 'restore']);
         Route::get('/users/{id}/permissions', [UserController::class, 'permissions']);
         Route::put('/users/{id}/permissions', [UserController::class, 'updatePermissions']);
-        
-        // CERTIFICADO DIGITAL
-        Route::post('/appointments/{id}/certificate', [AppointmentController::class, 'issueCertificate']);
     });
+
+    Route::post('/appointments/{id}/certificate', [AppointmentController::class, 'issueCertificate']);
 
     Route::get('/appointments/{id}/certificate/download', [AppointmentController::class, 'downloadCertificate']);
     Route::get('/appointments/{id}/invoice/download', [AppointmentController::class, 'downloadInvoice']);

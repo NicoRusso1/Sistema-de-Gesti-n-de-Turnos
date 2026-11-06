@@ -7,6 +7,7 @@ import { RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { debounceTime } from 'rxjs';
+import { rolLabel, tipoLabel } from '../../shared/role-label';
 
 @Component({
   selector: 'app-users',
@@ -29,6 +30,13 @@ export class UsersComponent implements OnInit {
   get canManageAdmins(): boolean {
     const me = this.auth.user();
     return this.isSuperAdmin || (me?.role.name === 'Administrator' && !!me?.is_owner);
+  }
+
+  etiqueta(user: User): string {
+    if (user.role.name === 'OperationalUser') {
+      return user.user_type ? tipoLabel(user.user_type.name) : rolLabel(user.role.name);
+    }
+    return rolLabel(user.role.name, user.is_owner);
   }
 
   canRevokeAdmin(user: User): boolean {

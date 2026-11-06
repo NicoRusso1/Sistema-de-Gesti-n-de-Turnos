@@ -104,7 +104,7 @@
                 </div>
               }
             </dl>
-            @if (canManage(app) || canAssignSala(app)) {
+            @if (canManage(app) || canAssignSala(app) || canDownloadCert(app) || canIssueCert(app)) {
               <div class="appt-actions">
                 @if (canAssignSala(app)) {
                   <button type="button" class="btn btn-secondary btn-sm" (click)="openSalaModal(app)">{{ app.sala ? 'Cambiar sala' : 'Asignar sala' }}</button>
@@ -112,12 +112,12 @@
                 @if (canManage(app)) {
                   <button type="button" class="btn btn-secondary btn-sm" (click)="openRescheduleModal(app)">Reprogramar</button>
                   <button type="button" class="btn btn-danger btn-sm" (click)="openCancelModal(app)">Cancelar</button>
-                  @if (app.certificado_url) {
-                    <button type="button" class="btn btn-primary btn-sm" (click)="downloadCert(app)">Descargar certificado</button>
-                  }
-                  @if (!app.certificado_url && (isDoctor() || isAdmin()) && app.status !== 'cancelado') {
-                    <button type="button" class="btn btn-secondary btn-sm" (click)="emitirCert(app)">Emitir certificado</button>
-                  }
+                }
+                @if (canDownloadCert(app)) {
+                  <button type="button" class="btn btn-primary btn-sm" (click)="downloadCert(app)">Descargar certificado</button>
+                }
+                @if (canIssueCert(app)) {
+                  <button type="button" class="btn btn-secondary btn-sm" (click)="emitirCert(app)">Emitir certificado</button>
                 }
               </div>
             }

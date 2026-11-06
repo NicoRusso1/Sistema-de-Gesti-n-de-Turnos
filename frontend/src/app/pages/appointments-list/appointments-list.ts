@@ -137,6 +137,21 @@ export class AppointmentsListComponent implements OnInit {
     return (this.isAdmin() || isSecretary) && app.status !== 'cancelado';
   }
 
+  esMedicoDelTurno(app: Appointment): boolean {
+    const user = this.currentUser();
+    return !!user && this.isDoctor() && user.id === app.doctor_id;
+  }
+
+  canIssueCert(app: Appointment): boolean {
+    return !app.certificado_url && app.status !== 'cancelado' && (this.isAdmin() || this.esMedicoDelTurno(app));
+  }
+
+  canDownloadCert(app: Appointment): boolean {
+    const user = this.currentUser();
+    if (!user || !app.certificado_url || app.status === 'cancelado') return false;
+    return this.isAdmin() || user.id === app.patient_id || this.esMedicoDelTurno(app);
+  }
+
   canManage(app: Appointment): boolean {
     const user = this.currentUser();
     if (!user) return false;

@@ -621,7 +621,7 @@
                     "Certificados"
                 ],
                 "summary": "Emitir certificado médico digital (Médicos y Administradores)",
-                "description": "Genera un PDF de certificado de atención, lo guarda en storage, actualiza el turno y envía el certificado por email al paciente.",
+                "description": "Genera un PDF de certificado de atención, lo guarda en storage, actualiza el turno y envía el certificado por email al paciente. Solo puede emitirlo el médico asignado al turno o un administrador.",
                 "operationId": "d9ac3cec1eb42d3ece08bfe691fa7350",
                 "parameters": [
                     {
@@ -677,7 +677,7 @@
                         }
                     },
                     "403": {
-                        "description": "Solo los médicos o administradores pueden emitir certificados."
+                        "description": "Solo el médico asignado o un administrador pueden emitir el certificado."
                     },
                     "404": {
                         "description": "Turno no encontrado."
