@@ -3,6 +3,7 @@ import { FormBuilder, ReactiveFormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { HealthInsurance } from '../../models/health-insurance';
 import { HealthInsuranceService } from '../../services/health-insurance.service';
+import { DialogService } from '../../shared/dialog/dialog.service';
 
 @Component({
   selector: 'app-health-insurances',
@@ -12,6 +13,7 @@ import { HealthInsuranceService } from '../../services/health-insurance.service'
 export class HealthInsurances implements OnInit {
   private fb = inject(FormBuilder);
   private healthInsuranceService = inject(HealthInsuranceService);
+  private dialog = inject(DialogService);
 
   protected readonly healthInsurances = signal<HealthInsurance[]>([]);
   protected readonly errorMessage = signal('');
@@ -39,21 +41,21 @@ export class HealthInsurances implements OnInit {
     this.load();
   }
 
-  protected deactivate(item: HealthInsurance): void {
-    if (!confirm(`¿Dar de baja a ${item.name}?`)) {
+  protected async deactivate(item: HealthInsurance): Promise<void> {
+    if (!(await this.dialog.confirm({ title: `¿Dar de baja a ${item.name}?`, confirmText: 'Dar de baja', variant: 'danger' }))) {
       return;
     }
 
     this.healthInsuranceService.deactivateHealthInsurance(item.id).subscribe({
       next: () => this.load(),
-      error: () => alert('No se pudo dar de baja la obra social'),
+      error: () => this.dialog.toast('No se pudo dar de baja la obra social', 'error'),
     });
   }
 
   protected activate(item: HealthInsurance): void {
     this.healthInsuranceService.activateHealthInsurance(item.id).subscribe({
       next: () => this.load(),
-      error: () => alert('No se pudo reactivar la obra social'),
+      error: () => this.dialog.toast('No se pudo reactivar la obra social', 'error'),
     });
   }
 }

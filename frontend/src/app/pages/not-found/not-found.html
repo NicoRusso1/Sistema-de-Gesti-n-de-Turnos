@@ -1,0 +1,16 @@
+<section class="err" [class.bare]="!user()">
+  <img class="err-mark" src="isotipo.png" alt="" aria-hidden="true">
+  <h1 class="err-code" aria-label="Error 404">
+    <span aria-hidden="true">404</span>
+    <svg class="err-pulse" viewBox="0 0 400 80" preserveAspectRatio="none" aria-hidden="true">
+      <path class="err-pulse-base" pathLength="1000" d="M0 40 H150 L162 40 L174 12 L192 68 L208 24 L220 40 H400" />
+      <path class="err-pulse-run" pathLength="1000" d="M0 40 H150 L162 40 L174 12 L192 68 L208 24 L220 40 H400" />
+    </svg>
+  </h1>
+  <h2 class="err-title">No encontramos esa página</h2>
+  <p class="err-text">La dirección que buscás no existe o fue movida.</p>
+  <div class="err-actions">
+    <a class="btn-primary" routerLink="/home">Volver al inicio</a>
+    <button type="button" class="btn-ghost" (click)="back()">Volver atrás</button>
+  </div>
+</section>

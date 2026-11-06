@@ -2,9 +2,10 @@ import { Component, inject } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from './services/auth.service';
 import { roleLabel } from './shared/role-label';
+import { DialogHost } from './shared/dialog/dialog-host';
 
 @Component({
-  imports: [RouterOutlet, RouterLink, RouterLinkActive],
+  imports: [RouterOutlet, RouterLink, RouterLinkActive, DialogHost],
   selector: 'app-root',
   styleUrl: './app.css',
   templateUrl: './app.html',

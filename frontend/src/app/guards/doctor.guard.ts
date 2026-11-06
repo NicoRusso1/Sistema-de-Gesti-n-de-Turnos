@@ -10,5 +10,5 @@ export const doctorGuard: CanActivateFn = () => {
     if (auth.user()?.user_type?.name === 'doctor') {
         return true;
     }
-    return router.createUrlTree(['/home']);
+    return router.createUrlTree(['/forbidden']);
 };
