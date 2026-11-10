@@ -85,4 +85,39 @@ class AdminActionLogFilterTest extends TestCase
             ->assertStatus(422)
             ->assertJsonValidationErrors('action');
     }
+
+    public function test_filtra_por_administrador_afectado(): void
+    {
+        $otroAdmin = $this->crear(RoleName::Administrator);
+        $propio = $this->registrar(AdminActionName::GrantAdmin);
+        $propio2 = $this->registrar(AdminActionName::Deactivate);
+        AdminActionLog::record($this->superAdmin, $otroAdmin, AdminActionName::GrantAdmin);
+
+        $response = $this->getJson('/api/auditoria?affected_admin_id=' . $this->admin->id)->assertOk();
+
+        $this->assertEqualsCanonicalizing(
+            [$propio->id, $propio2->id],
+            collect($response->json('data'))->pluck('id')->all()
+        );
+        foreach ($response->json('data') as $fila) {
+            $this->assertSame($this->admin->id, $fila['affected']['id']);
+        }
+    }
+
+    public function test_administrador_sin_registros_devuelve_lista_vacia(): void
+    {
+        $sinHistorial = $this->crear(RoleName::Administrator);
+        $this->registrar(AdminActionName::GrantAdmin);
+
+        $this->getJson('/api/auditoria?affected_admin_id=' . $sinHistorial->id)
+            ->assertOk()
+            ->assertJsonCount(0, 'data');
+    }
+
+    public function test_administrador_afectado_inexistente_responde_422(): void
+    {
+        $this->getJson('/api/auditoria?affected_admin_id=999999')
+            ->assertStatus(422)
+            ->assertJsonValidationErrors('affected_admin_id');
+    }
 }

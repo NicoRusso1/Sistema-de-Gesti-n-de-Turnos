@@ -87,6 +87,10 @@ class AdminActionLogController extends Controller
                 'action',
                 fn ($q) => $q->where('name', $request->input('action'))
             ))
+            ->when($request->filled('affected_admin_id'), fn ($query) => $query->where(
+                'affected_admin_id',
+                $request->integer('affected_admin_id')
+            ))
             ->orderByDesc('date')
             ->orderByDesc('id')
             ->paginate($request->integer('per_page', self::DEFAULT_PER_PAGE));
