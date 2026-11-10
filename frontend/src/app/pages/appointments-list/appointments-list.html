@@ -67,6 +67,7 @@
               @switch (app.status) {
                 @case ('abonado') { <span class="badge badge-ok">Abonado</span> }
                 @case ('reservado') { <span class="badge badge-warn">Pendiente de pago</span> }
+                @case ('completado') { <span class="badge badge-info">Completado</span> }
                 @case ('cancelado') { <span class="badge badge-error">Cancelado</span> }
                 @case ('cancelled') { <span class="badge badge-error">Cancelado</span> }
                 @default { <span class="badge badge-info">{{ app.status }}</span> }
@@ -104,7 +105,33 @@
                 </div>
               }
             </dl>
-            @if (canManage(app) || canAssignSala(app) || canDownloadCert(app) || canIssueCert(app)) {
+            @if (canViewPrescriptions(app)) {
+              <div class="rx-list">
+                <span class="rx-title">Recetas</span>
+                @for (rx of app.prescriptions; track rx.id) {
+                  <div class="rx-item">
+                    <div class="rx-info">
+                      <strong>Receta #{{ rx.id }}</strong>
+                      @switch (rx.estado_emision) {
+                        @case ('emitida') { <span class="cell-sub">Emitida el {{ rx.issue_date | date:'dd/MM/yyyy HH:mm' }}</span> }
+                        @case ('fallida') { <span class="badge badge-error" [title]="rx.error_emision || ''">No se pudo generar</span> }
+                        @default { <span class="badge badge-warn">Generando</span> }
+                      }
+                    </div>
+                    <div class="rx-actions">
+                      @if (rx.estado_emision === 'emitida') {
+                        <button type="button" class="btn btn-ghost btn-sm" (click)="viewPrescription(rx)">Ver</button>
+                        <button type="button" class="btn btn-secondary btn-sm" (click)="downloadPrescription(rx)">Descargar</button>
+                      }
+                      @if (canRetryPrescription(rx)) {
+                        <button type="button" class="btn btn-secondary btn-sm" (click)="retryPrescription(rx)">Reintentar</button>
+                      }
+                    </div>
+                  </div>
+                }
+              </div>
+            }
+            @if (canManage(app) || canAssignSala(app) || canDownloadCert(app) || canIssueCert(app) || canComplete(app) || canIssuePrescription(app)) {
               <div class="appt-actions">
                 @if (canAssignSala(app)) {
                   <button type="button" class="btn btn-secondary btn-sm" (click)="openSalaModal(app)">{{ app.sala ? 'Cambiar sala' : 'Asignar sala' }}</button>
@@ -118,6 +145,12 @@
                 }
                 @if (canIssueCert(app)) {
                   <button type="button" class="btn btn-secondary btn-sm" (click)="emitirCert(app)">Emitir certificado</button>
+                }
+                @if (canComplete(app)) {
+                  <button type="button" class="btn btn-secondary btn-sm" (click)="completeAppointment(app)">Finalizar consulta</button>
+                }
+                @if (canIssuePrescription(app)) {
+                  <button type="button" class="btn btn-primary btn-sm" (click)="issuePrescription(app)">Emitir receta</button>
                 }
               </div>
             }

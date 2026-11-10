@@ -1,4 +1,5 @@
 import { HealthInsurance } from './health-insurance';
+import { Prescription } from './prescription';
 import { Specialty } from './specialty';
 
 export interface Sala {
@@ -15,7 +16,7 @@ export interface Appointment {
   specialty_id: number | null;
   sala_id?: number | null;
   scheduled_at: string;
-  status: 'reservado' | 'abonado' | 'scheduled' | 'confirmed' | 'cancelado' | 'cancelled';
+  status: 'reservado' | 'abonado' | 'scheduled' | 'confirmed' | 'completado' | 'cancelado' | 'cancelled';
   cancellation_reason?: string | null;
   health_insurance_id: number | null;
   affiliate_number: string | null;
@@ -39,6 +40,7 @@ export interface Appointment {
   
   certificado_url?: string | null;
   fecha_emision?: string | null;
+  prescriptions?: Prescription[];
 }
 
 // Sala que se puede asignar a mano a un turno (GET /appointments/{id}/available-salas)
