@@ -6,7 +6,7 @@ use App\Models\Appointment;
 use App\Models\Certificate;
 use App\Models\Payment;
 use Barryvdh\DomPDF\Facade\Pdf;
-use Illuminate\Support\Facades\Storage;
+use App\Support\Documents;
 
 class InvoiceService
 {
@@ -23,7 +23,7 @@ class InvoiceService
         ])->setPaper('a4', 'portrait');
 
         $fileName = "facturas/factura_turno_{$appointment->id}_" . time() . '.pdf';
-        Storage::disk('public')->put($fileName, $pdf->output());
+        Documents::disk()->put($fileName, $pdf->output());
 
         $certificate = Certificate::firstOrNew(['appointment_id' => $appointment->id]);
         $certificate->invoice_url = $fileName;

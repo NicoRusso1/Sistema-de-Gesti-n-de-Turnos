@@ -4,13 +4,13 @@ namespace App\Mail;
 
 use App\Models\Appointment;
 use App\Models\Payment;
+use App\Support\Documents;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Storage;
 
 class TurnoConfirmadoMail extends Mailable
 {
@@ -56,9 +56,10 @@ class TurnoConfirmadoMail extends Mailable
         $attachments = [];
 
         foreach ($files as $name => $path) {
-            if ($path && Storage::disk('public')->exists($path)) {
-                $attachments[] = Attachment::fromStorageDisk('public', $path)
-                    ->as($name)
+            $disk = Documents::locate($path);
+
+            if ($disk) {
+                $attachments[] = Attachment::fromData(fn () => $disk->get($path), $name)
                     ->withMime('application/pdf');
             }
         }

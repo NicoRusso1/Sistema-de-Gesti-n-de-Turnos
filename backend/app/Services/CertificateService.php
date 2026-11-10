@@ -6,7 +6,7 @@ use App\Models\Appointment;
 use App\Models\Certificate;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Storage;
+use App\Support\Documents;
 use Illuminate\Support\Str;
 
 class CertificateService
@@ -23,7 +23,7 @@ class CertificateService
         ])->setPaper('a4', 'portrait');
 
         $fileName = "certificados/certificado_turno_{$appointment->id}_" . time() . ".pdf";
-        Storage::disk('public')->put($fileName, $pdf->output());
+        Documents::disk()->put($fileName, $pdf->output());
 
         $certificate = Certificate::firstOrNew(['appointment_id' => $appointment->id]);
         $certificate->certificate_url = $fileName;
