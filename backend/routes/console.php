@@ -12,6 +12,7 @@ Schedule::command('turnos:cancelar-expirados')
     ->everyFiveMinutes()
     ->withoutOverlapping();
 
+// Corre cada hora y avisa a los turnos que entran en el plazo de recordatorio (24 hs por defecto)
 Schedule::command('turnos:enviar-recordatorios')
-    ->dailyAt('08:00')
+    ->hourly()
     ->withoutOverlapping();

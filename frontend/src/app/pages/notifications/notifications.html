@@ -5,7 +5,7 @@
       <p>Recordatorios de turnos por email y alertas internas.</p>
     </div>
     <button type="button" class="btn btn-primary" [disabled]="sending()" (click)="onTriggerReminders()">
-      @if (sending()) { Enviando recordatorios... } @else { Enviar recordatorios de mañana }
+      @if (sending()) { Enviando recordatorios... } @else { Enviar recordatorios (próximas 24 hs) }
     </button>
   </header>
 

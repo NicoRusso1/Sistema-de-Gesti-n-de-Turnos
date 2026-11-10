@@ -1963,7 +1963,7 @@
                     "Notificaciones"
                 ],
                 "summary": "Disparar envío de recordatorios de turno (Médicos y Admins)",
-                "description": "Ejecuta el comando Artisan que envía recordatorios por email a los pacientes con turnos al día siguiente.",
+                "description": "Ejecuta el comando Artisan que envía recordatorios por email a los pacientes con turnos dentro del plazo de recordatorio (24 hs por defecto, configurable con REMINDER_HOURS_BEFORE).",
                 "operationId": "db5125bcc1b54c5521d7505af3b7aa9b",
                 "responses": {
                     "200": {
