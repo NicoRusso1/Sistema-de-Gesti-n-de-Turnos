@@ -31,7 +31,11 @@ export class NotificationService {
   triggerSendReminders(): Observable<{ message: string; output: string }> {
     return this.http.post<{ message: string; output: string }>(`${API_URL}/notifications/send-reminders`, {});
   }
-    deleteNotification(id: number): Observable<{ message: string }> {
+  retryInvoice(appointmentId: number): Observable<{ message: string; estado_emision?: string; error?: string }> {
+    return this.http.post<{ message: string; estado_emision?: string; error?: string }>(`${API_URL}/appointments/${appointmentId}/invoice/retry`, {});
+  }
+
+  deleteNotification(id: number): Observable<{ message: string }> {
     return this.http.delete<{ message: string }>(`${API_URL}/notifications/${id}`);
   }
 }
