@@ -118,6 +118,7 @@
                                 "abonado",
                                 "scheduled",
                                 "confirmed",
+                                "completado",
                                 "cancelado"
                             ]
                         }
@@ -2550,6 +2551,303 @@
                 ]
             }
         },
+        "/api/appointments/{id}/complete": {
+            "patch": {
+                "tags": [
+                    "Recetas"
+                ],
+                "summary": "Finalizar la consulta (Médico asignado)",
+                "description": "Marca el turno como \"completado\". Es el paso previo para emitir la receta. No se puede finalizar un turno cancelado ni uno de un día futuro.",
+                "operationId": "13ad823a04d292ebbe6a9ac29e428637",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID del turno",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Turno finalizado.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Consulta finalizada"
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "example": "completado"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "El usuario no es médico o no es el médico asignado."
+                    },
+                    "404": {
+                        "description": "Turno no encontrado."
+                    },
+                    "422": {
+                        "description": "El turno está cancelado, ya finalizado o es de un día futuro."
+                    },
+                    "401": {
+                        "description": "No autenticado."
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/appointments/{id}/prescriptions": {
+            "get": {
+                "tags": [
+                    "Recetas"
+                ],
+                "summary": "Listar las recetas del turno",
+                "description": "Accesible por el médico asignado, el paciente titular o un administrador.",
+                "operationId": "186bd25c0b43f5f0e10b394d2b3df9fd",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID del turno",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Recetas del turno.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Receta"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Sin permiso sobre el turno."
+                    },
+                    "404": {
+                        "description": "Turno no encontrado."
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Recetas"
+                ],
+                "summary": "Emitir receta digital (Médico asignado)",
+                "description": "Solo el médico asignado y con el turno finalizado. Guarda el contenido y genera el PDF. Si la generación falla devuelve 502 con la receta guardada para reintentar.",
+                "operationId": "3bfa03e006dadd89431d5c98515a8569",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID del turno",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "content"
+                                ],
+                                "properties": {
+                                    "content": {
+                                        "type": "string",
+                                        "example": "Amoxicilina 500 mg\n1 comprimido cada 8 hs durante 7 días."
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Receta emitida.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Receta emitida"
+                                        },
+                                        "prescription": {
+                                            "$ref": "#/components/schemas/Receta"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "El usuario no es médico o no es el médico asignado."
+                    },
+                    "404": {
+                        "description": "Turno no encontrado."
+                    },
+                    "422": {
+                        "description": "Falta el contenido o el turno no está finalizado."
+                    },
+                    "502": {
+                        "description": "No se pudo generar el PDF. La receta queda guardada como \"fallida\" para reintentar."
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/prescriptions/{id}/retry": {
+            "post": {
+                "tags": [
+                    "Recetas"
+                ],
+                "summary": "Reintentar la generación de una receta (Médico emisor)",
+                "description": "Vuelve a generar el PDF con el contenido ya guardado.",
+                "operationId": "eb9ec1bd521bd8fb45f5f3105bbb924f",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID de la receta",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Receta generada (o ya estaba emitida)."
+                    },
+                    "403": {
+                        "description": "Solo el médico que la emitió puede reintentar."
+                    },
+                    "404": {
+                        "description": "Receta no encontrada."
+                    },
+                    "502": {
+                        "description": "Volvió a fallar."
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/prescriptions/{id}/view": {
+            "get": {
+                "tags": [
+                    "Recetas"
+                ],
+                "summary": "Ver la receta en PDF",
+                "description": "Devuelve el PDF para mostrarlo en el navegador. Médico asignado, paciente titular o administrador.",
+                "operationId": "f1240c21dca8cc315fe9e4410d22fcb5",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID de la receta",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Archivo PDF."
+                    },
+                    "403": {
+                        "description": "Sin permiso."
+                    },
+                    "404": {
+                        "description": "Receta inexistente o sin PDF generado."
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/prescriptions/{id}/download": {
+            "get": {
+                "tags": [
+                    "Recetas"
+                ],
+                "summary": "Descargar la receta en PDF",
+                "description": "Médico asignado, paciente titular o administrador.",
+                "operationId": "111cbfee99f7a029183d4d242e893fc1",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID de la receta",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Archivo PDF."
+                    },
+                    "403": {
+                        "description": "Sin permiso."
+                    },
+                    "404": {
+                        "description": "Receta inexistente o sin PDF generado."
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/users": {
             "get": {
                 "tags": [
@@ -3451,6 +3749,53 @@
                     }
                 },
                 "type": "object"
+            },
+            "Receta": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 3
+                    },
+                    "appointment_id": {
+                        "type": "integer",
+                        "example": 12
+                    },
+                    "doctor_id": {
+                        "type": "integer",
+                        "example": 4
+                    },
+                    "patient_id": {
+                        "type": "integer",
+                        "example": 9
+                    },
+                    "content": {
+                        "type": "string",
+                        "example": "Ibuprofeno 400 mg\n1 comprimido cada 8 hs."
+                    },
+                    "issue_date": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "file_url": {
+                        "type": "string",
+                        "example": "recetas/receta_3_1793279024.pdf",
+                        "nullable": true
+                    },
+                    "estado_emision": {
+                        "type": "string",
+                        "enum": [
+                            "pendiente",
+                            "emitida",
+                            "fallida"
+                        ]
+                    },
+                    "error_emision": {
+                        "type": "string",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
             }
         },
         "securitySchemes": {
@@ -3506,6 +3851,10 @@
         {
             "name": "Pagos",
             "description": "Pagos"
+        },
+        {
+            "name": "Recetas",
+            "description": "Recetas"
         },
         {
             "name": "Usuarios",

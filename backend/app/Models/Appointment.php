@@ -21,6 +21,9 @@ class Appointment extends Model
     // Estados que ocupan agenda y sala
     public const ACTIVE_STATUSES = ['reservado', 'abonado', 'scheduled', 'confirmed'];
 
+    // GT-219: consulta finalizada por el médico, habilita la receta digital
+    public const STATUS_COMPLETED = 'completado';
+
     protected $fillable = [
         'patient_id',
         'doctor_id',
@@ -84,6 +87,11 @@ class Appointment extends Model
     public function certificate(): HasOne
     {
         return $this->hasOne(Certificate::class);
+    }
+
+    public function prescriptions(): HasMany
+    {
+        return $this->hasMany(Prescription::class);
     }
 
     public function notifications(): HasMany
