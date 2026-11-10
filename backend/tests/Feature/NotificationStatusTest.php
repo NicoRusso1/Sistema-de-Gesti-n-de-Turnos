@@ -53,13 +53,13 @@ class NotificationStatusTest extends TestCase
         ]);
     }
 
-    private function createAppointment(Patient $doctor): Appointment
+    private function createAppointment(Patient $doctor, $scheduledAt = null): Appointment
     {
         return Appointment::create([
             'patient_id' => $this->patient->id,
             'doctor_id' => $doctor->id,
             'specialty_id' => $this->specialty->id,
-            'scheduled_at' => now()->addDay()->setTime(10, 0),
+            'scheduled_at' => $scheduledAt ?? now()->addDay()->setTime(10, 0),
             'status' => 'reservado',
         ]);
     }
@@ -148,7 +148,7 @@ class NotificationStatusTest extends TestCase
 
     public function test_comando_de_recordatorios_registra_estado_y_reintenta_solo_fallidos(): void
     {
-        $this->createAppointment($this->doctor);
+        $this->createAppointment($this->doctor, now()->addHours(5));
 
         Mail::shouldReceive('to')->once()->andThrow(new \RuntimeException('SMTP caído'));
         $this->artisan('turnos:enviar-recordatorios')->assertSuccessful();
@@ -161,6 +161,42 @@ class NotificationStatusTest extends TestCase
 
         $this->artisan('turnos:enviar-recordatorios')->assertSuccessful();
         $this->assertSame(2, Notification::count());
+    }
+
+    public function test_comando_de_recordatorios_respeta_el_plazo_configurado(): void
+    {
+        config(['notifications.reminder_hours_before' => 24]);
+        Mail::fake();
+
+        $dentro = $this->createAppointment($this->doctor, now()->addHours(23));
+        $this->createAppointment($this->doctor, now()->addHours(30));
+        $this->createAppointment($this->doctor, now()->subHour());
+
+        $this->artisan('turnos:enviar-recordatorios')->assertSuccessful();
+
+        $this->assertSame(1, Notification::where('tipo', 'recordatorio')->count());
+        $this->assertSame($dentro->id, Notification::where('tipo', 'recordatorio')->first()->appointment_id);
+        Mail::assertSent(\App\Mail\RecordatorioTurnoMail::class, 1);
+    }
+
+    public function test_comando_de_recordatorios_acepta_plazo_por_opcion(): void
+    {
+        Mail::fake();
+
+        $this->createAppointment($this->doctor, now()->addHours(30));
+
+        $this->artisan('turnos:enviar-recordatorios', ['--horas' => 48])->assertSuccessful();
+
+        $this->assertSame(1, Notification::where('tipo', 'recordatorio')->count());
+    }
+
+    public function test_recordatorios_estan_programados_cada_hora(): void
+    {
+        $evento = collect(app(\Illuminate\Console\Scheduling\Schedule::class)->events())
+            ->first(fn ($e) => str_contains($e->command ?? '', 'turnos:enviar-recordatorios'));
+
+        $this->assertNotNull($evento);
+        $this->assertSame('0 * * * *', $evento->expression);
     }
 
     public function test_listado_requiere_rol_medico_o_admin(): void

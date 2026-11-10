@@ -167,7 +167,7 @@ class NotificationController extends Controller
     #[OA\Post(
         path: '/api/notifications/send-reminders',
         summary: 'Disparar envío de recordatorios de turno (Médicos y Admins)',
-        description: 'Ejecuta el comando Artisan que envía recordatorios por email a los pacientes con turnos al día siguiente.',
+        description: 'Ejecuta el comando Artisan que envía recordatorios por email a los pacientes con turnos dentro del plazo de recordatorio (24 hs por defecto, configurable con REMINDER_HOURS_BEFORE).',
         tags: ['Notificaciones'],
         security: [['sanctum' => []]],
         responses: [
@@ -212,7 +212,7 @@ class NotificationController extends Controller
 
         return response()->json([
             'message' => 'Recordatorios procesados exitosamente',
-            'output'  => trim($output) ?: 'No hay turnos pendientes de recordatorio para mañana.',
+            'output'  => trim($output) ?: 'No hay turnos pendientes de recordatorio.',
         ], 200);
     }
 

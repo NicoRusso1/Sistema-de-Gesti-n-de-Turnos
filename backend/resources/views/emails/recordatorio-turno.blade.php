@@ -19,7 +19,7 @@
     <div class="card">
         <div class="header">
             <h1>⏰ Recordatorio de Turno Médico</h1>
-            <p style="margin: 5px 0 0 0;">Te recordamos tu cita programada para mañana</p>
+            <p style="margin: 5px 0 0 0;">Te recordamos tu cita del {{ $appointment->scheduled_at->format('d/m/Y') }} a las {{ $appointment->scheduled_at->format('H:i') }} hs</p>
         </div>
         <div class="content">
             <p>Hola <strong>{{ $appointment->patient?->first_name }} {{ $appointment->patient?->last_name }}</strong>,</p>

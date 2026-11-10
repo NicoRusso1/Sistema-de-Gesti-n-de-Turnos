@@ -21,6 +21,10 @@ use Database\Seeders\PaymentStatusSeeder;
 use Database\Seeders\RoleSeeder;
 use Database\Seeders\UserTypeSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use App\Enums\NotificationDeliveryStatus;
+use App\Mail\TurnoConfirmadoMail;
+use App\Models\Notification;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
@@ -107,6 +111,47 @@ class AppointmentVouchersTest extends TestCase
         $this->assertNotNull($certificate->issue_date);
         Storage::disk('public')->assertExists($certificate->invoice_url);
         Storage::disk('public')->assertExists($certificate->certificate_url);
+    }
+
+    public function test_pago_aprobado_envia_email_con_factura_y_certificado_adjuntos(): void
+    {
+        Mail::fake();
+
+        $this->approvePayment();
+
+        Mail::assertSent(TurnoConfirmadoMail::class, function (TurnoConfirmadoMail $mail) {
+            $nombres = collect($mail->attachments())->map(fn ($a) => $a->as)->all();
+
+            return $mail->hasTo($this->patient->email)
+                && in_array("Factura_Turno_{$this->appointment->id}.pdf", $nombres)
+                && in_array("Certificado_Turno_{$this->appointment->id}.pdf", $nombres);
+        });
+
+        $notification = Notification::where('appointment_id', $this->appointment->id)->where('tipo', 'confirmacion')->first();
+        $this->assertNotNull($notification);
+        $this->assertSame(NotificationDeliveryStatus::Sent, $notification->estado_envio);
+    }
+
+    public function test_falla_del_email_post_pago_queda_fallida_y_no_corta_el_pago(): void
+    {
+        Mail::shouldReceive('to')->andThrow(new \RuntimeException('SMTP caído'));
+
+        $this->approvePayment();
+
+        $this->assertSame('abonado', $this->appointment->fresh()->status);
+        $notification = Notification::where('tipo', 'confirmacion')->first();
+        $this->assertSame(NotificationDeliveryStatus::Failed, $notification->estado_envio);
+        $this->assertSame('SMTP caído', $notification->error_envio);
+    }
+
+    public function test_pago_pendiente_no_envia_email(): void
+    {
+        Mail::fake();
+
+        $this->payment->update(['amount' => 9000]);
+
+        Mail::assertNothingSent();
+        $this->assertSame(0, Notification::where('tipo', 'confirmacion')->count());
     }
 
     public function test_paciente_titular_descarga_ambos_comprobantes(): void

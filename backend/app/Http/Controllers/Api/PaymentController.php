@@ -9,7 +9,6 @@ use App\Models\Appointment;
 use App\Models\Payment;
 use App\Models\PaymentMethod;
 use App\Models\PaymentStatus;
-use App\Services\AppointmentNotificationService;
 use App\Services\MercadoPagoService;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\JsonResponse;
@@ -312,13 +311,8 @@ class PaymentController extends Controller
             'payment_date'        => $statusName === PaymentStatusName::Approved ? now() : null,
         ]);
 
-        // SI EL PAGO FUE APROBADO: Actualizamos el turno y enviamos el correo
-        if ($statusName === PaymentStatusName::Approved) {
-            $appointment = $payment->appointment;
-            $appointment->update(['status' => 'abonado']);
-
-            app(AppointmentNotificationService::class)->notifyPaymentConfirmed($appointment, $payment);
-        }
+        // Si el pago fue aprobado, PaymentObserver marca el turno como abonado,
+        // genera la factura y el certificado y los envía por email al paciente.
 
         return response()->json([
             'message' => 'Pago actualizado',
@@ -347,9 +341,7 @@ class PaymentController extends Controller
                                 'provider_payment_id' => (string) $mpPayment['id'],
                                 'payment_date'        => now(),
                             ]);
-                            $payment->appointment->update(['status' => 'abonado']);
-
-                            app(AppointmentNotificationService::class)->notifyPaymentConfirmed($payment->appointment, $payment);
+                            // PaymentObserver se encarga del turno, los comprobantes y el email
                         }
                     }
                 }
