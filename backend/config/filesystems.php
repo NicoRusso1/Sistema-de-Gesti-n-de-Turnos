@@ -16,6 +16,14 @@ return [
     'default' => env('FILESYSTEM_DISK', 'local'),
 
     /*
+    | Disco donde se guardan las facturas y certificados en PDF.
+    | Es privado: los archivos solo se descargan por la API, que valida permisos.
+    | Para usar la nube alcanza con apuntarlo a un disco s3 (DOCUMENTS_DISK=s3).
+    */
+
+    'documents_disk' => env('DOCUMENTS_DISK', 'documentos'),
+
+    /*
     |--------------------------------------------------------------------------
     | Filesystem Disks
     |--------------------------------------------------------------------------
@@ -34,6 +42,15 @@ return [
             'driver' => 'local',
             'root' => storage_path('app/private'),
             'serve' => true,
+            'throw' => false,
+            'report' => false,
+        ],
+
+        'documentos' => [
+            'driver' => 'local',
+            'root' => storage_path('app/private/documentos'),
+            'visibility' => 'private',
+            'serve' => false,
             'throw' => false,
             'report' => false,
         ],

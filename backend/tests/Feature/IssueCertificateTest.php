@@ -34,6 +34,7 @@ class IssueCertificateTest extends TestCase
         parent::setUp();
 
         Storage::fake('public');
+        Storage::fake('documentos');
         Mail::fake();
         $this->seed([RoleSeeder::class, UserTypeSeeder::class]);
 
@@ -87,7 +88,7 @@ class IssueCertificateTest extends TestCase
 
         $this->assertEmpty($this->appointment->fresh()->certificado_url);
         Mail::assertNothingSent();
-        $this->assertEmpty(Storage::disk('public')->allFiles());
+        $this->assertEmpty(Storage::disk('documentos')->allFiles());
     }
 
     public function test_administrador_emite_el_certificado(): void

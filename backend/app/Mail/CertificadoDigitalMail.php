@@ -3,13 +3,14 @@
 namespace App\Mail;
 
 use App\Models\Appointment;
+use App\Support\Documents;
 use Illuminate\Bus\Queueable;
 use Illuminate\Mail\Mailable;
 use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Storage;
+
 
 class CertificadoDigitalMail extends Mailable
 {
@@ -40,9 +41,14 @@ class CertificadoDigitalMail extends Mailable
 
     public function attachments(): array
     {
+        $disk = Documents::locate($this->filePath);
+
+        if (!$disk) {
+            return [];
+        }
+
         return [
-            Attachment::fromStorageDisk('public', $this->filePath)
-                ->as("Certificado_Turno_{$this->appointment->id}.pdf")
+            Attachment::fromData(fn () => $disk->get($this->filePath), "Certificado_Turno_{$this->appointment->id}.pdf")
                 ->withMime('application/pdf'),
         ];
     }

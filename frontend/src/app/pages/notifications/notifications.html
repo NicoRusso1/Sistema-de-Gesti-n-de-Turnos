@@ -75,6 +75,11 @@
                 @if (n.error_envio) {
                   <div class="cell-sub cell-error">{{ n.error_envio }}</div>
                 }
+                @if (canRetryInvoice(n)) {
+                  <button type="button" class="btn btn-secondary btn-sm btn-retry" [disabled]="retrying() !== null" (click)="onRetryInvoice(n)">
+                    @if (retrying() === n.id) { Reintentando... } @else { Reintentar factura }
+                  </button>
+                }
               </td>
               <td data-label="Fecha de emisión">{{ n.created_at | date:'dd/MM/yyyy HH:mm' }}</td>
             </tr>

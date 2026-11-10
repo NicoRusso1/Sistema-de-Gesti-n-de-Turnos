@@ -18,7 +18,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use OpenApi\Attributes as OA;
 use App\Services\CertificateService;
-use Illuminate\Support\Facades\Storage;
+use App\Support\Documents;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 class AppointmentController extends Controller
@@ -623,11 +623,12 @@ class AppointmentController extends Controller
             return response()->json(['message' => 'No tenés permiso para descargar este certificado'], 403);
         }
 
-        if (!Storage::disk('public')->exists($path)) {
+        $disk = Documents::locate($path);
+        if (!$disk) {
             return response()->json(['message' => 'El archivo físico no fue encontrado'], 404);
         }
 
-        return Storage::disk('public')->download($path, "Certificado_Turno_{$appointment->id}.pdf");
+        return $disk->download($path, "Certificado_Turno_{$appointment->id}.pdf");
     }
 
     #[OA\Get(
@@ -658,11 +659,12 @@ class AppointmentController extends Controller
             return response()->json(['message' => 'No tenés permiso para descargar esta factura'], 403);
         }
 
-        if (!Storage::disk('public')->exists($path)) {
+        $disk = Documents::locate($path);
+        if (!$disk) {
             return response()->json(['message' => 'El archivo físico no fue encontrado'], 404);
         }
 
-        return Storage::disk('public')->download($path, "Factura_Turno_{$appointment->id}.pdf");
+        return $disk->download($path, "Factura_Turno_{$appointment->id}.pdf");
     }
 
     private function canDownloadVoucher($user, Appointment $appointment): bool

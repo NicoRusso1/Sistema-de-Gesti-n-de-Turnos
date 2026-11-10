@@ -46,6 +46,7 @@ class AppointmentVouchersTest extends TestCase
         parent::setUp();
 
         Storage::fake('public');
+        Storage::fake('documentos');
         $this->seed([RoleSeeder::class, UserTypeSeeder::class, PaymentMethodSeeder::class, PaymentStatusSeeder::class]);
 
         $this->patient = $this->createUser(UserTypeName::Patient);
@@ -109,8 +110,8 @@ class AppointmentVouchersTest extends TestCase
         $this->assertNotNull($certificate->invoice_url);
         $this->assertNotNull($certificate->certificate_url);
         $this->assertNotNull($certificate->issue_date);
-        Storage::disk('public')->assertExists($certificate->invoice_url);
-        Storage::disk('public')->assertExists($certificate->certificate_url);
+        Storage::disk('documentos')->assertExists($certificate->invoice_url);
+        Storage::disk('documentos')->assertExists($certificate->certificate_url);
     }
 
     public function test_pago_aprobado_envia_email_con_factura_y_certificado_adjuntos(): void

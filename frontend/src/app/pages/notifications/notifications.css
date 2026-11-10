@@ -1,6 +1,7 @@
 .notice-pre { white-space: pre-line; }
 .cell-message { max-width: 320px; }
 .cell-error { max-width: 220px; color: var(--sigt-error-texto); }
+.btn-retry { margin-top: 6px; }
 .toolbar .input-search { flex: 1 1 220px; width: auto; max-width: 320px; height: 44px; }
 
 @media (max-width: 700px) {
