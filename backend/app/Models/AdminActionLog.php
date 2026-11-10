@@ -13,6 +13,11 @@ class AdminActionLog extends Model
 
     protected $fillable = ['superadmin_id', 'affected_admin_id', 'action_id', 'date'];
 
+    protected function casts(): array
+    {
+        return ['date' => 'datetime'];
+    }
+
     public static function record(Patient $actor, Patient $affected, AdminActionName $action): self
     {
         return self::create([
