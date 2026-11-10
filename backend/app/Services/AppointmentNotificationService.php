@@ -81,7 +81,7 @@ class AppointmentNotificationService
         ], $email ? fn () => Mail::to($email)->send(new RecordatorioTurnoMail($appointment)) : null);
     }
 
-    public function notifyPaymentConfirmed(Appointment $appointment, Payment $payment): Notification
+    public function notifyPaymentConfirmed(Appointment $appointment, Payment $payment, ?string $invoicePath = null, ?string $certificatePath = null): Notification
     {
         $fecha = $appointment->scheduled_at->format('d/m/Y');
         $hora = $appointment->scheduled_at->format('H:i');
@@ -92,8 +92,8 @@ class AppointmentNotificationService
             'appointment_id' => $appointment->id,
             'tipo'           => 'confirmacion',
             'titulo'         => 'Turno confirmado',
-            'mensaje'        => "Se acreditó el pago de tu turno del {$fecha} a las {$hora} hs.",
-        ], $email ? fn () => Mail::to($email)->send(new TurnoConfirmadoMail($appointment, $payment)) : null);
+            'mensaje'        => "Se acreditó el pago de tu turno del {$fecha} a las {$hora} hs. Te enviamos la factura y el certificado por email.",
+        ], $email ? fn () => Mail::to($email)->send(new TurnoConfirmadoMail($appointment, $payment, $invoicePath, $certificatePath)) : null);
     }
 
     public function notifyCertificate(Appointment $appointment, string $fileName, string $viewUrl): Notification
