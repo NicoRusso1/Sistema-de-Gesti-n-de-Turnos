@@ -4,6 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\SpecialtyController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\DoctorController;
+use App\Http\Controllers\Api\PrescriptionController;
 use App\Http\Controllers\Api\DoctorSpecialtyController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\AdminRoleController;
@@ -73,6 +74,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/appointments/{id}/invoice/download', [AppointmentController::class, 'downloadInvoice']);
     // GT-69: reintento manual de emisión y envío de la factura (solo administradores)
     Route::post('/appointments/{id}/invoice/retry', [PaymentController::class, 'retryDocuments']);
+    // GT-219: finalizar consulta y receta digital (los permisos se validan en el controlador)
+    Route::patch('/appointments/{id}/complete', [PrescriptionController::class, 'complete']);
+    Route::get('/appointments/{id}/prescriptions', [PrescriptionController::class, 'index']);
+    Route::post('/appointments/{id}/prescriptions', [PrescriptionController::class, 'store']);
+    Route::post('/prescriptions/{id}/retry', [PrescriptionController::class, 'retry']);
+    Route::get('/prescriptions/{id}/view', [PrescriptionController::class, 'view']);
+    Route::get('/prescriptions/{id}/download', [PrescriptionController::class, 'download']);
     Route::get('/pagos', [PaymentController::class, 'index']);
     Route::get('/me/notifications', [NotificationController::class, 'myNotifications']);
     Route::patch('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);

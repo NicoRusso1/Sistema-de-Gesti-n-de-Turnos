@@ -49,7 +49,7 @@ class AppointmentController extends Controller
         tags: ['Turnos'],
         security: [['sanctum' => []]],
         parameters: [
-            new OA\Parameter(name: 'status', in: 'query', required: false, schema: new OA\Schema(type: 'string', enum: ['reservado', 'abonado', 'scheduled', 'confirmed', 'cancelado'])),
+            new OA\Parameter(name: 'status', in: 'query', required: false, schema: new OA\Schema(type: 'string', enum: ['reservado', 'abonado', 'scheduled', 'confirmed', 'completado', 'cancelado'])),
             new OA\Parameter(name: 'date', in: 'query', required: false, schema: new OA\Schema(type: 'string', format: 'date'), example: '2026-10-15'),
             new OA\Parameter(name: 'doctor_id', in: 'query', required: false, description: 'Solo con scope "all"', schema: new OA\Schema(type: 'integer')),
             new OA\Parameter(name: 'patient_id', in: 'query', required: false, description: 'Solo con scope "all"', schema: new OA\Schema(type: 'integer'))
@@ -80,7 +80,7 @@ class AppointmentController extends Controller
         $scope = $request->attributes->get('appointment_scope');
 
         // GT-55: filtro por scope del usuario logueado
-        $query = Appointment::with(['doctor', 'patient', 'specialty', 'sala', 'healthInsurance'])
+        $query = Appointment::with(['doctor', 'patient', 'specialty', 'sala', 'healthInsurance', 'prescriptions'])
             ->visibleTo($scope, $user);
 
         if ($scope === Appointment::SCOPE_ALL) {
@@ -231,6 +231,10 @@ class AppointmentController extends Controller
             return response()->json(['message' => 'El turno ya ha sido cancelado previamente.'], 400);
         }
 
+        if ($appointment->status === Appointment::STATUS_COMPLETED) {
+            return response()->json(['message' => 'No se puede cancelar una consulta ya finalizada.'], 400);
+        }
+
         $reason = $request->input('reason');
 
         // GT-58: Actualizar estado a 'cancelado' para liberar la agenda y la sala
@@ -288,6 +292,10 @@ class AppointmentController extends Controller
 
         if ($appointment->status === 'cancelado') {
             return response()->json(['message' => 'No es posible reprogramar un turno que ya está cancelado. Debe reservar uno nuevo.'], 400);
+        }
+
+        if ($appointment->status === Appointment::STATUS_COMPLETED) {
+            return response()->json(['message' => 'No se puede reprogramar una consulta ya finalizada.'], 400);
         }
 
         $validated = $request->validated();
