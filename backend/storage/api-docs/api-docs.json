@@ -2486,6 +2486,70 @@
                 ]
             }
         },
+        "/api/appointments/{id}/invoice/retry": {
+            "post": {
+                "tags": [
+                    "Pagos"
+                ],
+                "summary": "Reintentar emisión y envío de la factura (Administradores)",
+                "description": "Vuelve a emitir los PDF que falten y reenvía el email con la factura y el certificado si no se había enviado. Usa el último pago aprobado del turno.",
+                "operationId": "bba36120f4edb47459e06c62c5960140",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID del turno",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Factura emitida y enviada.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Factura emitida y enviada al paciente"
+                                        },
+                                        "estado_emision": {
+                                            "type": "string",
+                                            "enum": [
+                                                "pendiente",
+                                                "emitida",
+                                                "fallida"
+                                            ]
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Solo un administrador puede reintentar."
+                    },
+                    "404": {
+                        "description": "El turno no existe o no tiene un pago aprobado."
+                    },
+                    "502": {
+                        "description": "El reintento volvió a fallar (se devuelve el error)."
+                    },
+                    "401": {
+                        "description": "No autenticado."
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/users": {
             "get": {
                 "tags": [

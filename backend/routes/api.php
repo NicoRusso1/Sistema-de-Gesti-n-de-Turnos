@@ -71,6 +71,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/appointments/{id}/certificate/download', [AppointmentController::class, 'downloadCertificate']);
     Route::get('/appointments/{id}/invoice/download', [AppointmentController::class, 'downloadInvoice']);
+    // GT-69: reintento manual de emisión y envío de la factura (solo administradores)
+    Route::post('/appointments/{id}/invoice/retry', [PaymentController::class, 'retryDocuments']);
     Route::get('/pagos', [PaymentController::class, 'index']);
     Route::get('/me/notifications', [NotificationController::class, 'myNotifications']);
     Route::patch('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);

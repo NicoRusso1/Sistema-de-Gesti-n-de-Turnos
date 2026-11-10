@@ -16,3 +16,8 @@ Schedule::command('turnos:cancelar-expirados')
 Schedule::command('turnos:enviar-recordatorios')
     ->hourly()
     ->withoutOverlapping();
+
+// Reintenta las facturas cuya emisión o envío por email falló
+Schedule::command('facturas:reintentar')
+    ->everyFifteenMinutes()
+    ->withoutOverlapping();

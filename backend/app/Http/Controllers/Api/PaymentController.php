@@ -10,6 +10,7 @@ use App\Models\Payment;
 use App\Models\PaymentMethod;
 use App\Models\PaymentStatus;
 use App\Services\MercadoPagoService;
+use App\Services\PaymentDocumentsService;
 use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -351,5 +352,75 @@ class PaymentController extends Controller
         }
 
         return response()->json(['status' => 'ok'], 200);
+    }
+
+    #[OA\Post(
+        path: '/api/appointments/{id}/invoice/retry',
+        summary: 'Reintentar emisión y envío de la factura (Administradores)',
+        description: 'Vuelve a emitir los PDF que falten y reenvía el email con la factura y el certificado si no se había enviado. Usa el último pago aprobado del turno.',
+        tags: ['Pagos'],
+        security: [['sanctum' => []]],
+        parameters: [
+            new OA\Parameter(name: 'id', in: 'path', required: true, schema: new OA\Schema(type: 'integer'), description: 'ID del turno')
+        ],
+        responses: [
+            new OA\Response(
+                response: 200,
+                description: 'Factura emitida y enviada.',
+                content: new OA\JsonContent(properties: [
+                    new OA\Property(property: 'message', type: 'string', example: 'Factura emitida y enviada al paciente'),
+                    new OA\Property(property: 'estado_emision', type: 'string', enum: ['pendiente', 'emitida', 'fallida']),
+                ])
+            ),
+            new OA\Response(response: 403, description: 'Solo un administrador puede reintentar.'),
+            new OA\Response(response: 404, description: 'El turno no existe o no tiene un pago aprobado.'),
+            new OA\Response(response: 502, description: 'El reintento volvió a fallar (se devuelve el error).'),
+            new OA\Response(response: 401, description: 'No autenticado.'),
+        ]
+    )]
+    /**
+     * Reintentar manualmente la emisión y el envío de la factura de un turno.
+     */
+    public function retryDocuments(Request $request, $id, PaymentDocumentsService $documents): JsonResponse
+    {
+        if (!$request->user()->hasAdminAccess()) {
+            return response()->json(['message' => 'Solo un administrador puede reintentar el envío de la factura'], 403);
+        }
+
+        $appointment = Appointment::find($id);
+
+        $payment = $appointment?->payments()
+            ->whereHas('status', fn ($q) => $q->where('name', PaymentStatusName::Approved->value))
+            ->latest('payment_date')
+            ->first();
+
+        if (!$payment) {
+            return response()->json(['message' => 'El turno no tiene un pago aprobado'], 404);
+        }
+
+        if ($documents->isComplete($payment)) {
+            return response()->json([
+                'message'        => 'La factura ya estaba emitida y enviada',
+                'estado_emision' => 'emitida',
+            ], 200);
+        }
+
+        $certificate = $documents->process($payment);
+
+        if (!$documents->isComplete($payment)) {
+            $error = $certificate->error_emision
+                ?? $appointment->notifications()->where('tipo', 'confirmacion')->latest('id')->value('error_envio');
+
+            return response()->json([
+                'message'        => 'El reintento volvió a fallar',
+                'error'          => $error,
+                'estado_emision' => $certificate->estado_emision?->value,
+            ], 502);
+        }
+
+        return response()->json([
+            'message'        => 'Factura emitida y enviada al paciente',
+            'estado_emision' => $certificate->estado_emision->value,
+        ], 200);
     }
 }

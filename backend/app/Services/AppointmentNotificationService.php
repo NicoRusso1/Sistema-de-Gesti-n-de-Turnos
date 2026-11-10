@@ -96,6 +96,26 @@ class AppointmentNotificationService
         ], $email ? fn () => Mail::to($email)->send(new TurnoConfirmadoMail($appointment, $payment, $invoicePath, $certificatePath)) : null);
     }
 
+    /**
+     * Registra que el email de confirmación no salió porque falló la emisión de la factura.
+     */
+    public function notifyPaymentConfirmationFailed(Appointment $appointment, string $error): Notification
+    {
+        $fecha = $appointment->scheduled_at->format('d/m/Y');
+        $hora = $appointment->scheduled_at->format('H:i');
+
+        return Notification::create([
+            'patient_id'     => $appointment->patient_id,
+            'appointment_id' => $appointment->id,
+            'tipo'           => 'confirmacion',
+            'titulo'         => 'Turno confirmado',
+            'mensaje'        => "Se acreditó el pago de tu turno del {$fecha} a las {$hora} hs. Te enviamos la factura y el certificado por email.",
+            'leido'          => false,
+            'estado_envio'   => NotificationDeliveryStatus::Failed,
+            'error_envio'    => $error,
+        ]);
+    }
+
     public function notifyCertificate(Appointment $appointment, string $fileName, string $viewUrl): Notification
     {
         $email = $appointment->patient?->email;

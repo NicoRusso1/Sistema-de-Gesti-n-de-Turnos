@@ -5,9 +5,7 @@ namespace App\Observers;
 use App\Enums\PaymentStatusName;
 use App\Models\Payment;
 use App\Models\PaymentStatus;
-use App\Services\AppointmentNotificationService;
-use App\Services\CertificateService;
-use App\Services\InvoiceService;
+use App\Services\PaymentDocumentsService;
 
 class PaymentObserver
 {
@@ -29,19 +27,8 @@ class PaymentObserver
             $appointment->update(['status' => 'abonado']);
         }
 
-        $certificatePath = null;
-        $invoicePath = null;
-
-        try {
-            $certificatePath = app(CertificateService::class)->generate($appointment);
-            $invoicePath = app(InvoiceService::class)->generate($appointment, $payment);
-        } catch (\Throwable $e) {
-            logger()->error("Error generando comprobantes del turno #{$appointment->id}: " . $e->getMessage());
-        }
-
-        // Email automático al paciente con la factura y el certificado adjuntos.
-        // El resultado (enviada / fallida) queda registrado en la tabla notificaciones.
-        app(AppointmentNotificationService::class)
-            ->notifyPaymentConfirmed($appointment, $payment, $invoicePath, $certificatePath);
+        // Emite factura y certificado y los envía por email. Si algo falla queda
+        // registrado y el cron facturas:reintentar lo vuelve a intentar.
+        app(PaymentDocumentsService::class)->process($payment);
     }
 }
