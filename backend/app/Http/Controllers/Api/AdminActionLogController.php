@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\ListAdminActionLogsRequest;
 use App\Http\Resources\AdminActionLogResource;
 use App\Models\AdminActionLog;
+use Illuminate\Support\Carbon;
 use OpenApi\Attributes as OA;
 
 class AdminActionLogController extends Controller
@@ -90,6 +91,16 @@ class AdminActionLogController extends Controller
             ->when($request->filled('affected_admin_id'), fn ($query) => $query->where(
                 'affected_admin_id',
                 $request->integer('affected_admin_id')
+            ))
+            ->when($request->filled('date_from'), fn ($query) => $query->where(
+                'date',
+                '>=',
+                Carbon::parse($request->input('date_from'))->startOfDay()
+            ))
+            ->when($request->filled('date_to'), fn ($query) => $query->where(
+                'date',
+                '<=',
+                Carbon::parse($request->input('date_to'))->endOfDay()
             ))
             ->orderByDesc('date')
             ->orderByDesc('id')

@@ -120,4 +120,75 @@ class AdminActionLogFilterTest extends TestCase
             ->assertStatus(422)
             ->assertJsonValidationErrors('affected_admin_id');
     }
+
+    private function registrarEn(string $fecha): AdminActionLog
+    {
+        $log = $this->registrar(AdminActionName::GrantAdmin);
+        $log->update(['date' => $fecha]);
+
+        return $log;
+    }
+
+    private function idsDe(string $query): array
+    {
+        return collect($this->getJson('/api/auditoria?' . $query)->assertOk()->json('data'))
+            ->pluck('id')->all();
+    }
+
+    public function test_la_zona_horaria_de_la_aplicacion_es_buenos_aires(): void
+    {
+        $this->assertSame('America/Argentina/Buenos_Aires', config('app.timezone'));
+    }
+
+    public function test_rango_de_fechas_incluye_los_dias_limite_completos(): void
+    {
+        $antes = $this->registrarEn('2026-03-09 23:59:59');
+        $desdeInicio = $this->registrarEn('2026-03-10 00:00:00');
+        $medio = $this->registrarEn('2026-03-11 12:00:00');
+        $hastaFin = $this->registrarEn('2026-03-12 23:59:59');
+        $despues = $this->registrarEn('2026-03-13 00:00:00');
+
+        $ids = $this->idsDe('date_from=2026-03-10&date_to=2026-03-12');
+
+        $this->assertEqualsCanonicalizing([$desdeInicio->id, $medio->id, $hastaFin->id], $ids);
+        $this->assertNotContains($antes->id, $ids);
+        $this->assertNotContains($despues->id, $ids);
+    }
+
+    public function test_solo_desde_incluye_el_primer_instante_del_dia(): void
+    {
+        $antes = $this->registrarEn('2026-03-09 23:59:59');
+        $inicio = $this->registrarEn('2026-03-10 00:00:00');
+        $posterior = $this->registrarEn('2026-04-01 08:00:00');
+
+        $ids = $this->idsDe('date_from=2026-03-10');
+
+        $this->assertEqualsCanonicalizing([$inicio->id, $posterior->id], $ids);
+        $this->assertNotContains($antes->id, $ids);
+    }
+
+    public function test_solo_hasta_incluye_hasta_las_2359_del_dia(): void
+    {
+        $anterior = $this->registrarEn('2026-01-01 08:00:00');
+        $fin = $this->registrarEn('2026-03-10 23:59:59');
+        $despues = $this->registrarEn('2026-03-11 00:00:00');
+
+        $ids = $this->idsDe('date_to=2026-03-10');
+
+        $this->assertEqualsCanonicalizing([$anterior->id, $fin->id], $ids);
+        $this->assertNotContains($despues->id, $ids);
+    }
+
+    public function test_mismo_dia_en_desde_y_hasta_devuelve_todo_ese_dia(): void
+    {
+        $this->registrarEn('2026-03-09 23:59:59');
+        $inicio = $this->registrarEn('2026-03-10 00:00:00');
+        $fin = $this->registrarEn('2026-03-10 23:59:59');
+        $this->registrarEn('2026-03-11 00:00:00');
+
+        $this->assertEqualsCanonicalizing(
+            [$inicio->id, $fin->id],
+            $this->idsDe('date_from=2026-03-10&date_to=2026-03-10')
+        );
+    }
 }
