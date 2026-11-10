@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\PrescriptionController;
 use App\Http\Controllers\Api\DoctorSpecialtyController;
 use App\Http\Controllers\Api\UserController;
 use App\Http\Controllers\Api\AdminRoleController;
+use App\Http\Controllers\Api\AdminActionLogController;
 use App\Http\Controllers\Api\HealthInsuranceController;
 use App\Http\Controllers\Api\SalaController;
 use App\Http\Controllers\Api\DoctorScheduleController;
@@ -34,6 +35,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/users/{id}/admin-role', [AdminRoleController::class, 'grant']);
         Route::delete('/users/{id}/admin-role', [AdminRoleController::class, 'revoke']);
     });
+    Route::middleware('superadmin')->group(function () {
+        Route::get('/auditoria', [AdminActionLogController::class, 'index']);
+    });
+
     Route::middleware('permission:view_assigned_patients')->group(function () {
         Route::get('/medicos/me/pacientes', [DoctorPatientController::class, 'index']);
     });

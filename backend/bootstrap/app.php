@@ -19,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role' => \App\Http\Middleware\EnsureRole::class,
             'permission' => \App\Http\Middleware\EnsurePermission::class,
+            'superadmin' => \App\Http\Middleware\EnsureSuperAdmin::class,
             'superadmin_or_owner' => \App\Http\Middleware\EnsureSuperAdminOrOwner::class,
             'appointment_scope' => \App\Http\Middleware\EnsureAppointmentScope::class,
         ]);
