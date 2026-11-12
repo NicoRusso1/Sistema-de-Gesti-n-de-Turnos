@@ -16,6 +16,7 @@ use App\Http\Controllers\Api\AppointmentController;
 use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PatientHealthInsuranceController;
+use App\Http\Controllers\Api\PagoProcesoController;
 
 // Públicas
 Route::post('/register', [AuthController::class, 'register']);
@@ -132,4 +133,8 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/doctors/{id}/schedules/{scheduleId}', [DoctorScheduleController::class, 'update']);
         Route::delete('/doctors/{id}/schedules/{scheduleId}', [DoctorScheduleController::class, 'destroy']);
     });
+    Route::middleware('auth:sanctum')->group(function () {
+    // ... rutas existentes ...
+    Route::post('/pagos', [PagoProcesoController::class, 'store']);
+});
 });

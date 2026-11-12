@@ -1,19 +1,24 @@
 <div class="admin">
   <header class="page-header">
     <div>
-      <h1>Pagos</h1>
+      <h1>Gestión de Pagos</h1>
       <p>{{ totalRecords() }} {{ totalRecords() === 1 ? 'registro' : 'registros' }}</p>
     </div>
   </header>
+
+  @if (successMessage()) {
+    <div class="alert alert-success" role="alert">{{ successMessage() }}</div>
+  }
 
   @if (!loading() && payments().length > 0) {
     <dl class="stats-strip">
       <div><dt>Abonado en esta página</dt><dd>${{ totalPaid() | number:'1.2-2' }}</dd></div>
       <div><dt>Pendiente en esta página</dt><dd>${{ totalPending() | number:'1.2-2' }}</dd></div>
-      <div><dt>Cantidad de pagos</dt><dd>{{ totalRecords() }}</dd></div>
+      <div><dt>Cantidad de registros</dt><dd>{{ totalRecords() }}</dd></div>
     </dl>
   }
 
+  <!-- Filtros -->
   <form [formGroup]="filterForm" (ngSubmit)="onFilter()" class="toolbar">
     <select class="select" formControlName="status" aria-label="Estado">
       <option value="">Todos los estados</option>
@@ -48,34 +53,64 @@
         <thead>
           <tr>
             <th class="col-secundaria">Turno</th>
-            <th>Consulta</th>
+            <th>Consulta / Médico</th>
             <th class="col-secundaria">Paciente</th>
-            <th class="th-num">Monto</th>
-            <th class="col-secundaria">Método</th>
-            <th>Fecha de pago</th>
+            <th>Cobertura</th>
+            <th class="th-num">Monto Base</th>
+            <th class="th-num">Descuento</th>
+            <th class="th-num">Total</th>
             <th>Estado</th>
-            <th class="col-actions"><span class="sr-only">Acciones</span></th>
+            <th class="col-actions">Acciones</th>
           </tr>
         </thead>
         <tbody>
           @for (p of payments(); track p.id) {
             <tr>
-              <td data-label="Turno" class="col-secundaria">{{ p.appointment_id ? '#' + p.appointment_id : '-' }}</td>
+              <td data-label="Turno" class="col-secundaria">#{{ p.appointment_id }}</td>
               <td data-label="Consulta">
                 <span class="cell-main">{{ p.appointment?.specialty?.name ?? 'Consulta' }}</span>
                 <div class="cell-sub">Dr/a. {{ p.appointment?.doctor?.last_name }}</div>
               </td>
-              <td data-label="Paciente" class="col-secundaria">{{ p.appointment?.patient?.first_name }} {{ p.appointment?.patient?.last_name }}</td>
-              <td data-label="Monto" class="cell-main cell-num">${{ p.amount | number:'1.2-2' }}</td>
-              <td data-label="Método" class="col-secundaria">{{ p.method?.name ?? 'MercadoPago' }}</td>
-              <td data-label="Fecha de pago">{{ p.payment_date ? (p.payment_date | date:'dd/MM/yyyy HH:mm') : 'Pendiente' }}</td>
+              <td data-label="Paciente" class="col-secundaria">
+                {{ p.appointment?.patient?.first_name }} {{ p.appointment?.patient?.last_name }}
+              </td>
+              <td data-label="Cobertura">
+                <span class="badge" [class.badge-os]="p.appointment?.healthInsurance">
+                  {{ getNombreObraSocial(p) }}
+                </span>
+              </td>
+              <td data-label="Monto Base" class="cell-num">
+                ${{ getMontoBase(p) | number:'1.2-2' }}
+              </td>
+              <td data-label="Descuento" class="cell-num">
+                @if (getDescuento(p) > 0) {
+                  <span class="text-discount">- ${{ getDescuento(p) | number:'1.2-2' }}</span>
+                } @else {
+                  <span class="text-muted">$0.00</span>
+                }
+              </td>
+              <td data-label="Total" class="cell-main cell-num">
+                <strong>${{ getMontoFinal(p) | number:'1.2-2' }}</strong>
+              </td>
               <td data-label="Estado">
-                <span class="badge" [class.badge-ok]="p.status.name === 'approved'" [class.badge-error]="p.status.name === 'rejected'" [class.badge-warn]="p.status.name !== 'approved' && p.status.name !== 'rejected'">{{ getStatusLabel(p.status.name) }}</span>
+                <span class="badge"
+                  [class.badge-ok]="p.status.name === 'approved'"
+                  [class.badge-error]="p.status.name === 'rejected'"
+                  [class.badge-warn]="p.status.name === 'pending'">
+                  {{ getStatusLabel(p.status.name) }}
+                </span>
               </td>
               <td class="col-actions">
-                @if (p.status.name === 'pending') {
-                  <a class="btn btn-primary btn-sm" routerLink="/payments/result" [queryParams]="{ external_reference: p.id }">Pagar</a>
-                }
+                <div class="actions-group">
+                  <button type="button" class="btn btn-ghost btn-sm" (click)="openDetailModal(p)" title="Ver Desglose">
+                    🔍 Detalle
+                  </button>
+                  @if (p.status.name === 'pending') {
+                    <button type="button" class="btn btn-primary btn-sm" (click)="openCheckoutModal(p)">
+                      Pagar
+                    </button>
+                  }
+                </div>
               </td>
             </tr>
           }
@@ -91,6 +126,115 @@
   } @else {
     <div class="empty-state">
       <p>No se encontraron pagos con los filtros seleccionados.</p>
+    </div>
+  }
+
+  <!-- MODAL 1: CHECKOUT / PAGAR DIRECTO EN PÁGINA -->
+  @if (showPaymentModal() && selectedPayment(); as p) {
+    <div class="modal-backdrop" (click)="closeCheckoutModal()">
+      <div class="modal-dialog" (click)="$event.stopPropagation()">
+        <header class="modal-header">
+          <h3>Pagar Turno #{{ p.appointment_id }}</h3>
+          <button type="button" class="btn-close" (click)="closeCheckoutModal()">&times;</button>
+        </header>
+
+        <div class="modal-body">
+          <div class="summary-box">
+            <div class="summary-line">
+              <span>Consulta:</span>
+              <strong>{{ p.appointment?.specialty?.name }} - Dr/a. {{ p.appointment?.doctor?.last_name }}</strong>
+            </div>
+            <div class="summary-line">
+              <span>Valor Base:</span>
+              <span>${{ getMontoBase(p) | number:'1.2-2' }}</span>
+            </div>
+            <div class="summary-line">
+              <span>Obra Social:</span>
+              <span class="badge badge-os">{{ getNombreObraSocial(p) }}</span>
+            </div>
+            @if (getDescuento(p) > 0) {
+              <div class="summary-line text-discount">
+                <span>Descuento aplicado:</span>
+                <span>- ${{ getDescuento(p) | number:'1.2-2' }}</span>
+              </div>
+            }
+            <div class="summary-line total-highlight">
+              <span>Monto a Cobrar:</span>
+              <span>${{ getMontoFinal(p) | number:'1.2-2' }}</span>
+            </div>
+          </div>
+
+          @if (paymentError()) {
+            <div class="alert alert-danger">{{ paymentError() }}</div>
+          }
+
+          <form [formGroup]="checkoutForm" (ngSubmit)="confirmarPagoEnSitio()">
+            <div class="form-field">
+              <label for="modal-cardholder">Nombre en la tarjeta</label>
+              <input id="modal-cardholder" type="text" formControlName="cardholderName" class="input" />
+            </div>
+
+            <div class="form-field">
+              <label for="modal-method">Método de Pago</label>
+              <select id="modal-method" formControlName="paymentMethod" class="select">
+                <option value="tarjeta_credito">Tarjeta de Crédito</option>
+                <option value="tarjeta_debito">Tarjeta de Débito</option>
+                <option value="transferencia">Transferencia Bancaria</option>
+              </select>
+            </div>
+
+            <div class="form-field">
+              <label for="modal-simulate">Simulación (QA Testing)</label>
+              <select id="modal-simulate" formControlName="simulateResult" class="select">
+                <option value="aprobado">Aprobado (Fondos suficientes)</option>
+                <option value="rechazado">Rechazado (Tarjeta declinada)</option>
+              </select>
+            </div>
+
+            <div class="modal-footer">
+              <button type="button" class="btn btn-ghost" (click)="closeCheckoutModal()">Cancelar</button>
+              <button type="submit" [disabled]="processingPayment()" class="btn btn-primary">
+                {{ processingPayment() ? 'Procesando...' : 'Confirmar Pago de $' + (getMontoFinal(p) | number:'1.2-2') }}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- MODAL 2: DETALLE / TRAZABILIDAD DEL CÁLCULO -->
+  @if (showDetailModal() && selectedPayment(); as p) {
+    <div class="modal-backdrop" (click)="closeDetailModal()">
+      <div class="modal-dialog" (click)="$event.stopPropagation()">
+        <header class="modal-header">
+          <h3>Trazabilidad de Pago #{{ p.id }}</h3>
+          <button type="button" class="btn-close" (click)="closeDetailModal()">&times;</button>
+        </header>
+        <div class="modal-body">
+          <ul class="detail-list">
+            <li><strong>Turno Asociado:</strong> #{{ p.appointment_id }}</li>
+            <li><strong>Paciente:</strong> {{ p.appointment?.patient?.first_name }} {{ p.appointment?.patient?.last_name }}</li>
+            <li><strong>Médico:</strong> Dr/a. {{ p.appointment?.doctor?.first_name }} {{ p.appointment?.doctor?.last_name }}</li>
+            <li><strong>Especialidad:</strong> {{ p.appointment?.specialty?.name }}</li>
+            <li><strong>Obra Social:</strong> {{ p.appointment?.healthInsurance?.name ?? 'Ninguna (Particular)' }}</li>
+            @if (p.appointment?.healthInsurance) {
+              <li><strong>Descuento Configurado:</strong> {{ p.appointment?.healthInsurance?.discount_percentage }}%</li>
+              <li><strong>N° de Afiliado:</strong> {{ p.appointment?.affiliate_number ?? 'No registrado' }}</li>
+            }
+            <li class="divider"></li>
+            <li><strong>Monto Base Original:</strong> ${{ getMontoBase(p) | number:'1.2-2' }}</li>
+            <li class="text-discount"><strong>Descuento Bonificado:</strong> - ${{ getDescuento(p) | number:'1.2-2' }}</li>
+            <li class="total-highlight"><strong>Monto Final Pagado:</strong> ${{ getMontoFinal(p) | number:'1.2-2' }}</li>
+            <li class="divider"></li>
+            <li><strong>Estado Actual:</strong> {{ getStatusLabel(p.status.name) }}</li>
+            <li><strong>Fecha de Pago:</strong> {{ p.payment_date ? (p.payment_date | date:'dd/MM/yyyy HH:mm:ss') : 'Pendiente' }}</li>
+          </ul>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" (click)="closeDetailModal()">Cerrar</button>
+          </div>
+        </div>
+      </div>
     </div>
   }
 </div>
