@@ -9,6 +9,7 @@ import { Login } from './pages/login/login';
 import { Register } from './pages/register/register';
 import { ForgotPassword } from './pages/forgot-password/forgot-password';
 import { ResetPassword } from './pages/reset-password/reset-password';
+import { superAdminGuard } from './guards/super-admin.guard';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'home', pathMatch: 'full' },
@@ -146,6 +147,13 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/notifications/notifications').then(m => m.NotificationsComponent),
     canActivate: [authGuard]
   },
+  {
+    path: 'metrics',
+    title: 'Métricas Globales | SIGT',
+    loadComponent: () => import('./pages/global-metrics/global-metrics').then(m => m.GlobalMetricsComponent),
+    canActivate: [superAdminGuard]
+  },
   { path: 'forbidden', title: 'Acceso denegado | SIGT', component: Forbidden },
   { path: '**', title: 'Página no encontrada | SIGT', component: NotFound },
+
 ];

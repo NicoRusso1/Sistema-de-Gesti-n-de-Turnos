@@ -17,6 +17,7 @@ use App\Http\Controllers\Api\PaymentController;
 use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PatientHealthInsuranceController;
 use App\Http\Controllers\Api\PagoProcesoController;
+use App\Http\Controllers\Api\GlobalMetricsController;
 
 // Públicas
 Route::post('/register', [AuthController::class, 'register']);
@@ -133,8 +134,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/doctors/{id}/schedules/{scheduleId}', [DoctorScheduleController::class, 'update']);
         Route::delete('/doctors/{id}/schedules/{scheduleId}', [DoctorScheduleController::class, 'destroy']);
     });
-    Route::middleware('auth:sanctum')->group(function () {
-    // ... rutas existentes ...
+    
     Route::post('/pagos', [PagoProcesoController::class, 'store']);
-});
+
+    Route::middleware('role:SuperAdmin')->group(function () {
+        Route::get('/metricas/globales', [GlobalMetricsController::class, 'index']);
+        Route::get('/metricas/globales/export', [GlobalMetricsController::class, 'export']);
+    });
 });
