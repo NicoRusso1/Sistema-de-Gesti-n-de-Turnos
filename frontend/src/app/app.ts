@@ -23,6 +23,9 @@ export class App {
     const role = this.user()?.role?.name;
     return role === 'Administrator' || role === 'SuperAdmin';
   }
+  isSuperAdmin(): boolean {
+    return this.user()?.role?.name === 'SuperAdmin';
+  }
   isDoctor(): boolean {
     return this.user()?.user_type?.name === 'doctor';
   }
