@@ -14,6 +14,11 @@ class AdminActionLog extends Model
 
     protected $fillable = ['superadmin_id', 'affected_admin_id', 'action_id', 'date'];
 
+    protected function casts(): array
+    {
+        return ['date' => 'datetime'];
+    }
+
     protected static function booted(): void
     {
         static::updating(function () {

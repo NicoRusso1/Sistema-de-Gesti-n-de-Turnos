@@ -87,9 +87,14 @@ class AdminActionLogImmutabilityTest extends TestCase
         $this->assertDatabaseHas('admin_action_log', ['id' => $this->log->id]);
     }
 
-    public function test_no_existen_rutas_que_modifiquen_o_eliminen_el_log(): void
+        public function test_no_existen_rutas_que_modifiquen_o_eliminen_el_log(): void
     {
         foreach (app('router')->getRoutes() as $route) {
+            if ($route->uri() === 'api/auditoria') {
+                $this->assertSame(['GET', 'HEAD'], $route->methods());
+                continue;
+            }
+
             $this->assertStringNotContainsString('admin-action-log', $route->uri());
             $this->assertStringNotContainsString('admin_action_log', $route->uri());
             $this->assertStringNotContainsString('AdminActionLog', $route->getActionName());

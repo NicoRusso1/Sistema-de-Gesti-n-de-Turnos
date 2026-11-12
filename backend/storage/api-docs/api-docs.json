@@ -12,6 +12,246 @@
         }
     ],
     "paths": {
+        "/api/auditoria": {
+            "get": {
+                "tags": [
+                    "Auditoría"
+                ],
+                "summary": "Historial de auditoría de acciones administrativas",
+                "description": "Lista paginada de las acciones registradas sobre administradores, ordenada por fecha descendente. Solo accesible para el SuperAdmin.",
+                "operationId": "b51d352aa89c075fcc58d0c9031ff195",
+                "parameters": [
+                    {
+                        "name": "action",
+                        "in": "query",
+                        "description": "Filtra por tipo de acción",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "grant_owner",
+                                "revoke_owner",
+                                "activate",
+                                "deactivate",
+                                "grant_admin",
+                                "revoke_admin"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "affected_admin_id",
+                        "in": "query",
+                        "description": "ID del administrador afectado",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "minimum": 1
+                        },
+                        "example": 2
+                    },
+                    {
+                        "name": "date_from",
+                        "in": "query",
+                        "description": "Fecha desde (inclusiva)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        },
+                        "example": "2026-01-01"
+                    },
+                    {
+                        "name": "date_to",
+                        "in": "query",
+                        "description": "Fecha hasta (inclusiva). No puede ser anterior a date_from",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        },
+                        "example": "2026-01-31"
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Resultados por página (1 a 100, por defecto 15)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 15,
+                            "maximum": 100,
+                            "minimum": 1
+                        }
+                    },
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Número de página",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 1,
+                            "minimum": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Página de registros del historial.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer",
+                                                        "example": 12
+                                                    },
+                                                    "date": {
+                                                        "type": "string",
+                                                        "format": "date-time",
+                                                        "example": "2026-03-01T10:00:00+00:00"
+                                                    },
+                                                    "action": {
+                                                        "properties": {
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "grant_admin"
+                                                            },
+                                                            "label": {
+                                                                "type": "string",
+                                                                "example": "Otorgó rol de administrador"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "actor": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "Ana Lopez"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    },
+                                                    "affected": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 2
+                                                            },
+                                                            "name": {
+                                                                "type": "string",
+                                                                "example": "Beto Ruiz"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "links": {
+                                            "type": "object"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "example": 3
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "example": 15
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "example": 40
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Solo el Super Administrador puede acceder.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Solo el Super Administrador puede realizar esta acción"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Filtros inválidos (acción inexistente, fecha inválida, date_to anterior a date_from, per_page fuera de rango).",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "La fecha hasta no puede ser anterior a la fecha desde."
+                                        },
+                                        "errors": {
+                                            "type": "object",
+                                            "example": {
+                                                "date_to": [
+                                                    "La fecha hasta no puede ser anterior a la fecha desde."
+                                                ]
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/users/{id}/admin-role": {
             "post": {
                 "tags": [
@@ -4026,6 +4266,10 @@
         }
     },
     "tags": [
+        {
+            "name": "Auditoría",
+            "description": "Auditoría"
+        },
         {
             "name": "Roles administrativos",
             "description": "Roles administrativos"
