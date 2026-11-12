@@ -18,6 +18,7 @@ use App\Http\Controllers\Api\NotificationController;
 use App\Http\Controllers\Api\PatientHealthInsuranceController;
 use App\Http\Controllers\Api\PagoProcesoController;
 use App\Http\Controllers\Api\GlobalMetricsController;
+use App\Http\Controllers\Api\CertificateController;
 
 // Públicas
 Route::post('/register', [AuthController::class, 'register']);
@@ -141,4 +142,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/metricas/globales', [GlobalMetricsController::class, 'index']);
         Route::get('/metricas/globales/export', [GlobalMetricsController::class, 'export']);
     });
+    
+    Route::get('/certificados', [CertificateController::class, 'index']);
+    Route::get('/certificados/{id}/download', [CertificateController::class, 'download']);
 });

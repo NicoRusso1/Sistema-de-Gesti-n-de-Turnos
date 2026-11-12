@@ -57,6 +57,13 @@ export class App {
     return this.isAdmin() ? 'Gestión de Pagos' : 'Mis Pagos';
   }
 
+  canViewCertificates(): boolean {
+    return this.isAdmin() || this.isPatient();
+  }
+  certificatesLabel(): string {
+    return this.isAdmin() ? 'Certificados Emitidos' : 'Mis Certificados';
+  }
+  
   canAccessNotifications(): boolean {
     return this.isAdmin() || this.isDoctor();
   }
