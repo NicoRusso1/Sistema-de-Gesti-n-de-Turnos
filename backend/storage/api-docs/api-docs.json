@@ -2102,6 +2102,136 @@
                 ]
             }
         },
+        "/api/pagos": {
+            "get": {
+                "tags": [
+                    "Pagos"
+                ],
+                "summary": "Consultar listado de pagos con filtros",
+                "description": "Retorna pagos paginados. Los pacientes solo ven sus pagos; administradores pueden consultar el historial global y filtrar por paciente, estado o rango de fechas.",
+                "operationId": "8b9dc3fc7949cd4785e93ac93d0c3f10",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Nombre del estado: pending, approved, rejected",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "fecha_desde",
+                        "in": "query",
+                        "description": "Fecha inicio YYYY-MM-DD",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "fecha_hasta",
+                        "in": "query",
+                        "description": "Fecha fin YYYY-MM-DD",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "patient_id",
+                        "in": "query",
+                        "description": "ID del paciente (solo admins)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Elementos por página (default 15)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Listado de pagos paginado."
+                    },
+                    "401": {
+                        "description": "No autenticado."
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Pagos"
+                ],
+                "summary": "Registrar pago de turno y aplicar descuento de obra social",
+                "operationId": "0d7d4c468398abfe7ffb1ae2d7356f1e",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "turno_id",
+                                    "token_pago"
+                                ],
+                                "properties": {
+                                    "turno_id": {
+                                        "type": "integer",
+                                        "example": 12
+                                    },
+                                    "token_pago": {
+                                        "type": "string",
+                                        "example": "tok_visa_12345"
+                                    },
+                                    "metodo_pago": {
+                                        "type": "string",
+                                        "example": "tarjeta_credito"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Pago aprobado y turno confirmado."
+                    },
+                    "402": {
+                        "description": "Pago rechazado por la entidad bancaria."
+                    },
+                    "403": {
+                        "description": "Turno no pertenece al paciente logueado."
+                    },
+                    "409": {
+                        "description": "El turno no se encuentra en estado reservado."
+                    },
+                    "422": {
+                        "description": "Datos inválidos."
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/me/health-insurance": {
             "get": {
                 "tags": [
@@ -2231,79 +2361,6 @@
                     },
                     "404": {
                         "description": "El paciente no tiene una obra social cargada."
-                    }
-                },
-                "security": [
-                    {
-                        "sanctum": []
-                    }
-                ]
-            }
-        },
-        "/api/pagos": {
-            "get": {
-                "tags": [
-                    "Pagos"
-                ],
-                "summary": "Consultar listado de pagos con filtros",
-                "description": "Retorna pagos paginados. Los pacientes solo ven sus pagos; administradores pueden consultar el historial global y filtrar por paciente, estado o rango de fechas.",
-                "operationId": "8b9dc3fc7949cd4785e93ac93d0c3f10",
-                "parameters": [
-                    {
-                        "name": "status",
-                        "in": "query",
-                        "description": "Nombre del estado: pending, approved, rejected",
-                        "required": false,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "fecha_desde",
-                        "in": "query",
-                        "description": "Fecha inicio YYYY-MM-DD",
-                        "required": false,
-                        "schema": {
-                            "type": "string",
-                            "format": "date"
-                        }
-                    },
-                    {
-                        "name": "fecha_hasta",
-                        "in": "query",
-                        "description": "Fecha fin YYYY-MM-DD",
-                        "required": false,
-                        "schema": {
-                            "type": "string",
-                            "format": "date"
-                        }
-                    },
-                    {
-                        "name": "patient_id",
-                        "in": "query",
-                        "description": "ID del paciente (solo admins)",
-                        "required": false,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "name": "per_page",
-                        "in": "query",
-                        "description": "Elementos por página (default 15)",
-                        "required": false,
-                        "schema": {
-                            "type": "integer",
-                            "default": 15
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Listado de pagos paginado."
-                    },
-                    "401": {
-                        "description": "No autenticado."
                     }
                 },
                 "security": [
@@ -3845,12 +3902,12 @@
             "description": "Notificaciones"
         },
         {
-            "name": "Obra social del paciente",
-            "description": "Obra social del paciente"
-        },
-        {
             "name": "Pagos",
             "description": "Pagos"
+        },
+        {
+            "name": "Obra social del paciente",
+            "description": "Obra social del paciente"
         },
         {
             "name": "Recetas",
