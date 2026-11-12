@@ -1,0 +1,70 @@
+<div class="checkout-container">
+  <div class="checkout-card">
+    <div class="checkout-header">
+      <h2>Confirmar y Pagar Turno #{{ turnoId() }}</h2>
+      <p class="subtitle">Verifique el desglose de su cobertura antes de abonar.</p>
+    </div>
+
+    <!-- Desglose de Montos y Obra Social -->
+    <div class="desglose-panel">
+      <h3>Resumen del Arancel</h3>
+      <div class="row">
+        <span>Valor Consulta:</span>
+        <strong>${{ montoOriginal() | number:'1.2-2' }}</strong>
+      </div>
+
+      <div class="row">
+        <span>Cobertura / Obra Social:</span>
+        <span class="badge" [class.badge-os]="nombreObraSocial()">
+          {{ nombreObraSocial() ? nombreObraSocial() + ' (' + porcentajeDescuento() + '%)' : 'Particular (Sin descuento)' }}
+        </span>
+      </div>
+
+      @if (descuentoCalculado() > 0) {
+        <div class="row text-success">
+          <span>Descuento aplicado:</span>
+          <strong>- ${{ descuentoCalculado() | number:'1.2-2' }}</strong>
+        </div>
+      }
+
+      <hr class="divider" />
+
+      <div class="row total-row">
+        <span>Total a Abonar:</span>
+        <span class="total-amount">${{ montoFinal() | number:'1.2-2' }}</span>
+      </div>
+    </div>
+
+    <!-- Mensajes de feedback -->
+    @if (errorMessage()) {
+      <div class="alert alert-danger">{{ errorMessage() }}</div>
+    }
+    @if (successMessage()) {
+      <div class="alert alert-success">{{ successMessage() }}</div>
+    }
+
+    <!-- Formulario de Pago Seguro -->
+    <form [formGroup]="checkoutForm" (ngSubmit)="confirmarPago()" class="checkout-form">
+      <div class="form-group">
+        <label for="cardholder">Titular de la Tarjeta</label>
+        <input id="cardholder" type="text" formControlName="cardholderName" placeholder="Juan Pérez" />
+      </div>
+
+      <div class="form-group">
+        <label for="simulateResult">Simulación de Pasarela (Testing QA)</label>
+        <select id="simulateResult" formControlName="simulateResult">
+          <option value="aprobado">Aprobado (Simular fondos suficientes)</option>
+          <option value="rechazado">Rechazado (Simular tarjeta declinada)</option>
+        </select>
+      </div>
+
+      <button type="submit" [disabled]="loading()" class="btn-pagar">
+        @if (loading()) {
+          Procesando Pago Seguro...
+        } @else {
+          Pagar ${{ montoFinal() | number:'1.2-2' }}
+        }
+      </button>
+    </form>
+  </div>
+</div>

@@ -1061,6 +1061,67 @@
                 }
             }
         },
+        "/api/certificados": {
+            "get": {
+                "tags": [
+                    "Certificados"
+                ],
+                "summary": "Consultar certificados emitidos del paciente autenticado (GT-153)",
+                "operationId": "e043b7672bc9f4e4abcf33096a1091f6",
+                "responses": {
+                    "200": {
+                        "description": "Listado de certificados del paciente ordenados por fecha descendente."
+                    },
+                    "401": {
+                        "description": "No autenticado."
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/certificados/{id}/download": {
+            "get": {
+                "tags": [
+                    "Certificados"
+                ],
+                "summary": "Descarga segura del certificado médico (GT-154)",
+                "operationId": "6bfabdbfc67a1764b2504d2a17040398",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID del certificado",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Descarga del archivo PDF."
+                    },
+                    "401": {
+                        "description": "No autenticado."
+                    },
+                    "403": {
+                        "description": "No tenés permiso para descargar este certificado."
+                    },
+                    "404": {
+                        "description": "Certificado o archivo físico no encontrado."
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/medicos/me/pacientes": {
             "get": {
                 "tags": [
@@ -1645,6 +1706,106 @@
                     },
                     "404": {
                         "description": "Especialidad no encontrada."
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/metricas/globales": {
+            "get": {
+                "tags": [
+                    "Métricas"
+                ],
+                "summary": "Consultar métricas globales del centro médico (Solo Super Administrador)",
+                "operationId": "846ddd36b03bcbc95db2960a7e0b230f",
+                "parameters": [
+                    {
+                        "name": "fecha_desde",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "fecha_hasta",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Métricas agregadas obtenidas con éxito."
+                    },
+                    "401": {
+                        "description": "No autenticado."
+                    },
+                    "403": {
+                        "description": "Acceso denegado: solo SuperAdmin."
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/metricas/globales/export": {
+            "get": {
+                "tags": [
+                    "Métricas"
+                ],
+                "summary": "Exportar reporte de métricas en PDF o CSV (Solo Super Administrador)",
+                "operationId": "7d3fe0eb0f3439179ef3f93c6bffb07f",
+                "parameters": [
+                    {
+                        "name": "formato",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "pdf",
+                            "enum": [
+                                "pdf",
+                                "csv"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "fecha_desde",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "fecha_hasta",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Archivo binario descargado."
+                    },
+                    "403": {
+                        "description": "No autorizado."
                     }
                 },
                 "security": [
@@ -2342,6 +2503,136 @@
                 ]
             }
         },
+        "/api/pagos": {
+            "get": {
+                "tags": [
+                    "Pagos"
+                ],
+                "summary": "Consultar listado de pagos con filtros",
+                "description": "Retorna pagos paginados. Los pacientes solo ven sus pagos; administradores pueden consultar el historial global y filtrar por paciente, estado o rango de fechas.",
+                "operationId": "8b9dc3fc7949cd4785e93ac93d0c3f10",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Nombre del estado: pending, approved, rejected",
+                        "required": false,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "name": "fecha_desde",
+                        "in": "query",
+                        "description": "Fecha inicio YYYY-MM-DD",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "fecha_hasta",
+                        "in": "query",
+                        "description": "Fecha fin YYYY-MM-DD",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "patient_id",
+                        "in": "query",
+                        "description": "ID del paciente (solo admins)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Elementos por página (default 15)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "default": 15
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Listado de pagos paginado."
+                    },
+                    "401": {
+                        "description": "No autenticado."
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Pagos"
+                ],
+                "summary": "Registrar pago de turno y aplicar descuento de obra social",
+                "operationId": "0d7d4c468398abfe7ffb1ae2d7356f1e",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "turno_id",
+                                    "token_pago"
+                                ],
+                                "properties": {
+                                    "turno_id": {
+                                        "type": "integer",
+                                        "example": 12
+                                    },
+                                    "token_pago": {
+                                        "type": "string",
+                                        "example": "tok_visa_12345"
+                                    },
+                                    "metodo_pago": {
+                                        "type": "string",
+                                        "example": "tarjeta_credito"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Pago aprobado y turno confirmado."
+                    },
+                    "402": {
+                        "description": "Pago rechazado por la entidad bancaria."
+                    },
+                    "403": {
+                        "description": "Turno no pertenece al paciente logueado."
+                    },
+                    "409": {
+                        "description": "El turno no se encuentra en estado reservado."
+                    },
+                    "422": {
+                        "description": "Datos inválidos."
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/me/health-insurance": {
             "get": {
                 "tags": [
@@ -2471,79 +2762,6 @@
                     },
                     "404": {
                         "description": "El paciente no tiene una obra social cargada."
-                    }
-                },
-                "security": [
-                    {
-                        "sanctum": []
-                    }
-                ]
-            }
-        },
-        "/api/pagos": {
-            "get": {
-                "tags": [
-                    "Pagos"
-                ],
-                "summary": "Consultar listado de pagos con filtros",
-                "description": "Retorna pagos paginados. Los pacientes solo ven sus pagos; administradores pueden consultar el historial global y filtrar por paciente, estado o rango de fechas.",
-                "operationId": "8b9dc3fc7949cd4785e93ac93d0c3f10",
-                "parameters": [
-                    {
-                        "name": "status",
-                        "in": "query",
-                        "description": "Nombre del estado: pending, approved, rejected",
-                        "required": false,
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    {
-                        "name": "fecha_desde",
-                        "in": "query",
-                        "description": "Fecha inicio YYYY-MM-DD",
-                        "required": false,
-                        "schema": {
-                            "type": "string",
-                            "format": "date"
-                        }
-                    },
-                    {
-                        "name": "fecha_hasta",
-                        "in": "query",
-                        "description": "Fecha fin YYYY-MM-DD",
-                        "required": false,
-                        "schema": {
-                            "type": "string",
-                            "format": "date"
-                        }
-                    },
-                    {
-                        "name": "patient_id",
-                        "in": "query",
-                        "description": "ID del paciente (solo admins)",
-                        "required": false,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    },
-                    {
-                        "name": "per_page",
-                        "in": "query",
-                        "description": "Elementos por página (default 15)",
-                        "required": false,
-                        "schema": {
-                            "type": "integer",
-                            "default": 15
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Listado de pagos paginado."
-                    },
-                    "401": {
-                        "description": "No autenticado."
                     }
                 },
                 "security": [
@@ -4081,6 +4299,10 @@
             "description": "Especialidades de médicos"
         },
         {
+            "name": "Métricas",
+            "description": "Métricas"
+        },
+        {
             "name": "Obras sociales",
             "description": "Obras sociales"
         },
@@ -4089,12 +4311,12 @@
             "description": "Notificaciones"
         },
         {
-            "name": "Obra social del paciente",
-            "description": "Obra social del paciente"
-        },
-        {
             "name": "Pagos",
             "description": "Pagos"
+        },
+        {
+            "name": "Obra social del paciente",
+            "description": "Obra social del paciente"
         },
         {
             "name": "Recetas",

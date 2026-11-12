@@ -12,6 +12,7 @@ use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
+use App\Models\AdminAction;
 
 class AdminActionLogFilterTest extends TestCase
 {
@@ -37,9 +38,14 @@ class AdminActionLogFilterTest extends TestCase
         ]);
     }
 
-    private function registrar(AdminActionName $accion): AdminActionLog
+        private function registrar(AdminActionName $accion, ?string $fecha = null): AdminActionLog
     {
-        return AdminActionLog::record($this->superAdmin, $this->admin, $accion);
+        return AdminActionLog::create([
+            'superadmin_id' => $this->superAdmin->id,
+            'affected_admin_id' => $this->admin->id,
+            'action_id' => AdminAction::where('name', $accion->value)->firstOrFail()->id,
+            'date' => $fecha ?? now(),
+        ]);
     }
 
     public function test_filtra_por_tipo_de_accion(): void
@@ -121,12 +127,9 @@ class AdminActionLogFilterTest extends TestCase
             ->assertJsonValidationErrors('affected_admin_id');
     }
 
-    private function registrarEn(string $fecha): AdminActionLog
+        private function registrarEn(string $fecha): AdminActionLog
     {
-        $log = $this->registrar(AdminActionName::GrantAdmin);
-        $log->update(['date' => $fecha]);
-
-        return $log;
+        return $this->registrar(AdminActionName::GrantAdmin, $fecha);
     }
 
     private function idsDe(string $query): array
@@ -192,12 +195,14 @@ class AdminActionLogFilterTest extends TestCase
         );
     }
 
-    private function registrarCon(Patient $afectado, AdminActionName $accion, string $fecha): AdminActionLog
+        private function registrarCon(Patient $afectado, AdminActionName $accion, string $fecha): AdminActionLog
     {
-        $log = AdminActionLog::record($this->superAdmin, $afectado, $accion);
-        $log->update(['date' => $fecha]);
-
-        return $log;
+        return AdminActionLog::create([
+            'superadmin_id' => $this->superAdmin->id,
+            'affected_admin_id' => $afectado->id,
+            'action_id' => AdminAction::where('name', $accion->value)->firstOrFail()->id,
+            'date' => $fecha,
+        ]);
     }
 
     public function test_filtros_combinados_accion_administrador_y_fechas(): void

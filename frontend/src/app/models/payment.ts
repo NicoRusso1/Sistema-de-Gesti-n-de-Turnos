@@ -9,7 +9,10 @@ export interface PaymentStartResponse {
 export interface Payment {
   id: number;
   appointment_id: number;
-  amount: string;
+  amount: string | number;
+  monto_original?: number;
+  descuento_aplicado?: number;
+  monto_final?: number;
   payment_date: string | null;
   status: { id: number; name: 'pending' | 'approved' | 'rejected' };
   method: { id: number; name: 'transfer' | 'credit' | 'debit' } | null;

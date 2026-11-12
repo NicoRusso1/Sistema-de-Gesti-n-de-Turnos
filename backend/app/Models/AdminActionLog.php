@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use App\Enums\AdminActionName;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use LogicException;
 
 class AdminActionLog extends Model
 {
@@ -16,6 +17,17 @@ class AdminActionLog extends Model
     protected function casts(): array
     {
         return ['date' => 'datetime'];
+    }
+
+    protected static function booted(): void
+    {
+        static::updating(function () {
+            throw new LogicException('Los registros del log de acciones administrativas no pueden modificarse.');
+        });
+
+        static::deleting(function () {
+            throw new LogicException('Los registros del log de acciones administrativas no pueden eliminarse.');
+        });
     }
 
     public static function record(Patient $actor, Patient $affected, AdminActionName $action): self

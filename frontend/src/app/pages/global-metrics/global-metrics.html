@@ -1,0 +1,117 @@
+<div class="metrics-container">
+  <header class="page-header">
+    <div>
+      <h1>Métricas Globales del Centro Médico</h1>
+      <p class="subtitle">Tablero de control y toma de decisiones (Super Administrador)</p>
+    </div>
+
+    <div class="export-actions">
+      <button type="button" class="btn btn-secondary" [disabled]="exporting()" (click)="descargarReporte('csv')">
+        📥 Exportar CSV
+      </button>
+      <button type="button" class="btn btn-primary" [disabled]="exporting()" (click)="descargarReporte('pdf')">
+        📄 Descargar PDF
+      </button>
+    </div>
+  </header>
+
+  <!-- Filtro por Período -->
+  <form [formGroup]="filterForm" (ngSubmit)="cargarMetricas()" class="filter-bar">
+    <div class="date-group">
+      <label>Desde: <input type="date" formControlName="fecha_desde" class="input" /></label>
+      <label>Hasta: <input type="date" formControlName="fecha_hasta" class="input" /></label>
+      <button type="submit" class="btn btn-filter">Aplicar Filtro</button>
+    </div>
+
+    <div class="quick-pills">
+      <button type="button" class="pill" (click)="setPeriodoRapido(7)">Últimos 7 días</button>
+      <button type="button" class="pill" (click)="setPeriodoRapido(30)">Últimos 30 días</button>
+      <button type="button" class="pill" (click)="setPeriodoRapido(90)">Último trimestre</button>
+    </div>
+  </form>
+
+  @if (errorMessage()) {
+    <div class="alert alert-danger">{{ errorMessage() }}</div>
+  }
+
+  @if (loading()) {
+    <div class="loading-box">Cargando métricas del sistema...</div>
+  } @else if (metrics(); as m) {
+    <!-- TARJETAS DE RESUMEN (KPIS) -->
+    <div class="kpi-grid">
+      <div class="kpi-card">
+        <span class="kpi-title">Ingresos Totales</span>
+        <strong class="kpi-num">${{ m.kpis.ingresos_totales | number:'1.2-2' }}</strong>
+        <span class="kpi-sub">Pagos aprobados en el período</span>
+      </div>
+
+      <div class="kpi-card">
+        <span class="kpi-title">Turnos Gestionados</span>
+        <strong class="kpi-num">{{ m.kpis.total_turnos }}</strong>
+        <span class="kpi-sub">Total de reservas agendadas</span>
+      </div>
+
+      <div class="kpi-card">
+        <span class="kpi-title">Salas Operativas</span>
+        <strong class="kpi-num">{{ m.kpis.total_salas_activas }}</strong>
+        <span class="kpi-sub">Disponibles para consultas</span>
+      </div>
+
+      <div class="kpi-card">
+        <span class="kpi-title">Usuarios Activos</span>
+        <strong class="kpi-num">{{ m.kpis.total_usuarios_act }}</strong>
+        <span class="kpi-sub">{{ m.usuarios_desglose.pacientes_activos }} pacientes | {{ m.usuarios_desglose.medicos_activos }} médicos</span>
+      </div>
+    </div>
+
+    <!-- SECCIÓN DE GRÁFICOS Y DISTRIBUCIONES -->
+    <div class="dashboard-grid">
+      <!-- Turnos por Especialidad (Gráfico de Barras Proporcionales) -->
+      <section class="card-section">
+        <h3>Turnos por Especialidad</h3>
+        @if (m.turnos_por_especialidad.length > 0) {
+          <div class="chart-list">
+            @for (esp of m.turnos_por_especialidad; track esp.especialidad) {
+              <div class="bar-row">
+                <div class="bar-labels">
+                  <span>{{ esp.especialidad }}</span>
+                  <strong>{{ esp.total }} ({{ esp.porcentaje }}%)</strong>
+                </div>
+                <div class="bar-track">
+                  <div class="bar-fill" [style.width.%]="esp.porcentaje"></div>
+                </div>
+              </div>
+            }
+          </div>
+        } @else {
+          <p class="empty-txt">No se registraron turnos en este período.</p>
+        }
+      </section>
+
+      <!-- Rendimiento y Ocupación de Salas -->
+      <section class="card-section">
+        <h3>Ocupación de Salas</h3>
+        <table class="table-mini">
+          <thead>
+            <tr>
+              <th>Sala</th>
+              <th>Piso</th>
+              <th>Estado</th>
+              <th class="text-right">Turnos Atendidos</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (sala of m.ocupacion_salas; track sala.sala_id) {
+              <tr>
+                <td><strong>Sala {{ sala.numero }}</strong></td>
+                <td>Piso {{ sala.piso }}</td>
+                <td><span class="badge" [class.badge-active]="sala.estado === 'Activa'">{{ sala.estado }}</span></td>
+                <td class="text-right">{{ sala.turnos_atendidos }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </section>
+    </div>
+  }
+</div>

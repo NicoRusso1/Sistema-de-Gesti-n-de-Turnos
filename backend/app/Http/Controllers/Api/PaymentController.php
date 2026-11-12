@@ -44,12 +44,13 @@ class PaymentController extends Controller
         $user = $request->user();
         $isGlobalAdmin = $user->hasAdminAccess() || $user->hasPermissionFlag('view_all_appointments');
 
-        $query = Payment::with([
+                $query = Payment::with([
             'status',
             'method',
             'appointment.patient',
             'appointment.doctor',
-            'appointment.specialty'
+            'appointment.specialty',
+            'appointment.healthInsurance'
         ]);
 
         // Restricción por rol de usuario

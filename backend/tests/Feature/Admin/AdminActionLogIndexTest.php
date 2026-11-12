@@ -12,6 +12,7 @@ use Database\Seeders\RoleSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
+use App\Models\AdminAction;
 
 class AdminActionLogIndexTest extends TestCase
 {
@@ -36,12 +37,14 @@ class AdminActionLogIndexTest extends TestCase
         ]);
     }
 
-    private function registrar(string $fecha, AdminActionName $accion = AdminActionName::GrantAdmin): AdminActionLog
+        private function registrar(string $fecha, AdminActionName $accion = AdminActionName::GrantAdmin): AdminActionLog
     {
-        $log = AdminActionLog::record($this->superAdmin, $this->admin, $accion);
-        $log->update(['date' => $fecha]);
-
-        return $log;
+        return AdminActionLog::create([
+            'superadmin_id' => $this->superAdmin->id,
+            'affected_admin_id' => $this->admin->id,
+            'action_id' => AdminAction::where('name', $accion->value)->firstOrFail()->id,
+            'date' => $fecha,
+        ]);
     }
 
     public function test_superadmin_lista_el_historial_con_la_estructura_esperada(): void
