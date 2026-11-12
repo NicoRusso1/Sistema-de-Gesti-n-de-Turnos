@@ -1,0 +1,72 @@
+<div class="certificates-container">
+  <header class="page-header">
+    <div>
+      <h1>Mis Certificados Médicos</h1>
+      <p class="subtitle">Consulta y descarga los certificados emitidos de tus consultas médicas.</p>
+    </div>
+  </header>
+
+  @if (errorMessage()) {
+    <div class="alert alert-danger">{{ errorMessage() }}</div>
+  }
+
+  @if (loading()) {
+    <div class="skeleton-stack">
+      <div class="skeleton-box"></div>
+      <div class="skeleton-box"></div>
+      <div class="skeleton-box"></div>
+    </div>
+  } @else if (certificados().length > 0) {
+    <div class="cards-grid">
+      @for (c of certificados(); track c.id) {
+        <article class="cert-card" [class.cert-invalid]="!c.valido">
+          <div class="cert-card-header">
+            <div class="badge-status">
+              @if (c.valido) {
+                <span class="badge badge-success">✓ Válido</span>
+              } @else {
+                <span class="badge badge-danger">⚠ No Válido</span>
+              }
+            </div>
+            <span class="cert-date">{{ c.fecha_emision_fmt }}</span>
+          </div>
+
+          <div class="cert-card-body">
+            <h3 class="doctor-name">Dr/a. {{ c.medico.nombre }}</h3>
+            <span class="specialty-pill">{{ c.medico.especialidad }}</span>
+
+            <p class="appointment-ref">Turno asociado: <strong>#{{ c.turno_id }}</strong></p>
+
+            @if (!c.valido && c.motivo_invalidez) {
+              <div class="invalid-warning">
+                <strong>Aviso:</strong> {{ c.motivo_invalidez }}
+              </div>
+            }
+          </div>
+
+          <div class="cert-card-footer">
+            <button
+              type="button"
+              class="btn-download"
+              [class.btn-download-muted]="!c.valido"
+              [disabled]="downloadingId() === c.id"
+              (click)="descargarCertificado(c)">
+              @if (downloadingId() === c.id) {
+                <span>Descargando...</span>
+              } @else {
+                <span>📄 Descargar PDF</span>
+              }
+            </button>
+          </div>
+        </article>
+      }
+    </div>
+  } @else {
+    <div class="empty-state">
+      <div class="empty-icon">📁</div>
+      <h3>Aún no tienes certificados emitidos</h3>
+      <p>Cuando un médico finalice tu consulta y emita tu certificado, podrás consultarlo y descargarlo aquí.</p>
+      <a routerLink="/appointments" class="btn btn-secondary">Ver mis turnos</a>
+    </div>
+  }
+</div>

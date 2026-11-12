@@ -821,6 +821,67 @@
                 }
             }
         },
+        "/api/certificados": {
+            "get": {
+                "tags": [
+                    "Certificados"
+                ],
+                "summary": "Consultar certificados emitidos del paciente autenticado (GT-153)",
+                "operationId": "e043b7672bc9f4e4abcf33096a1091f6",
+                "responses": {
+                    "200": {
+                        "description": "Listado de certificados del paciente ordenados por fecha descendente."
+                    },
+                    "401": {
+                        "description": "No autenticado."
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/certificados/{id}/download": {
+            "get": {
+                "tags": [
+                    "Certificados"
+                ],
+                "summary": "Descarga segura del certificado médico (GT-154)",
+                "operationId": "6bfabdbfc67a1764b2504d2a17040398",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID del certificado",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Descarga del archivo PDF."
+                    },
+                    "401": {
+                        "description": "No autenticado."
+                    },
+                    "403": {
+                        "description": "No tenés permiso para descargar este certificado."
+                    },
+                    "404": {
+                        "description": "Certificado o archivo físico no encontrado."
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/medicos/me/pacientes": {
             "get": {
                 "tags": [
@@ -1405,6 +1466,106 @@
                     },
                     "404": {
                         "description": "Especialidad no encontrada."
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/metricas/globales": {
+            "get": {
+                "tags": [
+                    "Métricas"
+                ],
+                "summary": "Consultar métricas globales del centro médico (Solo Super Administrador)",
+                "operationId": "846ddd36b03bcbc95db2960a7e0b230f",
+                "parameters": [
+                    {
+                        "name": "fecha_desde",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "fecha_hasta",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Métricas agregadas obtenidas con éxito."
+                    },
+                    "401": {
+                        "description": "No autenticado."
+                    },
+                    "403": {
+                        "description": "Acceso denegado: solo SuperAdmin."
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/metricas/globales/export": {
+            "get": {
+                "tags": [
+                    "Métricas"
+                ],
+                "summary": "Exportar reporte de métricas en PDF o CSV (Solo Super Administrador)",
+                "operationId": "7d3fe0eb0f3439179ef3f93c6bffb07f",
+                "parameters": [
+                    {
+                        "name": "formato",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "pdf",
+                            "enum": [
+                                "pdf",
+                                "csv"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "fecha_desde",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "fecha_hasta",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Archivo binario descargado."
+                    },
+                    "403": {
+                        "description": "No autorizado."
                     }
                 },
                 "security": [
@@ -3892,6 +4053,10 @@
         {
             "name": "Especialidades de médicos",
             "description": "Especialidades de médicos"
+        },
+        {
+            "name": "Métricas",
+            "description": "Métricas"
         },
         {
             "name": "Obras sociales",

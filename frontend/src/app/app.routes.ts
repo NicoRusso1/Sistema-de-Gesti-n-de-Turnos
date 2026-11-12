@@ -153,6 +153,13 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/global-metrics/global-metrics').then(m => m.GlobalMetricsComponent),
     canActivate: [superAdminGuard]
   },
+  {
+    path: 'certificates',
+    title: 'Mis Certificados | SIGT',
+    loadComponent: () => import('./pages/certificates-list/certificates-list').then(m => m.CertificatesListComponent),
+    canActivate: [authGuard]
+  },
+
   { path: 'forbidden', title: 'Acceso denegado | SIGT', component: Forbidden },
   { path: '**', title: 'Página no encontrada | SIGT', component: NotFound },
 
