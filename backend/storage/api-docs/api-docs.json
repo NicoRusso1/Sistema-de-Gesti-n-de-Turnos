@@ -1014,6 +1014,124 @@
                 ]
             }
         },
+        "/api/reportes/turnos-por-estado": {
+            "get": {
+                "tags": [
+                    "Reportes"
+                ],
+                "summary": "Reporte de turnos por estado (Administrador / Super Administrador)",
+                "description": "Totales de turnos por estado (reservado, abonado, en espera, completado y cancelado) con la descripción de cada uno. Todos los filtros son opcionales; sin fechas abarca todos los turnos. Incluye las especialidades y médicos disponibles para armar los filtros.",
+                "operationId": "48f5f12b991eb1d4e6cf72453b686af5",
+                "parameters": [
+                    {
+                        "name": "fecha_desde",
+                        "in": "query",
+                        "description": "Fecha del turno desde (inclusive).",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "fecha_hasta",
+                        "in": "query",
+                        "description": "Fecha del turno hasta (inclusive, día completo).",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "specialty_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "doctor_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Reporte generado.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "estados": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "estado": {
+                                                        "type": "string",
+                                                        "example": "abonado"
+                                                    },
+                                                    "etiqueta": {
+                                                        "type": "string",
+                                                        "example": "Abonado"
+                                                    },
+                                                    "descripcion": {
+                                                        "type": "string"
+                                                    },
+                                                    "cantidad": {
+                                                        "type": "integer",
+                                                        "example": 12
+                                                    },
+                                                    "porcentaje": {
+                                                        "type": "number",
+                                                        "example": 40
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "total": {
+                                            "type": "integer",
+                                            "example": 30
+                                        },
+                                        "filtros": {
+                                            "type": "object"
+                                        },
+                                        "generado_en": {
+                                            "type": "string",
+                                            "format": "date-time"
+                                        },
+                                        "opciones": {
+                                            "description": "Especialidades y médicos para los filtros.",
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado."
+                    },
+                    "403": {
+                        "description": "Solo Administrador o Super Administrador."
+                    },
+                    "422": {
+                        "description": "Filtros inválidos."
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/login": {
             "post": {
                 "tags": [
@@ -3069,6 +3187,48 @@
                 ]
             }
         },
+        "/api/recetas": {
+            "get": {
+                "tags": [
+                    "Recetas"
+                ],
+                "summary": "Historial de recetas del usuario autenticado (GT-220)",
+                "description": "El paciente ve solo las recetas emitidas a su nombre; el médico, las que él emitió (incluidas las que fallaron, para reintentar); el administrador, todas. Orden: de la más reciente a la más antigua.",
+                "operationId": "0f0de43f63b8e13ce0c10d2714b8a8e1",
+                "responses": {
+                    "200": {
+                        "description": "Historial de recetas.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/RecetaHistorial"
+                                            }
+                                        },
+                                        "total": {
+                                            "type": "integer",
+                                            "example": 2
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado."
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/appointments/{id}/prescriptions": {
             "get": {
                 "tags": [
@@ -4254,6 +4414,59 @@
                     }
                 },
                 "type": "object"
+            },
+            "RecetaHistorial": {
+                "description": "GT-220: ítem del historial de recetas.",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 3
+                    },
+                    "turno_id": {
+                        "type": "integer",
+                        "example": 12
+                    },
+                    "fecha_turno": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "fecha_emision": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "medico": {
+                        "type": "string",
+                        "example": "Ana Perez"
+                    },
+                    "paciente": {
+                        "type": "string",
+                        "example": "Lucia Gomez",
+                        "nullable": true
+                    },
+                    "especialidad": {
+                        "type": "string",
+                        "example": "Clínica Médica"
+                    },
+                    "contenido": {
+                        "type": "string",
+                        "example": "Ibuprofeno 400 mg\n1 comprimido cada 8 hs."
+                    },
+                    "estado_emision": {
+                        "type": "string",
+                        "enum": [
+                            "pendiente",
+                            "emitida",
+                            "fallida"
+                        ]
+                    },
+                    "tiene_archivo": {
+                        "type": "boolean",
+                        "example": true
+                    }
+                },
+                "type": "object"
             }
         },
         "securitySchemes": {
@@ -4281,6 +4494,10 @@
         {
             "name": "Certificados",
             "description": "Certificados"
+        },
+        {
+            "name": "Reportes",
+            "description": "Reportes"
         },
         {
             "name": "Autenticación",

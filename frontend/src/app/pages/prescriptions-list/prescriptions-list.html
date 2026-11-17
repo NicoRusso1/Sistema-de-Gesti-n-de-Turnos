@@ -1,0 +1,94 @@
+<div class="rx-container">
+  <header class="page-header">
+    <h1>{{ isDoctor() || isAdmin() ? 'Recetas emitidas' : 'Mis Recetas' }}</h1>
+    <p class="subtitle">
+      @if (isDoctor()) {
+        Recetas digitales que emitiste, de la más reciente a la más antigua.
+      } @else if (isAdmin()) {
+        Todas las recetas digitales emitidas en el centro, de la más reciente a la más antigua.
+      } @else {
+        Consultá y descargá las recetas emitidas a tu nombre, de la más reciente a la más antigua.
+      }
+    </p>
+  </header>
+
+  @if (errorMessage()) {
+    <div class="alert alert-danger">
+      {{ errorMessage() }}
+      <button type="button" class="link-btn" (click)="cargar()">Reintentar</button>
+    </div>
+  }
+
+  @if (loading()) {
+    <div class="skeleton-stack">
+      <div class="skeleton-box"></div>
+      <div class="skeleton-box"></div>
+      <div class="skeleton-box"></div>
+    </div>
+  } @else if (recetas().length > 0) {
+    <ul class="rx-list">
+      @for (rx of recetas(); track rx.id) {
+        <li class="rx-card" [class.rx-failed]="rx.estado_emision !== 'emitida'">
+          <div class="rx-main">
+            <div class="rx-top">
+              <span class="rx-date">
+                @if (rx.fecha_emision) {
+                  Emitida el {{ rx.fecha_emision | date: 'dd/MM/yyyy HH:mm' }}
+                } @else {
+                  Sin fecha de emisión
+                }
+              </span>
+              @if (rx.estado_emision !== 'emitida') {
+                <span class="badge badge-warn">{{ estadoLabel(rx) }}</span>
+              }
+            </div>
+
+            <h3 class="rx-doctor">
+              @if (isDoctor()) {
+                Paciente: {{ rx.paciente }}
+              } @else {
+                Dr/a. {{ rx.medico }}
+              }
+            </h3>
+            @if (isAdmin()) {
+              <p class="rx-meta">Paciente: {{ rx.paciente }}</p>
+            }
+            <span class="specialty-pill">{{ rx.especialidad }}</span>
+
+            <p class="rx-meta">
+              Turno asociado: <strong>#{{ rx.turno_id }}</strong>
+              @if (rx.fecha_turno) {
+                · {{ rx.fecha_turno | date: 'dd/MM/yyyy HH:mm' }}
+              }
+            </p>
+
+            <p class="rx-content">{{ rx.contenido }}</p>
+          </div>
+
+          <div class="rx-actions">
+            @if (rx.tiene_archivo) {
+              <button type="button" class="btn-outline" [disabled]="busyId() === rx.id" (click)="ver(rx)">Ver</button>
+              <button type="button" class="btn-download" [disabled]="busyId() === rx.id" (click)="descargar(rx)">
+                {{ busyId() === rx.id ? 'Procesando…' : 'Descargar PDF' }}
+              </button>
+            } @else {
+              <span class="rx-hint">Podés reintentar la emisión desde la agenda del turno.</span>
+            }
+          </div>
+        </li>
+      }
+    </ul>
+  } @else if (!errorMessage()) {
+    <div class="empty-state">
+      <h3>{{ isDoctor() ? 'Todavía no emitiste recetas' : 'Todavía no tenés recetas emitidas' }}</h3>
+      <p>
+        @if (isDoctor()) {
+          Cuando finalices una consulta y emitas una receta, va a aparecer en este listado.
+        } @else {
+          Cuando un médico te emita una receta al finalizar tu consulta, vas a poder verla y descargarla acá.
+        }
+      </p>
+      <a routerLink="/appointments" class="btn-secondary">{{ isDoctor() ? 'Ir a mi agenda' : 'Ver mis turnos' }}</a>
+    </div>
+  }
+</div>
