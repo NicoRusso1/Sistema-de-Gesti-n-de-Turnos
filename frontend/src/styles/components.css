@@ -392,6 +392,10 @@
 
 .toolbar-filtros { align-items: flex-start; }
 .toolbar-filtros .field-spacer { font-size: 0.85rem; line-height: 1.4; }
+@media (max-width: 700px) {
+  .toolbar-filtros { align-items: stretch; }
+  .toolbar-filtros .field-spacer { display: none; }
+}
 .toolbar .input-short { width: 150px; }
 @media (max-width: 700px) { .toolbar .input-short { width: 100%; } }
 

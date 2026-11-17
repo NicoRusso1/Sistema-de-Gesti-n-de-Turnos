@@ -89,7 +89,7 @@
             <tr>
               <th>Fecha</th>
               <th>Acción</th>
-              <th class="col-secundaria">Ejecutó</th>
+              <th>Ejecutó</th>
               <th>Afectado</th>
             </tr>
           </thead>
@@ -100,7 +100,7 @@
                 <td data-label="Acción">
                   <span class="badge" [class]="badgeClass(e.action.name)">{{ e.action.label }}</span>
                 </td>
-                <td data-label="Ejecutó" class="col-secundaria">{{ e.actor.name }}</td>
+                <td data-label="Ejecutó">{{ e.actor.name }}</td>
                 <td data-label="Afectado" class="cell-main">{{ e.affected.name }}</td>
               </tr>
             }
