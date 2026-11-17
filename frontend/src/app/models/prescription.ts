@@ -19,3 +19,22 @@ export interface PrescriptionResponse {
   prescription: Prescription;
   error?: string;
 }
+
+// GT-220: ítem del historial de recetas (GET /recetas)
+export interface RecetaHistorialItem {
+  id: number;
+  turno_id: number;
+  fecha_turno: string | null;
+  fecha_emision: string | null;
+  medico: string;
+  paciente: string | null;
+  especialidad: string;
+  contenido: string;
+  estado_emision: EstadoEmision;
+  tiene_archivo: boolean;
+}
+
+export interface RecetasHistorialResponse {
+  data: RecetaHistorialItem[];
+  total: number;
+}

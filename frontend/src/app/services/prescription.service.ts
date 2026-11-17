@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { API_URL } from '../config/api';
-import { Prescription, PrescriptionResponse } from '../models/prescription';
+import { Prescription, PrescriptionResponse, RecetasHistorialResponse } from '../models/prescription';
 
 @Injectable({
   providedIn: 'root',
@@ -12,6 +12,11 @@ export class PrescriptionService {
 
   completeAppointment(appointmentId: number): Observable<{ message: string; status: string }> {
     return this.http.patch<{ message: string; status: string }>(`${API_URL}/appointments/${appointmentId}/complete`, {});
+  }
+
+  // GT-220: historial de recetas del usuario logueado (paciente: las propias; médico: las que emitió)
+  getHistory(): Observable<RecetasHistorialResponse> {
+    return this.http.get<RecetasHistorialResponse>(`${API_URL}/recetas`);
   }
 
   getByAppointment(appointmentId: number): Observable<Prescription[]> {

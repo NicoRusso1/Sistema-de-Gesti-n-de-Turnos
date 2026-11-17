@@ -69,6 +69,14 @@
           </a>
         </li>
         }
+        @if (canViewPrescriptions()) {
+        <li>
+          <a routerLink="/prescriptions" routerLinkActive="active" ariaCurrentWhenActive="page" (click)="closeOnMobile()">
+            <svg class="nav-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3h7l5 5v13H7z"/><path d="M14 3v5h5"/><path d="M10 12v6M10 12h2.5a2 2 0 0 1 0 4H10M12.5 16l2.5 2.5"/></svg>
+            <span>{{ prescriptionsLabel() }}</span>
+          </a>
+        </li>
+        }
         @if (canAccessNotifications()) {
         <li>
           <a routerLink="/notifications" routerLinkActive="active" ariaCurrentWhenActive="page" (click)="closeOnMobile()">

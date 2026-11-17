@@ -89,6 +89,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/prescriptions/{id}/retry', [PrescriptionController::class, 'retry']);
     Route::get('/prescriptions/{id}/view', [PrescriptionController::class, 'view']);
     Route::get('/prescriptions/{id}/download', [PrescriptionController::class, 'download']);
+    // GT-220: historial de recetas (el alcance por rol se resuelve en el controlador)
+    Route::get('/recetas', [PrescriptionController::class, 'history']);
     Route::get('/pagos', [PaymentController::class, 'index']);
     Route::get('/me/notifications', [NotificationController::class, 'myNotifications']);
     Route::patch('/notifications/{id}/read', [NotificationController::class, 'markAsRead']);

@@ -3069,6 +3069,48 @@
                 ]
             }
         },
+        "/api/recetas": {
+            "get": {
+                "tags": [
+                    "Recetas"
+                ],
+                "summary": "Historial de recetas del usuario autenticado (GT-220)",
+                "description": "El paciente ve solo las recetas emitidas a su nombre; el médico, las que él emitió (incluidas las que fallaron, para reintentar); el administrador, todas. Orden: de la más reciente a la más antigua.",
+                "operationId": "0f0de43f63b8e13ce0c10d2714b8a8e1",
+                "responses": {
+                    "200": {
+                        "description": "Historial de recetas.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/RecetaHistorial"
+                                            }
+                                        },
+                                        "total": {
+                                            "type": "integer",
+                                            "example": 2
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado."
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/appointments/{id}/prescriptions": {
             "get": {
                 "tags": [
@@ -4251,6 +4293,59 @@
                     "error_emision": {
                         "type": "string",
                         "nullable": true
+                    }
+                },
+                "type": "object"
+            },
+            "RecetaHistorial": {
+                "description": "GT-220: ítem del historial de recetas.",
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 3
+                    },
+                    "turno_id": {
+                        "type": "integer",
+                        "example": 12
+                    },
+                    "fecha_turno": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "fecha_emision": {
+                        "type": "string",
+                        "format": "date-time",
+                        "nullable": true
+                    },
+                    "medico": {
+                        "type": "string",
+                        "example": "Ana Perez"
+                    },
+                    "paciente": {
+                        "type": "string",
+                        "example": "Lucia Gomez",
+                        "nullable": true
+                    },
+                    "especialidad": {
+                        "type": "string",
+                        "example": "Clínica Médica"
+                    },
+                    "contenido": {
+                        "type": "string",
+                        "example": "Ibuprofeno 400 mg\n1 comprimido cada 8 hs."
+                    },
+                    "estado_emision": {
+                        "type": "string",
+                        "enum": [
+                            "pendiente",
+                            "emitida",
+                            "fallida"
+                        ]
+                    },
+                    "tiene_archivo": {
+                        "type": "boolean",
+                        "example": true
                     }
                 },
                 "type": "object"
