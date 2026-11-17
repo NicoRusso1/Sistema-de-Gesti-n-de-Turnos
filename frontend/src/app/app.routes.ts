@@ -167,6 +167,13 @@ export const routes: Routes = [
     loadComponent: () => import('./pages/prescriptions-list/prescriptions-list').then(m => m.PrescriptionsListComponent),
     canActivate: [authGuard]
   },
+  // GT-67: reporte de turnos por estado (Administrador y Super Administrador)
+  {
+    path: 'reports/appointments-by-status',
+    title: 'Turnos por estado | SIGT',
+    loadComponent: () => import('./pages/appointment-status-report/appointment-status-report').then(m => m.AppointmentStatusReportComponent),
+    canActivate: [adminGuard]
+  },
 
   { path: 'forbidden', title: 'Acceso denegado | SIGT', component: Forbidden },
   { path: '**', title: 'Página no encontrada | SIGT', component: NotFound },

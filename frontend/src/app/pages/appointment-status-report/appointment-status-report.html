@@ -1,0 +1,124 @@
+<div class="report-container">
+  <header class="page-header">
+    <div>
+      <h1>Turnos por estado</h1>
+      <p class="subtitle">Monitoreo de la operación del centro médico.</p>
+    </div>
+
+    <div class="live-box">
+      @if (report(); as r) {
+        <span class="updated" aria-live="polite">
+          <span class="dot" [class.dot-on]="autoRefresh()" [class.dot-pulse]="refreshing()"></span>
+          Actualizado a las {{ r.generado_en | date: 'HH:mm:ss' }}
+        </span>
+      }
+      <button type="button" class="btn-ghost" (click)="toggleAutoRefresh()" [attr.aria-pressed]="autoRefresh()">
+        {{ autoRefresh() ? 'Pausar' : 'Reanudar' }} actualización automática ({{ REFRESH_SECONDS }}s)
+      </button>
+      <button type="button" class="btn-ghost" (click)="cargar(true)" [disabled]="loading() || refreshing()">
+        Actualizar ahora
+      </button>
+    </div>
+  </header>
+
+  <form [formGroup]="filterForm" (ngSubmit)="aplicarFiltros()" class="filter-bar">
+    <label>
+      Desde
+      <input type="date" formControlName="fecha_desde" />
+    </label>
+    <label>
+      Hasta
+      <input type="date" formControlName="fecha_hasta" />
+    </label>
+    <label>
+      Especialidad
+      <select formControlName="specialty_id">
+        <option value="">Todas</option>
+        @for (e of report()?.opciones?.especialidades ?? []; track e.id) {
+          <option [value]="e.id">{{ e.name }}</option>
+        }
+      </select>
+    </label>
+    <label>
+      Médico
+      <select formControlName="doctor_id">
+        <option value="">Todos</option>
+        @for (m of report()?.opciones?.medicos ?? []; track m.id) {
+          <option [value]="m.id">{{ m.nombre }}</option>
+        }
+      </select>
+    </label>
+    <div class="filter-actions">
+      <button type="submit" class="btn-primary" [disabled]="loading()">Aplicar</button>
+      <button type="button" class="btn-ghost" (click)="limpiarFiltros()" [disabled]="loading()">Ver todo</button>
+    </div>
+  </form>
+
+  @if (errorMessage()) {
+    <div class="alert-danger">{{ errorMessage() }}</div>
+  }
+
+  @if (loading() && !report()) {
+    <div class="loading-box">Cargando reporte…</div>
+  } @else if (report(); as r) {
+    <section class="kpi-grid" [class.is-loading]="loading()">
+      <div class="kpi-card kpi-total">
+        <span class="kpi-title">Total de turnos</span>
+        <strong class="kpi-num">{{ r.total }}</strong>
+      </div>
+      @for (e of r.estados; track e.estado) {
+        <div class="kpi-card" [attr.data-estado]="e.estado">
+          <span class="kpi-title"><span class="swatch"></span>{{ e.etiqueta }}</span>
+          <strong class="kpi-num">{{ e.cantidad }}</strong>
+          <span class="kpi-sub">{{ e.porcentaje }}% del total</span>
+        </div>
+      }
+    </section>
+
+    @if (r.total > 0) {
+      <div class="stacked-bar" role="img"
+           [attr.aria-label]="distribucionLabel(r)">
+        @for (e of r.estados; track e.estado) {
+          @if (e.cantidad > 0) {
+            <div class="segment" [attr.data-estado]="e.estado" [style.width.%]="e.porcentaje"
+                 [title]="e.etiqueta + ': ' + e.cantidad"></div>
+          }
+        }
+      </div>
+    }
+
+    <section class="card-section">
+      <h2>Desglose por estado</h2>
+      <table class="breakdown">
+        <thead>
+          <tr>
+            <th>Estado</th>
+            <th>Descripción</th>
+            <th class="num">Turnos</th>
+            <th class="num">%</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (e of r.estados; track e.estado) {
+            <tr [attr.data-estado]="e.estado">
+              <td><span class="state-pill"><span class="swatch"></span>{{ e.etiqueta }}</span></td>
+              <td class="desc">{{ e.descripcion }}</td>
+              <td class="num">{{ e.cantidad }}</td>
+              <td class="num">{{ e.porcentaje }}%</td>
+            </tr>
+          }
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="2">Total</td>
+            <td class="num">{{ r.total }}</td>
+            <td class="num">{{ r.total > 0 ? '100%' : '0%' }}</td>
+          </tr>
+        </tfoot>
+      </table>
+      @if (r.total === 0) {
+        <p class="empty-txt">No hay turnos para los filtros seleccionados.</p>
+      }
+    </section>
+  }
+</div>
