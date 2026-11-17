@@ -1014,6 +1014,124 @@
                 ]
             }
         },
+        "/api/reportes/turnos-por-estado": {
+            "get": {
+                "tags": [
+                    "Reportes"
+                ],
+                "summary": "Reporte de turnos por estado (Administrador / Super Administrador)",
+                "description": "Totales de turnos por estado (reservado, abonado, en espera, completado y cancelado) con la descripción de cada uno. Todos los filtros son opcionales; sin fechas abarca todos los turnos. Incluye las especialidades y médicos disponibles para armar los filtros.",
+                "operationId": "48f5f12b991eb1d4e6cf72453b686af5",
+                "parameters": [
+                    {
+                        "name": "fecha_desde",
+                        "in": "query",
+                        "description": "Fecha del turno desde (inclusive).",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "fecha_hasta",
+                        "in": "query",
+                        "description": "Fecha del turno hasta (inclusive, día completo).",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "specialty_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    },
+                    {
+                        "name": "doctor_id",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Reporte generado.",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "estados": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "estado": {
+                                                        "type": "string",
+                                                        "example": "abonado"
+                                                    },
+                                                    "etiqueta": {
+                                                        "type": "string",
+                                                        "example": "Abonado"
+                                                    },
+                                                    "descripcion": {
+                                                        "type": "string"
+                                                    },
+                                                    "cantidad": {
+                                                        "type": "integer",
+                                                        "example": 12
+                                                    },
+                                                    "porcentaje": {
+                                                        "type": "number",
+                                                        "example": 40
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "total": {
+                                            "type": "integer",
+                                            "example": 30
+                                        },
+                                        "filtros": {
+                                            "type": "object"
+                                        },
+                                        "generado_en": {
+                                            "type": "string",
+                                            "format": "date-time"
+                                        },
+                                        "opciones": {
+                                            "description": "Especialidades y médicos para los filtros.",
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado."
+                    },
+                    "403": {
+                        "description": "Solo Administrador o Super Administrador."
+                    },
+                    "422": {
+                        "description": "Filtros inválidos."
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/login": {
             "post": {
                 "tags": [
@@ -4376,6 +4494,10 @@
         {
             "name": "Certificados",
             "description": "Certificados"
+        },
+        {
+            "name": "Reportes",
+            "description": "Reportes"
         },
         {
             "name": "Autenticación",
