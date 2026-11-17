@@ -69,6 +69,61 @@ class PrescriptionController extends Controller
     }
 
     #[OA\Get(
+        path: '/api/recetas',
+        summary: 'Historial de recetas del usuario autenticado (GT-220)',
+        description: 'El paciente ve solo las recetas emitidas a su nombre; el médico, las que él emitió (incluidas las que fallaron, para reintentar); el administrador, todas. Orden: de la más reciente a la más antigua.',
+        tags: ['Recetas'],
+        security: [['sanctum' => []]],
+        responses: [
+            new OA\Response(response: 200, description: 'Historial de recetas.', content: new OA\JsonContent(properties: [
+                new OA\Property(property: 'data', type: 'array', items: new OA\Items(ref: '#/components/schemas/RecetaHistorial')),
+                new OA\Property(property: 'total', type: 'integer', example: 2),
+            ])),
+            new OA\Response(response: 401, description: 'No autenticado.'),
+        ]
+    )]
+    public function history(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        $query = Prescription::with(['appointment.specialty', 'doctor', 'patient']);
+
+        if ($user->hasAdminAccess()) {
+            $query->where('estado_emision', DocumentIssueStatus::Issued->value);
+        } elseif ($user->isDoctor()) {
+            // El médico ve todas las que emitió, también las fallidas para poder reintentar
+            $query->where('doctor_id', $user->id);
+        } else {
+            // El paciente solo ve las recetas efectivamente emitidas a su nombre
+            $query->where('patient_id', $user->id)
+                ->where('estado_emision', DocumentIssueStatus::Issued->value);
+        }
+
+        $recetas = $query
+            ->orderByRaw('issue_date IS NULL')
+            ->orderByDesc('issue_date')
+            ->orderByDesc('id')
+            ->get()
+            ->map(fn (Prescription $p) => [
+                'id'                => $p->id,
+                'turno_id'          => $p->appointment_id,
+                'fecha_turno'       => $p->appointment?->scheduled_at?->toIso8601String(),
+                'fecha_emision'     => $p->issue_date?->toIso8601String(),
+                'medico'            => $p->doctor ? "{$p->doctor->first_name} {$p->doctor->last_name}" : 'No asignado',
+                'paciente'          => $p->patient ? "{$p->patient->first_name} {$p->patient->last_name}" : null,
+                'especialidad'      => $p->appointment?->specialty?->name ?? 'General',
+                'contenido'         => $p->content,
+                'estado_emision'    => $p->estado_emision->value,
+                'tiene_archivo'     => $p->estado_emision === DocumentIssueStatus::Issued && !empty($p->file_url),
+            ]);
+
+        return response()->json([
+            'data'  => $recetas,
+            'total' => $recetas->count(),
+        ], 200);
+    }
+
+    #[OA\Get(
         path: '/api/appointments/{id}/prescriptions',
         summary: 'Listar las recetas del turno',
         description: 'Accesible por el médico asignado, el paciente titular o un administrador.',

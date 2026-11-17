@@ -64,6 +64,14 @@ export class App {
     return this.isAdmin() ? 'Certificados Emitidos' : 'Mis Certificados';
   }
   
+  // GT-220: historial de recetas
+  canViewPrescriptions(): boolean {
+    return this.isPatient() || this.isDoctor() || this.isAdmin();
+  }
+  prescriptionsLabel(): string {
+    return this.isPatient() ? 'Mis Recetas' : 'Recetas Emitidas';
+  }
+
   canAccessNotifications(): boolean {
     return this.isAdmin() || this.isDoctor();
   }
