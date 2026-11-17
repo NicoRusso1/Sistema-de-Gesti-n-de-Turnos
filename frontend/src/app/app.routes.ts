@@ -154,6 +154,12 @@ export const routes: Routes = [
     canActivate: [superAdminGuard]
   },
   {
+    path: 'auditoria',
+    title: 'Historial de auditoría | SIGT',
+    loadComponent: () => import('./pages/audit-log/audit-log').then(m => m.AuditLogComponent),
+    canActivate: [authGuard, superAdminGuard]
+  },
+  {
     path: 'certificates',
     title: 'Mis Certificados | SIGT',
     loadComponent: () => import('./pages/certificates-list/certificates-list').then(m => m.CertificatesListComponent),

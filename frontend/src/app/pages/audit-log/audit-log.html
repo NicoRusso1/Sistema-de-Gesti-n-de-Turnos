@@ -1,0 +1,126 @@
+<div class="admin">
+  <header class="page-header">
+    <div>
+      <h1>Historial de auditoría</h1>
+      <p aria-live="polite">
+        @if (!loading() && !errorMessage()) {
+          {{ total() }} {{ total() === 1 ? 'acción' : 'acciones' }}
+        }
+      </p>
+    </div>
+  </header>
+
+  <form [formGroup]="filterForm" (ngSubmit)="onFilter()" class="toolbar toolbar-filtros" novalidate>
+    <div class="field">
+      <label for="filtro-accion">Tipo de acción</label>
+      <select id="filtro-accion" class="select" formControlName="action" [attr.aria-invalid]="fieldError('action') ? true : null">
+        <option value="">Todas las acciones</option>
+        @for (a of actionOptions; track a.value) {
+          <option [value]="a.value">{{ a.label }}</option>
+        }
+      </select>
+      @if (fieldError('action')) {
+        <span class="field-error" role="alert">{{ fieldError('action') }}</span>
+      }
+    </div>
+
+    <div class="field">
+      <label for="filtro-admin">Administrador afectado</label>
+      <select id="filtro-admin" class="select" formControlName="affected_admin_id" [attr.aria-invalid]="fieldError('affected_admin_id') ? true : null">
+        <option value="">Todos</option>
+        @for (u of admins(); track u.id) {
+          <option [value]="u.id">{{ u.first_name }} {{ u.last_name }}</option>
+        }
+      </select>
+      @if (fieldError('affected_admin_id')) {
+        <span class="field-error" role="alert">{{ fieldError('affected_admin_id') }}</span>
+      }
+    </div>
+
+    <div class="field">
+      <label for="filtro-desde">Fecha desde</label>
+      <input id="filtro-desde" type="date" class="input input-short" formControlName="date_from" [attr.aria-invalid]="fieldError('date_from') ? true : null">
+      @if (fieldError('date_from')) {
+        <span class="field-error" role="alert">{{ fieldError('date_from') }}</span>
+      }
+    </div>
+
+    <div class="field">
+      <label for="filtro-hasta">Fecha hasta</label>
+      <input id="filtro-hasta" type="date" class="input input-short" formControlName="date_to"
+        [attr.aria-invalid]="dateRangeInvalid() || fieldError('date_to') ? true : null"
+        [attr.aria-describedby]="dateRangeInvalid() ? 'filtro-hasta-error' : null">
+      @if (dateRangeInvalid()) {
+        <span id="filtro-hasta-error" class="field-error" role="alert">La fecha desde no puede ser posterior a la fecha hasta.</span>
+      } @else if (fieldError('date_to')) {
+        <span class="field-error" role="alert">{{ fieldError('date_to') }}</span>
+      }
+    </div>
+
+    <div class="field toolbar-submit">
+      <span class="field-spacer" aria-hidden="true">&nbsp;</span>
+      <div class="toolbar-actions">
+        <button type="submit" class="btn btn-secondary">Filtrar</button>
+        <button type="button" class="btn btn-ghost" (click)="resetFilters()">Limpiar</button>
+      </div>
+    </div>
+  </form>
+
+  <div aria-live="polite">
+    @if (errorMessage()) {
+      <p class="notice-error" role="alert">{{ errorMessage() }}</p>
+    }
+  </div>
+
+  <h2 #listado class="sr-only" tabindex="-1">Listado de acciones</h2>
+
+  <div aria-live="polite">
+    @if (loading()) {
+      <div class="skeleton-stack" aria-busy="true" aria-label="Cargando historial">
+        <div class="skeleton"></div>
+        <div class="skeleton"></div>
+        <div class="skeleton"></div>
+        <div class="skeleton"></div>
+      </div>
+    } @else if (entries().length > 0) {
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Acción</th>
+              <th>Ejecutó</th>
+              <th>Afectado</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (e of entries(); track e.id) {
+              <tr>
+                <td data-label="Fecha">{{ e.date | date:'dd/MM/yyyy HH:mm' }}</td>
+                <td data-label="Acción">
+                  <span class="badge" [class]="badgeClass(e.action.name)">{{ e.action.label }}</span>
+                </td>
+                <td data-label="Ejecutó">{{ e.actor.name }}</td>
+                <td data-label="Afectado" class="cell-main">{{ e.affected.name }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    } @else if (!errorMessage()) {
+      <div class="empty-state">
+        <p>No hay acciones registradas con estos filtros.</p>
+      </div>
+    }
+  </div>
+
+  @if (lastPage() > 1) {
+    <nav aria-label="Paginación del historial">
+      <div class="pager">
+        <button type="button" aria-label="Página anterior" [disabled]="loading() || currentPage() <= 1" (click)="goToPage(currentPage() - 1)">Anterior</button>
+        <span>Página {{ currentPage() }} de {{ lastPage() }}</span>
+        <button type="button" aria-label="Página siguiente" [disabled]="loading() || currentPage() >= lastPage()" (click)="goToPage(currentPage() + 1)">Siguiente</button>
+      </div>
+    </nav>
+  }
+</div>
