@@ -2,31 +2,57 @@
   <header class="page-header">
     <div>
       <h1>Historial de auditoría</h1>
+      <p aria-live="polite">
+        @if (!loading() && !errorMessage()) {
+          {{ total() }} {{ total() === 1 ? 'acción' : 'acciones' }}
+        }
+      </p>
     </div>
   </header>
 
-  <div class="table-wrap">
-    <table class="table">
-      <thead>
-        <tr>
-          <th>Fecha</th>
-          <th>Acción</th>
-          <th class="col-secundaria">Ejecutó</th>
-          <th>Afectado</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (e of entries(); track e.id) {
-          <tr>
-            <td data-label="Fecha">{{ e.date | date:'dd/MM/yyyy HH:mm' }}</td>
-            <td data-label="Acción">
-              <span class="badge" [class]="badgeClass(e.action.name)">{{ e.action.label }}</span>
-            </td>
-            <td data-label="Ejecutó" class="col-secundaria">{{ e.actor.name }}</td>
-            <td data-label="Afectado" class="cell-main">{{ e.affected.name }}</td>
-          </tr>
-        }
-      </tbody>
-    </table>
+  <div aria-live="polite">
+    @if (errorMessage()) {
+      <p class="notice-error" role="alert">{{ errorMessage() }}</p>
+    }
+  </div>
+
+  <div aria-live="polite">
+    @if (loading()) {
+      <div class="skeleton-stack" aria-busy="true" aria-label="Cargando historial">
+        <div class="skeleton"></div>
+        <div class="skeleton"></div>
+        <div class="skeleton"></div>
+        <div class="skeleton"></div>
+      </div>
+    } @else if (entries().length > 0) {
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Fecha</th>
+              <th>Acción</th>
+              <th class="col-secundaria">Ejecutó</th>
+              <th>Afectado</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (e of entries(); track e.id) {
+              <tr>
+                <td data-label="Fecha">{{ e.date | date:'dd/MM/yyyy HH:mm' }}</td>
+                <td data-label="Acción">
+                  <span class="badge" [class]="badgeClass(e.action.name)">{{ e.action.label }}</span>
+                </td>
+                <td data-label="Ejecutó" class="col-secundaria">{{ e.actor.name }}</td>
+                <td data-label="Afectado" class="cell-main">{{ e.affected.name }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    } @else if (!errorMessage()) {
+      <div class="empty-state">
+        <p>No hay acciones registradas con estos filtros.</p>
+      </div>
+    }
   </div>
 </div>

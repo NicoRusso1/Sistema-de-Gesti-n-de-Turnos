@@ -1,5 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
+import { HttpErrorResponse } from '@angular/common/http';
 import { AuditService } from '../../services/audit.service';
 import { AdminActionLogEntry, AdminActionName } from '../../models/admin-action-log';
 
@@ -13,10 +14,29 @@ export class AuditLogComponent implements OnInit {
   private auditService = inject(AuditService);
 
   entries = signal<AdminActionLogEntry[]>([]);
+  total = signal<number>(0);
+  loading = signal<boolean>(false);
+  errorMessage = signal<string>('');
 
   ngOnInit(): void {
+    this.load();
+  }
+
+  load(): void {
+    this.loading.set(true);
+    this.errorMessage.set('');
     this.auditService.getAdminActions().subscribe({
-      next: (res) => this.entries.set(res.data)
+      next: (res) => {
+        this.entries.set(res.data);
+        this.total.set(res.meta.total);
+        this.loading.set(false);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.entries.set([]);
+        this.total.set(0);
+        this.errorMessage.set(err.error?.message || 'No se pudo cargar el historial.');
+        this.loading.set(false);
+      }
     });
   }
 
