@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal } from '@angular/core';
+import { Component, ElementRef, OnInit, inject, signal, viewChild } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { HttpErrorResponse } from '@angular/common/http';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors } from '@angular/forms';
@@ -52,10 +52,13 @@ export class AuditLogComponent implements OnInit {
   entries = signal<AdminActionLogEntry[]>([]);
   total = signal<number>(0);
   currentPage = signal<number>(1);
+  lastPage = signal<number>(1);
   loading = signal<boolean>(false);
   errorMessage = signal<string>('');
   admins = signal<User[]>([]);
   submitted = signal<boolean>(false);
+  private appliedFilters: AdminActionLogFilters = {};
+  listado = viewChild<ElementRef<HTMLElement>>('listado');
   serverErrors = signal<Partial<Record<FilterField, string>>>({});
 
   ngOnInit(): void {
@@ -88,25 +91,19 @@ export class AuditLogComponent implements OnInit {
     this.errorMessage.set('');
     this.serverErrors.set({});
 
-    const value = this.filterForm.getRawValue();
-    const filters: AdminActionLogFilters = {
-      page,
-      action: value.action as AdminActionName | '',
-      affected_admin_id: value.affected_admin_id ? Number(value.affected_admin_id) : null,
-      date_from: value.date_from,
-      date_to: value.date_to
-    };
-
-    this.auditService.getAdminActions(filters).subscribe({
+    this.auditService.getAdminActions({ ...this.appliedFilters, page }).subscribe({
       next: (res) => {
         this.entries.set(res.data);
         this.total.set(res.meta.total);
         this.currentPage.set(res.meta.current_page);
+        this.lastPage.set(res.meta.last_page);
         this.loading.set(false);
       },
       error: (err: HttpErrorResponse) => {
         this.entries.set([]);
         this.total.set(0);
+        this.currentPage.set(1);
+        this.lastPage.set(1);
         const errors = err.status === 422 ? err.error?.errors : null;
         if (errors) {
           const mapped: Partial<Record<FilterField, string>> = {};
@@ -128,13 +125,35 @@ export class AuditLogComponent implements OnInit {
   onFilter(): void {
     this.submitted.set(true);
     if (this.filterForm.invalid) return;
+    this.applyFormFilters();
     this.load(1);
   }
 
   resetFilters(): void {
     this.filterForm.reset();
     this.submitted.set(false);
+    this.applyFormFilters();
     this.load(1);
+  }
+
+  goToPage(page: number): void {
+    if (this.loading() || page < 1 || page > this.lastPage() || page === this.currentPage()) return;
+    this.load(page);
+    setTimeout(() => {
+      const el = this.listado()?.nativeElement;
+      el?.focus();
+      el?.scrollIntoView({ block: 'start' });
+    });
+  }
+
+  private applyFormFilters(): void {
+    const value = this.filterForm.getRawValue();
+    this.appliedFilters = {
+      action: value.action as AdminActionName | '',
+      affected_admin_id: value.affected_admin_id ? Number(value.affected_admin_id) : null,
+      date_from: value.date_from,
+      date_to: value.date_to
+    };
   }
 
   badgeClass(name: AdminActionName): string {

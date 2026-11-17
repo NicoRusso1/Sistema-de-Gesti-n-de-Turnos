@@ -72,6 +72,8 @@
     }
   </div>
 
+  <h2 #listado class="sr-only" tabindex="-1">Listado de acciones</h2>
+
   <div aria-live="polite">
     @if (loading()) {
       <div class="skeleton-stack" aria-busy="true" aria-label="Cargando historial">
@@ -111,4 +113,14 @@
       </div>
     }
   </div>
+
+  @if (lastPage() > 1) {
+    <nav aria-label="Paginación del historial">
+      <div class="pager">
+        <button type="button" aria-label="Página anterior" [disabled]="loading() || currentPage() <= 1" (click)="goToPage(currentPage() - 1)">Anterior</button>
+        <span>Página {{ currentPage() }} de {{ lastPage() }}</span>
+        <button type="button" aria-label="Página siguiente" [disabled]="loading() || currentPage() >= lastPage()" (click)="goToPage(currentPage() + 1)">Siguiente</button>
+      </div>
+    </nav>
+  }
 </div>
