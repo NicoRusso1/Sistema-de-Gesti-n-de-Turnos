@@ -10,13 +10,14 @@ import { Register } from './pages/register/register';
 import { ForgotPassword } from './pages/forgot-password/forgot-password';
 import { ResetPassword } from './pages/reset-password/reset-password';
 import { superAdminGuard } from './guards/super-admin.guard';
+import { guestGuard } from './guards/guest.guard';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'home', pathMatch: 'full' },
-  { path: 'register', title: 'Crear cuenta | SIGT', component: Register },
-  { path: 'login', title: 'Ingresar | SIGT', component: Login },
-  { path: 'forgot-password', title: 'Recuperar acceso | SIGT', component: ForgotPassword },
-  { path: 'reset-password', title: 'Nueva contraseña | SIGT', component: ResetPassword },
+  { path: 'register', title: 'Crear cuenta | SIGT', component: Register, canActivate: [guestGuard] },
+  { path: 'login', title: 'Ingresar | SIGT', component: Login, canActivate: [guestGuard] },
+  { path: 'forgot-password', title: 'Recuperar acceso | SIGT', component: ForgotPassword, canActivate: [guestGuard] },
+  { path: 'reset-password', title: 'Nueva contraseña | SIGT', component: ResetPassword, canActivate: [guestGuard] },
   { path: 'home', title: 'Inicio | SIGT', component: Home, canActivate: [authGuard] },
 
   {
