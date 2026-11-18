@@ -17,7 +17,7 @@ class PatientSeeder extends Seeder
         $role = Role::where('name', RoleName::OperationalUser->value)->firstOrFail();
         $patientType = UserType::where('name', UserTypeName::Patient->value)->firstOrFail();
 
-        Patient::firstOrCreate(
+        $patient = Patient::firstOrCreate(
             ['email' => 'paciente@hospital.test'],
             [
                 'first_name' => 'María',
@@ -29,5 +29,14 @@ class PatientSeeder extends Seeder
                 'email_verified_at' => now(),
             ]
         );
+
+        // Deja la cuenta de prueba ya vinculada a Telegram (chat_id desde el .env, no se commitea)
+        $chatId = config('services.n8n.demo_chat_id');
+
+        if ($chatId) {
+            Patient::where('telegram_chat_id', $chatId)->where('id', '!=', $patient->id)->update(['telegram_chat_id' => null]);
+            $patient->telegram_chat_id = (string) $chatId;
+            $patient->save();
+        }
     }
 }

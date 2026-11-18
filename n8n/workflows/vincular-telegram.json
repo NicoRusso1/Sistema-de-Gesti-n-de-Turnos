@@ -1,0 +1,130 @@
+{
+  "name": "SIGT - Vincular cuenta con Telegram",
+  "nodes": [
+    {
+      "parameters": {
+        "updates": ["message"],
+        "additionalFields": {}
+      },
+      "id": "7a2e9d10-3c4b-4e8a-8f21-6c1d2b3a4e01",
+      "name": "Mensaje al bot",
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.1,
+      "position": [0, 0],
+      "webhookId": "9b3c1f20-7d6e-4a5b-9c8d-1e2f3a4b5c01"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extrae el token de \"/start <token>\" (lo arma el link t.me/<bot>?start=<token> del perfil)\nconst msg = $input.first().json.message ?? {};\nconst text = (msg.text ?? '').trim();\nconst match = text.match(/^\\/start\\s+([A-Za-z0-9_-]{1,64})$/);\n\nreturn [{\n  json: {\n    chat_id: String(msg.chat?.id ?? ''),\n    token: match ? match[1] : '',\n  },\n}];"
+      },
+      "id": "7a2e9d10-3c4b-4e8a-8f21-6c1d2b3a4e02",
+      "name": "Extraer token",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [220, 0]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "c1a2b3c4-d5e6-4f70-8a91-b2c3d4e5f601",
+              "leftValue": "={{ $json.token }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "7a2e9d10-3c4b-4e8a-8f21-6c1d2b3a4e03",
+      "name": "¿Trae token?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [440, 0]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://host.docker.internal:8000/api/integrations/n8n/telegram/link",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ token: $json.token, chat_id: $json.chat_id }) }}",
+        "options": {
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          }
+        }
+      },
+      "id": "7a2e9d10-3c4b-4e8a-8f21-6c1d2b3a4e04",
+      "name": "Confirmar en Laravel",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [680, -100]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Extraer token').item.json.chat_id }}",
+        "text": "={{ $json.statusCode === 200 ? '✅ ¡Listo, ' + $json.body.first_name + '! Desde ahora vas a recibir acá los recordatorios de tus turnos.' : '❌ El link de vinculación no es válido o ya fue usado. Generá uno nuevo desde \"Mi perfil\" en SIGT.' }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "7a2e9d10-3c4b-4e8a-8f21-6c1d2b3a4e05",
+      "name": "Responder resultado",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [920, -100]
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.chat_id }}",
+        "text": "👋 Hola! Soy el bot de recordatorios de SIGT. Para recibir tus turnos acá, entrá a \"Mi perfil\" en SIGT y tocá \"Vincular Telegram\".",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "7a2e9d10-3c4b-4e8a-8f21-6c1d2b3a4e06",
+      "name": "Responder instrucciones",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [680, 100]
+    }
+  ],
+  "connections": {
+    "Mensaje al bot": {
+      "main": [[{ "node": "Extraer token", "type": "main", "index": 0 }]]
+    },
+    "Extraer token": {
+      "main": [[{ "node": "¿Trae token?", "type": "main", "index": 0 }]]
+    },
+    "¿Trae token?": {
+      "main": [
+        [{ "node": "Confirmar en Laravel", "type": "main", "index": 0 }],
+        [{ "node": "Responder instrucciones", "type": "main", "index": 0 }]
+      ]
+    },
+    "Confirmar en Laravel": {
+      "main": [[{ "node": "Responder resultado", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}

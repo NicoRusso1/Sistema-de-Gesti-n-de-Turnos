@@ -35,6 +35,20 @@ return [
         ],
     ],
 
+    /*
+    | n8n: recibe los recordatorios de turno y los manda por Telegram.
+    | reminder_webhook_url: URL del Webhook del workflow "Recordatorio de turno por Telegram".
+    | secret: valor compartido que viaja en el header X-N8N-Secret (en ambos sentidos).
+    | telegram_bot_username: usuario del bot sin @, para armar el link de vinculación.
+    */
+    'n8n' => [
+        'reminder_webhook_url' => env('N8N_REMINDER_WEBHOOK_URL'),
+        'secret' => env('N8N_SECRET'),
+        'telegram_bot_username' => env('TELEGRAM_BOT_USERNAME'),
+        // chat_id que el seeder le asigna a paciente@hospital.test (para pruebas)
+        'demo_chat_id' => env('TELEGRAM_DEMO_CHAT_ID'),
+    ],
+
         'mercadopago' => [
         'access_token' => env('MERCADOPAGO_ACCESS_TOKEN'),
         'return_url' => env('MERCADOPAGO_RETURN_URL'),

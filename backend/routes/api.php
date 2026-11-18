@@ -21,6 +21,7 @@ use App\Http\Controllers\Api\PagoProcesoController;
 use App\Http\Controllers\Api\GlobalMetricsController;
 use App\Http\Controllers\Api\CertificateController;
 use App\Http\Controllers\Api\AppointmentStatusReportController;
+use App\Http\Controllers\Api\TelegramController;
 
 // Públicas
 Route::post('/register', [AuthController::class, 'register']);
@@ -30,6 +31,9 @@ Route::apiResource('specialties', SpecialtyController::class)->only(['index', 's
 Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
 Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 Route::post('/mercadopago/webhook', [PaymentController::class, 'webhook']);
+// n8n confirma la vinculación con Telegram (autenticado con el header X-N8N-Secret)
+Route::post('/integrations/n8n/telegram/link', [TelegramController::class, 'confirmLink'])
+    ->middleware(['n8n', 'throttle:30,1']);
 
 // Requieren token
 Route::middleware('auth:sanctum')->group(function () {
@@ -102,6 +106,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/notifications', [NotificationController::class, 'index']);
     Route::post('/notifications/send-reminders', [NotificationController::class, 'sendReminders']);
     Route::delete('/notifications/{id}', [NotificationController::class, 'destroy']);
+
+    // Vinculación con Telegram para recibir los recordatorios de turno
+    Route::get('/me/telegram', [TelegramController::class, 'show']);
+    Route::post('/me/telegram/link', [TelegramController::class, 'link']);
+    Route::delete('/me/telegram', [TelegramController::class, 'unlink']);
 
     Route::get('/me/next-appointment', [AppointmentController::class, 'nextAppointment']);
     

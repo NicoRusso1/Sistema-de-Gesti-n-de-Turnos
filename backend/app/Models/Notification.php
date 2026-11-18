@@ -20,6 +20,7 @@ class Notification extends Model
         'estado_envio',
         'error_envio',
         'enviada_at',
+        'telegram_enviado_at',
     ];
 
     protected function casts(): array
@@ -28,6 +29,7 @@ class Notification extends Model
             'leido' => 'boolean',
             'estado_envio' => NotificationDeliveryStatus::class,
             'enviada_at' => 'datetime',
+            'telegram_enviado_at' => 'datetime',
         ];
     }
 

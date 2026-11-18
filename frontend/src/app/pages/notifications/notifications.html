@@ -2,7 +2,7 @@
   <header class="page-header">
     <div>
       <h1>Notificaciones</h1>
-      <p>Recordatorios de turnos por email y alertas internas.</p>
+      <p>Recordatorios de turnos por email y Telegram, y alertas internas.</p>
     </div>
     <button type="button" class="btn btn-primary" [disabled]="sending()" (click)="onTriggerReminders()">
       @if (sending()) { Enviando recordatorios... } @else { Enviar recordatorios (próximas 24 hs) }

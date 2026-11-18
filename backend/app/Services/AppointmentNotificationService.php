@@ -15,6 +15,10 @@ use Throwable;
 
 class AppointmentNotificationService
 {
+    public function __construct(private TelegramReminderService $telegram)
+    {
+    }
+
     public function notifyCancellation(Appointment $appointment, ?string $reason = null): void
     {
         $doctorName = $appointment->doctor
@@ -72,13 +76,27 @@ class AppointmentNotificationService
         $salaInfo = $appointment->sala ? " en Sala {$appointment->sala->numero} (Piso {$appointment->sala->piso})" : "";
         $email = $appointment->patient?->email;
 
-        return $this->register([
+        $notification = $this->register([
             'patient_id'     => $appointment->patient_id,
             'appointment_id' => $appointment->id,
             'tipo'           => 'recordatorio',
             'titulo'         => "Tu próximo turno es el {$fecha} a las {$hora} hs",
             'mensaje'        => "Recordá que tu próximo turno está agendado para el día {$fecha} a las {$hora} hs con {$doctorName} ({$especialidad}){$salaInfo}. Estado del turno: " . strtoupper($appointment->status) . ".",
         ], $email ? fn () => Mail::to($email)->send(new RecordatorioTurnoMail($appointment)) : null);
+
+        // Telegram (vía n8n) es un canal extra solo para recordatorios, independiente del email.
+        // Si el email falla, el cron lo reintenta creando otra notificación: para no repetir el
+        // mensaje de Telegram se revisa si ya salió en algún intento anterior de este turno.
+        $telegramYaEnviado = Notification::where('appointment_id', $appointment->id)
+            ->where('tipo', 'recordatorio')
+            ->whereNotNull('telegram_enviado_at')
+            ->exists();
+
+        if (!$telegramYaEnviado && $this->telegram->send($appointment, $notification)) {
+            $notification->update(['telegram_enviado_at' => now()]);
+        }
+
+        return $notification;
     }
 
     public function notifyPaymentConfirmed(Appointment $appointment, Payment $payment, ?string $invoicePath = null, ?string $certificatePath = null): Notification
