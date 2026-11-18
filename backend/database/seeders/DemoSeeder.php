@@ -28,6 +28,7 @@ class DemoSeeder extends Seeder
             PaymentMethodSeeder::class,
             PaymentStatusSeeder::class,
             DemoUsuariosSeeder::class,
+            DemoTurnosSeeder::class,
         ]);
     }
 }
