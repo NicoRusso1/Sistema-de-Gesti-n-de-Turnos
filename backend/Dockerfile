@@ -14,7 +14,11 @@ RUN chmod +x /usr/local/bin/install-php-extensions \
     && a2enmod rewrite headers
 
 COPY docker/vhost.conf /etc/apache2/sites-available/000-default.conf
-RUN echo 'Listen ${PORT}' > /etc/apache2/ports.conf
+RUN echo 'Listen ${PORT}' > /etc/apache2/ports.conf \
+    && rm -f /etc/apache2/mods-enabled/mpm_event.* /etc/apache2/mods-enabled/mpm_worker.* \
+    && a2enmod mpm_prefork \
+    && apache2ctl configtest \
+    && apache2ctl -M 2>/dev/null | grep -c mpm_ | grep -qx 1
 
 WORKDIR /var/www/html
 
