@@ -19,7 +19,11 @@ return [
 
     'allowed_methods' => ['*'],
 
-    'allowed_origins' => ['http://localhost:4200'],
+    'allowed_origins' => array_values(array_unique(array_filter([
+        'http://localhost:4200',
+        'http://localhost',
+        env('FRONTEND_URL'),
+    ]))),
 
     'allowed_origins_patterns' => [],
 

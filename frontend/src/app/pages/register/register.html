@@ -118,6 +118,10 @@
     <button class="submit" type="submit" [disabled]="loading()">
       {{ loading() ? 'Creando cuenta...' : 'Crear cuenta' }}
     </button>
+    <div class="or-separator" aria-hidden="true">
+      <span>o</span>
+    </div>
+    <div id="google-btn-register" class="google-btn-wrapper"></div>
   </form>
 
   <p class="below-link" ngProjectAs="[below]">¿Ya tenés cuenta? <a routerLink="/login">Ingresá</a></p>
