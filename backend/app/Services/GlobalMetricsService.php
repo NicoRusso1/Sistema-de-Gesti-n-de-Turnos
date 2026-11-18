@@ -32,7 +32,7 @@ class GlobalMetricsService
             'kpis' => [
                 'ingresos_totales'     => $this->calcularIngresosTotales($desde, $hasta),
                 'total_turnos'         => $this->contarTurnosPeriodo($desde, $hasta),
-                'total_salas_activas'  => Sala::where('status', 1)->count(),
+                'total_salas_activas'  => Sala::where('estado', 'disponible')->count(),
                 'total_usuarios_act'   => Patient::where('status', 1)->count(),
             ],
             'turnos_por_especialidad' => $this->turnosPorEspecialidad($desde, $hasta),
@@ -101,7 +101,7 @@ class GlobalMetricsService
                 'sala_id'          => $sala->id,
                 'numero'           => $sala->numero,
                 'piso'             => $sala->piso,
-                'estado'           => (int) $sala->status === 1 ? 'Activa' : 'Inactiva',
+                'estado'           => $sala->estado === 'disponible' ? 'Activa' : 'Inactiva',
                 'turnos_atendidos' => (int) $asignados,
             ];
         })->sortByDesc('turnos_atendidos')->values()->all();
