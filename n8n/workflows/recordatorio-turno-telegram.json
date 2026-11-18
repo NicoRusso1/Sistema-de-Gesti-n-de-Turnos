@@ -1,0 +1,58 @@
+{
+  "name": "SIGT - Recordatorio de turno por Telegram",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "turnos-recordatorio",
+        "authentication": "headerAuth",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "0f6b8c52-1f0a-4b61-9a37-2b7f3f2c0a01",
+      "name": "Webhook recordatorio",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [0, 0],
+      "webhookId": "5d1d0c36-58a4-4c64-8f0e-5d6f5b8d6a01"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $json.body.chat_id }}",
+        "text": "={{ $json.body.texto }}",
+        "additionalFields": {
+          "appendAttribution": false
+        }
+      },
+      "id": "0f6b8c52-1f0a-4b61-9a37-2b7f3f2c0a02",
+      "name": "Enviar por Telegram",
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [240, 0]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ { \"ok\": true, \"message_id\": $json.result.message_id } }}",
+        "options": {}
+      },
+      "id": "0f6b8c52-1f0a-4b61-9a37-2b7f3f2c0a03",
+      "name": "Responder a Laravel",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [480, 0]
+    }
+  ],
+  "connections": {
+    "Webhook recordatorio": {
+      "main": [[{ "node": "Enviar por Telegram", "type": "main", "index": 0 }]]
+    },
+    "Enviar por Telegram": {
+      "main": [[{ "node": "Responder a Laravel", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "pinData": {}
+}

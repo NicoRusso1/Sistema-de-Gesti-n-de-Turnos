@@ -57,6 +57,10 @@ class SendAppointmentReminders extends Command
 
             $notification = $notificationService->notifyReminder($appointment);
 
+            if ($notification->telegram_enviado_at) {
+                $this->line("Recordatorio enviado por Telegram para el turno #{$appointment->id}.");
+            }
+
             if ($notification->estado_envio === NotificationDeliveryStatus::Sent) {
                 $this->line("Recordatorio enviado al paciente {$email} para el turno #{$appointment->id}.");
                 $enviados++;

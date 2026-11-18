@@ -1,0 +1,23 @@
+# n8n para los recordatorios de turno por Telegram. Ver docs/n8n-telegram.md
+#   cd n8n && docker compose up -d   ->  http://localhost:5678
+services:
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:latest
+    restart: unless-stopped
+    ports:
+      - "5678:5678"
+    environment:
+      - GENERIC_TIMEZONE=America/Argentina/Buenos_Aires
+      - TZ=America/Argentina/Buenos_Aires
+      # URL pública HTTPS de n8n (ngrok / cloudflared). Telegram solo manda updates a HTTPS,
+      # así que el workflow "Vincular cuenta con Telegram" necesita esto para activarse.
+      - WEBHOOK_URL=${N8N_PUBLIC_URL:-http://localhost:5678/}
+    extra_hosts:
+      # Permite que n8n llame a Laravel corriendo en la máquina host
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - n8n_data:/home/node/.n8n
+      - ./workflows:/workflows:ro
+
+volumes:
+  n8n_data:

@@ -9,6 +9,7 @@ import { AuthService } from '../../services/auth.service';
 import { DialogService } from '../../shared/dialog/dialog.service';
 import { HealthInsuranceService } from '../../services/health-insurance.service';
 import { PatientHealthInsuranceService } from '../../services/patient-health-insurance.service';
+import { TelegramService, TelegramStatus } from '../../services/telegram.service';
 
 @Component({
   selector: 'app-profile',
@@ -35,6 +36,13 @@ export class ProfileComponent implements OnInit {
   protected readonly successMessage = signal('');
   protected readonly errorMessage = signal('');
 
+  private telegramService = inject(TelegramService);
+  protected readonly telegram = signal<TelegramStatus | null>(null);
+  protected readonly telegramLink = signal('');
+  protected readonly telegramBusy = signal(false);
+  protected readonly telegramMessage = signal('');
+  protected readonly telegramError = signal('');
+
   protected readonly form = this.fb.group({
     health_insurance_id: [null as number | null, Validators.required],
     member_number: ['', [Validators.required, Validators.maxLength(50)]],
@@ -54,6 +62,60 @@ export class ProfileComponent implements OnInit {
       error: () => {
         this.loading.set(false);
         this.errorMessage.set('No se pudo cargar tu obra social.');
+      }
+    });
+
+    this.loadTelegram();
+  }
+
+  protected loadTelegram(): void {
+    this.telegramService.status().subscribe({
+      next: (status) => {
+        this.telegram.set(status);
+        if (status.linked) {
+          this.telegramLink.set('');
+        }
+      },
+      error: () => this.telegramError.set('No se pudo consultar el estado de Telegram.')
+    });
+  }
+
+  protected linkTelegram(): void {
+    this.telegramBusy.set(true);
+    this.telegramMessage.set('');
+    this.telegramError.set('');
+
+    this.telegramService.createLink().subscribe({
+      next: (res) => {
+        this.telegramBusy.set(false);
+        this.telegramLink.set(res.url);
+        window.open(res.url, '_blank', 'noopener');
+      },
+      error: (err: HttpErrorResponse) => {
+        this.telegramBusy.set(false);
+        this.telegramError.set(err.error?.message || 'No se pudo generar el link de Telegram.');
+      }
+    });
+  }
+
+  protected async unlinkTelegram(): Promise<void> {
+    if (!(await this.dialog.confirm({ title: '¿Querés dejar de recibir recordatorios por Telegram?', confirmText: 'Desvincular', variant: 'danger' }))) {
+      return;
+    }
+
+    this.telegramBusy.set(true);
+    this.telegramMessage.set('');
+    this.telegramError.set('');
+
+    this.telegramService.unlink().subscribe({
+      next: (res) => {
+        this.telegramBusy.set(false);
+        this.telegram.update((s) => (s ? { ...s, linked: false } : s));
+        this.telegramMessage.set(res.message);
+      },
+      error: (err: HttpErrorResponse) => {
+        this.telegramBusy.set(false);
+        this.telegramError.set(err.error?.message || 'No se pudo desvincular Telegram.');
       }
     });
   }

@@ -36,6 +36,8 @@ class Patient extends Authenticatable
     protected $hidden = [
         'password_hash',
         'remember_token',
+        'telegram_chat_id',
+        'telegram_link_token',
     ];
 
     protected function casts(): array

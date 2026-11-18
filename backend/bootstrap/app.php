@@ -22,6 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'superadmin' => \App\Http\Middleware\EnsureSuperAdmin::class,
             'superadmin_or_owner' => \App\Http\Middleware\EnsureSuperAdminOrOwner::class,
             'appointment_scope' => \App\Http\Middleware\EnsureAppointmentScope::class,
+            'n8n' => \App\Http\Middleware\VerifyN8nSecret::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {

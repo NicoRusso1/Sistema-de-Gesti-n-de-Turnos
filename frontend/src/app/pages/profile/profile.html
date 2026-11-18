@@ -122,6 +122,48 @@
           </form>
         }
       </section>
+
+      @if (telegram()?.available) {
+        <section class="profile-section" aria-labelledby="p-telegram">
+          <h2 id="p-telegram" class="section-label">Recordatorios por Telegram</h2>
+
+          <div aria-live="polite">
+            @if (telegramMessage()) {
+              <p class="notice-ok">{{ telegramMessage() }}</p>
+            }
+            @if (telegramError()) {
+              <p class="notice-error" role="alert">{{ telegramError() }}</p>
+            }
+          </div>
+
+          @if (telegram()?.linked) {
+            <p class="field-hint intro">Tu cuenta está vinculada. Además del email, vas a recibir los recordatorios de tus turnos por Telegram.</p>
+            <div class="form-actions">
+              <button type="button" class="btn btn-danger" [disabled]="telegramBusy()" (click)="unlinkTelegram()">
+                @if (telegramBusy()) { Desvinculando... } @else { Desvincular Telegram }
+              </button>
+            </div>
+          } @else {
+            <p class="field-hint intro">Vinculá tu cuenta para recibir también por Telegram el recordatorio de tus turnos.</p>
+
+            @if (telegramLink()) {
+              <p class="field-hint intro">
+                Se abrió Telegram: tocá <strong>Iniciar</strong> en el chat del bot. Si no se abrió,
+                <a [href]="telegramLink()" target="_blank" rel="noopener">abrí este link</a>.
+              </p>
+            }
+
+            <div class="form-actions">
+              <button type="button" class="btn btn-primary" [disabled]="telegramBusy()" (click)="linkTelegram()">
+                @if (telegramBusy()) { Generando link... } @else { Vincular Telegram }
+              </button>
+              @if (telegramLink()) {
+                <button type="button" class="btn btn-ghost" (click)="loadTelegram()">Ya lo vinculé</button>
+              }
+            </div>
+          }
+        </section>
+      }
     </div>
   </div>
 </div>
