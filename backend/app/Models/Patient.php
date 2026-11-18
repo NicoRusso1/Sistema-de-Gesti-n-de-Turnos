@@ -25,6 +25,7 @@ class Patient extends Authenticatable
         'last_name',
         'email',
         'password_hash',
+        'google_id',
         'phone',
         'user_type_id',
         'role_id',

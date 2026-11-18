@@ -14,6 +14,9 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules\Password;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Str;
+use App\Models\UserPermission;
 
 class AuthController extends Controller
 {
@@ -95,6 +98,79 @@ class AuthController extends Controller
 
         $token = $patient->createToken('auth_token')->plainTextToken;
 
+        return response()->json([
+            'message' => 'Login exitoso',
+            'access_token' => $token,
+            'token_type' => 'Bearer',
+            'user' => $patient->load('role', 'userType'),
+        ]);
+    }
+    public function googleLogin(Request $request)
+    {
+        $request->validate([
+            'token' => 'required|string',
+        ]);
+        // 1. Validar el token directamente con los servidores de Google
+        $response = Http::get('https://oauth2.googleapis.com/tokeninfo', [
+            'id_token' => $request->token,
+        ]);
+        if ($response->failed()) {
+            return response()->json([
+                'message' => 'Token de Google inválido o expirado.',
+            ], 401);
+        }
+        $googleUser = $response->json();
+        // 2. Verificar que el token pertenezca a nuestro Client ID
+        $clientId = env('GOOGLE_CLIENT_ID');
+        if ($clientId && isset($googleUser['aud']) && $googleUser['aud'] !== $clientId) {
+            return response()->json([
+                'message' => 'El token no corresponde a esta aplicación.',
+            ], 401);
+        }
+        $email = strtolower($googleUser['email'] ?? '');
+        $googleId = $googleUser['sub'] ?? null;
+        if (!$email || !$googleId) {
+            return response()->json([
+                'message' => 'No se pudo obtener la información de Google.',
+            ], 422);
+        }
+        // 3. Buscar si el usuario ya existe por google_id o por email
+        $patient = Patient::where('google_id', $googleId)
+            ->orWhere('email', $email)
+            ->first();
+        if ($patient) {
+            // Si existía por email pero no tenía vinculado el google_id, lo vinculamos
+            if (!$patient->google_id) {
+                $patient->google_id = $googleId;
+                $patient->save();
+            }
+        } else {
+            // 4. Si no existe, lo registramos como Paciente operativo
+            $role = Role::where('name', RoleName::OperationalUser->value)->firstOrFail();
+            $patientType = UserType::where('name', UserTypeName::Patient->value)->firstOrFail();
+            $patient = Patient::create([
+                'first_name' => $googleUser['given_name'] ?? ($googleUser['name'] ?? 'Usuario'),
+                'last_name' => $googleUser['family_name'] ?? 'Google',
+                'email' => $email,
+                'google_id' => $googleId,
+                'password_hash' => Hash::make(Str::random(32)),
+                'role_id' => $role->id,
+                'user_type_id' => $patientType->id,
+                'status' => 1,
+            ]);
+            // Asignar permisos por defecto de paciente
+            UserPermission::firstOrCreate(
+                ['patient_id' => $patient->id],
+                UserPermission::defaultsFor(UserTypeName::Patient->value)
+            );
+        }
+        if ($patient->status !== 1) {
+            return response()->json([
+                'message' => 'La cuenta se encuentra dada de baja.',
+            ], 403);
+        }
+        // 5. Emitir el token de Sanctum idéntico al login tradicional
+        $token = $patient->createToken('auth_token')->plainTextToken;
         return response()->json([
             'message' => 'Login exitoso',
             'access_token' => $token,

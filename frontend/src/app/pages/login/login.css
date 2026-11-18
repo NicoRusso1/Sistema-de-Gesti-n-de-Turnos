@@ -127,3 +127,26 @@
     margin-right: 16px;
   }
 }
+.or-separator {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 14px 0 10px;
+  font-size: 0.85rem;
+  color: var(--sigt-texto-suave);
+}
+
+.or-separator::before,
+.or-separator::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--sigt-borde);
+}
+
+.google-btn-wrapper {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  min-height: 44px;
+}
