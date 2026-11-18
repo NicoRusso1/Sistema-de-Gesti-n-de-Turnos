@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-export PORT="${PORT:-80}"
+export PORT="${PORT:-8000}"
 cd /var/www/html
 
 if [ -z "$APP_KEY" ]; then
@@ -33,6 +33,8 @@ if [ "${RUN_DEMO_SEEDER:-false}" = "true" ]; then
   php artisan db:seed --class=DemoSeeder --force
 fi
 
-chown -R www-data:www-data storage bootstrap/cache
+if [ "$1" = "serve" ]; then
+  exec php artisan serve --host=0.0.0.0 --port="$PORT"
+fi
 
 exec "$@"

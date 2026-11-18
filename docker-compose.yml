@@ -20,7 +20,7 @@ services:
       mysql:
         condition: service_healthy
     environment:
-      PORT: "80"
+      PORT: "8000"
       APP_ENV: local
       APP_DEBUG: "true"
       APP_KEY: ${APP_KEY:-base64:55KSt3vDezolpcIzltRbbMIT2BEY7YbUmFC8qD3RrAA=}
@@ -39,7 +39,7 @@ services:
       RUN_SEEDERS: "true"
       RUN_DEMO_SEEDER: "true"
     ports:
-      - "8000:80"
+      - "8000:8000"
     volumes:
       - backend_storage:/var/www/html/storage/app
 
