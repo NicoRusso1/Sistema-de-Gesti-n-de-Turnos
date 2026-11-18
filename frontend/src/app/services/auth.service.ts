@@ -29,6 +29,16 @@ export class AuthService {
       }),
     );
   }
+  loginWithGoogle(token: string): Observable<LoginResponse> {
+    return this.http.post<LoginResponse>(`${API_URL}/auth/google`, { token }).pipe(
+      tap((res) => {
+        localStorage.setItem(TOKEN_KEY, res.access_token);
+        localStorage.setItem(USER_KEY, JSON.stringify(res.user));
+        this.token.set(res.access_token);
+        this.user.set(res.user);
+      }),
+    );
+  }
 
   logout(): Observable<unknown> {
     return this.http.post(`${API_URL}/logout`, {}).pipe(tap(() => this.clearSession()));

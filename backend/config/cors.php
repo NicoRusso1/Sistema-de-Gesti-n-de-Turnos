@@ -20,7 +20,7 @@ return [
     'allowed_methods' => ['*'],
 
     'allowed_origins' => array_values(array_unique(array_filter(array_map('trim', array_merge(
-        ['http://localhost:4200'],
+        ['http://localhost:4200', 'http://localhost'],
         explode(',', (string) env('CORS_ALLOWED_ORIGINS', env('FRONTEND_URL', '')))
     ))))),
 
