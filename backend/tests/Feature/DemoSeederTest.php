@@ -5,17 +5,32 @@ namespace Tests\Feature;
 use App\Models\DoctorSchedule;
 use App\Models\Patient;
 use App\Models\PatientHealthInsurance;
-use Database\Seeders\DemoSeeder;
+use Database\Seeders\DatabaseSeeder;
+use Database\Seeders\DemoTurnosSeeder;
+use Database\Seeders\DemoUsuariosSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class DemoSeederTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        Storage::fake('documentos');
+    }
+
+    private function sembrar(): void
+    {
+        $this->seed([DatabaseSeeder::class, DemoUsuariosSeeder::class, DemoTurnosSeeder::class]);
+    }
+
     public function test_siembra_las_personas_de_la_demo_sin_romper_las_cuentas_existentes(): void
     {
-        $this->seed(DemoSeeder::class);
+        $this->sembrar();
 
         foreach (['superadmin', 'admin', 'medico', 'paciente', 'secretaria'] as $cuenta) {
             $this->assertDatabaseHas('patients', ['email' => "{$cuenta}@hospital.test"]);
@@ -30,7 +45,7 @@ class DemoSeederTest extends TestCase
 
     public function test_las_franjas_de_los_medicos_nuevos_son_de_lunes_a_viernes(): void
     {
-        $this->seed(DemoSeeder::class);
+        $this->sembrar();
 
         $medico = Patient::where('email', 'carolina.benitez@hospital.test')->first();
 
@@ -40,10 +55,10 @@ class DemoSeederTest extends TestCase
 
     public function test_correrlo_dos_veces_no_duplica_personas_ni_horarios(): void
     {
-        $this->seed(DemoSeeder::class);
+        $this->sembrar();
         $cantidades = [Patient::count(), DoctorSchedule::count(), PatientHealthInsurance::count()];
 
-        $this->seed(DemoSeeder::class);
+        $this->sembrar();
 
         $this->assertSame($cantidades, [Patient::count(), DoctorSchedule::count(), PatientHealthInsurance::count()]);
     }

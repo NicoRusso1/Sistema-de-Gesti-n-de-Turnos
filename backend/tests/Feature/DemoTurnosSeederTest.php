@@ -6,14 +6,29 @@ use App\Models\Appointment;
 use App\Models\DoctorSchedule;
 use App\Models\Patient;
 use Carbon\Carbon;
-use Database\Seeders\DemoSeeder;
+use Database\Seeders\DatabaseSeeder;
+use Database\Seeders\DemoTurnosSeeder;
+use Database\Seeders\DemoUsuariosSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use PHPUnit\Framework\Attributes\DataProvider;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class DemoTurnosSeederTest extends TestCase
 {
     use RefreshDatabase;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        Storage::fake('documentos');
+    }
+
+    private function sembrar(): void
+    {
+        $this->seed([DatabaseSeeder::class, DemoUsuariosSeeder::class, DemoTurnosSeeder::class]);
+    }
 
     public static function momentosDeEjecucion(): array
     {
@@ -29,7 +44,7 @@ class DemoTurnosSeederTest extends TestCase
     public function test_los_turnos_cumplen_las_reglas_del_modelo(string $momento): void
     {
         $this->travelTo(Carbon::parse($momento));
-        $this->seed(DemoSeeder::class);
+        $this->sembrar();
 
         $turnos = Appointment::with(['sala', 'doctor.specialties', 'healthInsurance'])->get();
 
@@ -88,7 +103,7 @@ class DemoTurnosSeederTest extends TestCase
     public function test_los_turnos_caen_en_franjas_validas_sin_cruces(string $momento): void
     {
         $this->travelTo(Carbon::parse($momento));
-        $this->seed(DemoSeeder::class);
+        $this->sembrar();
 
         $activos = Appointment::where('status', '!=', 'cancelado')->get();
 
@@ -126,7 +141,7 @@ class DemoTurnosSeederTest extends TestCase
     public function test_maria_tiene_historial_completo_y_el_doctor_perez_agenda_de_hoy_y_los_proximos_dias(): void
     {
         $this->travelTo(Carbon::parse('2026-11-18 14:00'));
-        $this->seed(DemoSeeder::class);
+        $this->sembrar();
 
         $maria = Patient::where('email', 'paciente@hospital.test')->first();
         $turnosMaria = Appointment::where('patient_id', $maria->id)->get();
@@ -152,10 +167,10 @@ class DemoTurnosSeederTest extends TestCase
 
     public function test_correrlo_dos_veces_no_duplica_turnos(): void
     {
-        $this->seed(DemoSeeder::class);
+        $this->sembrar();
         $cantidad = Appointment::count();
 
-        $this->seed(DemoSeeder::class);
+        $this->sembrar();
 
         $this->assertSame($cantidad, Appointment::count());
     }

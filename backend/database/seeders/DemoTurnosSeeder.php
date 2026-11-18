@@ -17,14 +17,14 @@ use RuntimeException;
 
 class DemoTurnosSeeder extends Seeder
 {
-    private const MEDICOS = [
+    public const MEDICOS = [
         'juan' => 'medico@hospital.test',
         'carolina' => 'carolina.benitez@hospital.test',
         'lucia' => 'lucia.marchetti@hospital.test',
         'martin' => 'martin.acosta@hospital.test',
     ];
 
-    private const PACIENTES = [
+    public const PACIENTES = [
         'maria' => 'paciente@hospital.test',
         'sofia' => 'sofia.ramirez@hospital.test',
         'diego' => 'diego.sosa@hospital.test',
