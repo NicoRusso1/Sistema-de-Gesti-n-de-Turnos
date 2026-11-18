@@ -1,0 +1,17 @@
+.git
+.gitignore
+vendor
+node_modules
+.env
+.env.*
+tests
+database/database.sqlite
+bootstrap/cache/*.php
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+storage/app/private/*
+storage/api-docs/*.tmp
+Dockerfile
+docker-compose*.yml
