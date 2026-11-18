@@ -17,6 +17,13 @@ use App\Models\UserPermission;
 
 class UserController extends Controller
 {
+    private function normalizarEmail(Request $request): void
+    {
+        if (is_string($request->input('email'))) {
+            $request->merge(['email' => mb_strtolower(trim($request->input('email')))]);
+        }
+    }
+
     #[OA\Get(
         path: '/api/users',
         summary: 'Listar usuarios con filtros',
@@ -113,6 +120,8 @@ class UserController extends Controller
     )]
     public function store(Request $request)
     {
+        $this->normalizarEmail($request);
+
         $request->validate([
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
@@ -229,6 +238,7 @@ class UserController extends Controller
             ], 404);
         }
 
+        $this->normalizarEmail($request);
         $validated = $request->validate([
             'first_name' => ['sometimes', 'required', 'string', 'max:255'],
             'last_name' => ['sometimes', 'required', 'string', 'max:255'],

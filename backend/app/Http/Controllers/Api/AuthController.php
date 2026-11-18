@@ -20,8 +20,17 @@ use App\Models\UserPermission;
 
 class AuthController extends Controller
 {
+    private function normalizarEmail(Request $request): void
+    {
+        if (is_string($request->input('email'))) {
+            $request->merge(['email' => mb_strtolower(trim($request->input('email')))]);
+        }
+    }
+
     public function register(Request $request)
     {
+        $this->normalizarEmail($request);
+
         $request->validate([
             'first_name' => ['required', 'string', 'max:255'],
             'last_name' => ['required', 'string', 'max:255'],
@@ -222,7 +231,7 @@ class AuthController extends Controller
                 'created_at' => now(),
             ]
         );
-        $resetUrl = "http://localhost:4200/reset-password?token=" . urlencode($token);
+        $resetUrl = rtrim((string) config('app.frontend_url'), '/') . '/reset-password?token=' . urlencode($token);
 
         $htmlContent = '
         <!DOCTYPE html>
@@ -271,10 +280,19 @@ class AuthController extends Controller
         </body>
         </html>';
 
-        Mail::html($htmlContent, function ($message) use ($patient) {
-            $message->to($patient->email)
-                    ->subject('Recuperación de contraseña');
-        });
+        try {
+            Mail::html($htmlContent, function ($message) use ($patient) {
+                $message->to($patient->email)
+                        ->subject('Recuperación de contraseña');
+            });
+        } catch (\Throwable $e) {
+            report($e);
+
+            return response()->json([
+                'message' => 'No pudimos enviar el correo de recuperación. Intentá de nuevo más tarde.'
+            ], 503);
+        }
+
         return response()->json([
             'message' => 'Te hemos enviado un correo con el enlace para restablecer tu contraseña.'
         ]);

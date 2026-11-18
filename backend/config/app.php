@@ -65,6 +65,8 @@ return [
     |
     */
 
+    'frontend_url' => env('FRONTEND_URL', 'http://localhost:4200'),
+
     'timezone' => env('APP_TIMEZONE', 'America/Argentina/Buenos_Aires'),
 
     /*
